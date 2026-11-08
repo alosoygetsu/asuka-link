@@ -6,7 +6,7 @@
 #ifndef LAUNCHER_VERSION
 #define LAUNCHER_VERSION "dev"
 #endif
-#define REPO "Feerdus95/dw3-native-port"
+#define REPO "alosoygetsu/dw3-native-port" /* the co-op's fork: its releases are the co-op's (release.ps1) */
 
 enum { IDLE, RUNNING, FOUND_OR_NOT, FAILED };
 static SDL_AtomicInt s_state;
