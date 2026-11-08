@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.18.9 (beta)
+
+- The launcher moves with the arrows where it makes sense. On the home screen, Left and Right walk the bar (Play, Settings, Saves, Tools, language) and Up and Down move between it and the buttons under it, where Left and Right swap Play and Quit. In Settings, Up from the first row reaches the tabs, and Left and Right switch them.
+- **Menu cursor wraps** (Options, Input; off by default). Up from the first row goes to the last, and down from the last to the first, in the field menu, the item lists and shops, and the techniques list (who uses it, which, and whom it heals). The other menus keep stopping at their ends. Also in the launcher's Input tab. Thanks to Hucaru (#14).
+- **Cancel on B**: a row in Controls (options menu, Input tab; and the launcher's Input tab) that swaps Triangle and Circle, keys and gamepad buttons, so the game's cancel is on B. It is a remap: the icons in the game's texts follow it, and pressing it again undoes it. The row, before the list of buttons, shows On or Off. Thanks to Hucaru (#14).
+- The launcher's settings list scrolls with the wheel by itself (three rows a notch) and the selection goes to the row under the pointer, instead of the selection jumping row by row and fighting the pointer; its scroll bar is wider, leaves the values clear and can be dragged with the mouse, its thumb lighting under the pointer and when held.
+- **Menus in fast forward** (Options, Input; off by default). With fast forward on, a menu's cursor repeats at its normal pace when a direction is held, instead of at the game's speed. Also in the launcher's Input tab. Thanks to Hucaru (#19).
+- **Skip PRESS START** (Options, Input; off by default). The title screen shows New game and Continue as soon as its intro ends, without waiting for Start. Also in the launcher's Input tab. Thanks to Hucaru (#17).
+- **Heal on level up** (Options, Mods; off by default). A partner that levels up in a battle gets its HP and MP back in full; its Digimon's levels do not heal. Also in the launcher's Mods tab. Thanks to Hucaru (#18).
+- **Inactive window** (Options, Display; off by default). While the game's window is not in front, nothing happens as before, the sound is muted, or the game is paused until the window is back. Also in the launcher's Display tab. Thanks to Hucaru (#16).
+
 ## v0.18.8 (beta)
 
 - **Script mods** (`data/mods/scripts/<fighter>/<script>.json`): a fighter's battle script (its attack, hit, KO and evade scripts) as a list of commands that replaces the game's, e.g. `{"schema_version": 1, "commands": [{"op": "sound", "sound": "punch"}, {"op": "end"}]}`. A sound command can play a sound of the library, one of the game's (1 to 89), the hit's sound, or the game's own on a result 3 hit. A file that is wrong is rejected with the reason and the game's script runs; `--check-mods` lists them. Options > Mods > Custom scripts switches them off in game (also `native.ini` and the launcher's Mods tab). The model viewer (v0.18.5) edits the scripts in its Fighter tab and saves these files.

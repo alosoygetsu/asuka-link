@@ -37,11 +37,11 @@ void art_flag(int x, int y, int lang); /* 16x10: en, es, fr, de, it */
 
 /* lang_*.c */
 enum {
-    O_FPS, O_FULLSCREEN, O_WINDOW, O_WIDESCREEN, O_VSYNC, O_MOVIES,
+    O_FPS, O_FULLSCREEN, O_WINDOW, O_WIDESCREEN, O_VSYNC, O_MOVIES, O_INACTIVE,
     O_RESOLUTION, O_PERSPECTIVE, O_SMOOTH_3D, O_TRUE_COLOR, O_DITHER, O_SOFT_SHADOWS, O_BATTLE_SHADOWS, O_BATTLE_SKY,
-    O_ICONS, O_RUMBLE, O_DEADZONE,
+    O_ICONS, O_RUMBLE, O_DEADZONE, O_FF_MENUS, O_SKIP_START, O_MENU_WRAP,
     O_FAST_TEXT, O_FAST_TRAVEL, O_OBJECTIVE, O_JOURNAL, O_PACKS,
-    O_BLADEGARURUMON, O_FULL_EXP_SHARE, O_SAVE_ANYWHERE, O_CUSTOM_EFFECTS, O_CUSTOM_SOUNDS, O_CUSTOM_SCRIPTS,
+    O_BLADEGARURUMON, O_FULL_EXP_SHARE, O_HEAL_LEVELUP, O_SAVE_ANYWHERE, O_CUSTOM_EFFECTS, O_CUSTOM_SOUNDS, O_CUSTOM_SCRIPTS,
     O_COUNT
 };
 enum {
@@ -50,7 +50,7 @@ enum {
     S_RELEASE, S_RELEASE_D, S_U_CLOSE_GAME, S_READY, S_DISC_OK, S_VERSION,
     S_BROWSE, S_NEED, S_ONCE, S_DROP, S_OR, S_ISO, S_KEYS, S_READING, S_CANCEL,
     S_E_OPEN, S_E_GAME, S_E_BAD, S_E_WRITE, S_E_READ, S_E_TRUNCATED, S_E_CUE, S_E_SPACE, S_SEE_LOG,
-    S_DISPLAY, S_GRAPHICS, S_INPUT, S_MODS, S_PLAYABLE, S_RESET, S_RESET_D, S_ON, S_OFF, S_AUTO, S_KEYBOARD,
+    S_DISPLAY, S_GRAPHICS, S_INPUT, S_MODS, S_PLAYABLE, S_RESET, S_RESET_D, S_SWAP, S_SWAP_D, S_ON, S_OFF, S_AUTO, S_KEYBOARD, S_MUTE, S_PAUSE,
     S_BACK, S_BACK_D, S_FOLDER, S_FOLDER_D, S_LOG, S_LOG_D, S_VIEWER, S_VIEWER_D, S_EDITOR, S_EDITOR_D, S_CHECK, S_CHECK_D,
     S_CHECKING, S_UP_TO_DATE, S_CHECK_FAILED, S_GAME_RUNNING, S_GAME_FAILED, S_NO_EXE, S_SAVE_FAILED, S_NO_LOG,
     S_HINT_MENU, S_HINT_SETTINGS,
@@ -98,6 +98,8 @@ bool option_is_off(int option);
 enum { BIND_COUNT = 16 };
 void binds_load(void);
 void binds_reset(void);
+bool binds_swapped(void);    /* Triangle and Circle hold each other's defaults */
+void binds_swap_cancel(void); /* Triangle and Circle trade their keys and pad buttons */
 bool binds_save(void);
 const char *bind_text(int bit, int slot); /* slots: two keys, the pad's button */
 const char *bind_label(int bit);
@@ -172,6 +174,8 @@ typedef struct {
     int scroll; /* the first row in sight of a list too long for its panel */
     bool quit;
     const char *note; /* shown instead of the description until the next move */
+    bool playtab; /* Home: the Play row stands for the bar's Play, not the button */
+    bool tabfocus; /* Settings: the focus is on the tabs, Left/Right switch them */
     int btn; /* on a tool's row with an update: 1 when its Update button has the focus */
 } App;
 extern App g_app;
@@ -179,6 +183,9 @@ extern App g_app;
 const Row *rows(void);
 int row_count(const Row *r);
 int list_rows(const Row *r); /* those drawn in the list: all but the language */
+int list_inset(void);       /* the width the scroll bar takes from the rows' right edge, 0 without one */
+int list_in_sight(void);    /* the rows a settings list shows at once */
+bool home_on_bar(void);    /* Home: the focus is on the bar (Play tab, Settings, Saves, Tools, language) */
 int list_first(void);       /* the first in sight, with the selected one kept in sight */
 int bind_column(int slot);  /* where a binding's slot starts on screen */
 SDL_Rect list_rect(void);
@@ -192,6 +199,10 @@ void screens_draw(void);
 enum { A_NONE, A_UP, A_DOWN, A_LEFT, A_RIGHT, A_OK, A_BACK, A_PREV, A_NEXT, A_CLEAR };
 void screens_action(int action);
 void screens_mouse(int x, int y, bool clicked);
+bool scroll_mouse(int x, int y, bool clicked); /* scroll.c: true while the scroll bar holds the pointer */
+int scrollbar_state(void);   /* 0 at rest, 1 pointer over the bar, 2 held */
+void screens_mouse_release(void);
+void screens_wheel(int dir); /* the wheel: -1 up, 1 down */
 bool screens_tick(void); /* true while something's going on in the background */
 void screens_shutdown(void);
 void language_set(int lang);

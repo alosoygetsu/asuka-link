@@ -170,6 +170,8 @@ int spu_cd_queued(void);
 void spu_cd_clear(void);
 void spu_render(int16_t *out, int frames);
 void audio_vblank(int rate); /* mixes and queues one vsync of sound */
+void audio_mute(int on);     /* silence, while the window is inactive */
+extern int g_inactive_window; /* inactive_window: 0 nothing, 1 mute, 2 pause the game (mods.c) */
 void movie_vblank(int rate); /* platform/movie.c: the CD streams on */
 
 /* Logs once per call site key: for stubs and first-time events */
@@ -234,6 +236,7 @@ const char *pad_button_name(int bit);   /* "cross" */
 int *pad_keys(int bit);                 /* its two scancodes, 0 for none */
 int *pad_source(int bit);               /* its gamepad button, PAD_LT / PAD_RT or PAD_NONE */
 const char *pad_source_name(int src);   /* SDL's name: "a", "lefttrigger" */
+int pad_swapped(void);                  /* Triangle and Circle trade places (the Controls page's swap row) */
 void pad_bind_reset(void);              /* the defaults */
 int pad_bind_ini(const char *key, const char *value); /* 1: a binding, read */
 int pad_bind_line(int i, char *key, char *value, size_t size); /* line 0-31 for native.ini; 1: not the default */
@@ -283,6 +286,10 @@ int native_scripts_check(void); /* --check-mods: lists the script files, returns
 extern int g_custom_scripts; /* custom_scripts = 0: the game's own battle scripts (scriptmod.c) */
 extern int g_save_anywhere; /* save_anywhere = 1: a SAVE row in the field menu (mods.c) */
 extern int g_save_from_menu;
+extern int g_menu_wrap;      /* menu_wrap = 1: a menu's cursor goes round at its ends (mods.c) */
+extern int g_ff_menu_speed;  /* ff_menu_speed = 1: menus repeat at their normal pace in fast forward (mods.c) */
+extern int g_skip_press_start; /* skip_press_start = 1: no PRESS START on the title (mods.c) */
+extern int g_heal_on_levelup; /* heal_on_levelup = 1: a partner that levels up is healed in full (mods.c) */
 extern int g_full_exp_share; /* full_exp_share = 1: full rewards for non-KO party members (mods.c) */
 extern int g_full_exp_eligible[3]; /* battle-end reward eligibility by party slot (mods.c) */
 extern int g_full_exp_report; /* the option captured for the current report (mods.c) */

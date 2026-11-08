@@ -66,7 +66,7 @@ static void handle_event(SDL_Renderer *r, SDL_Event *e)
     case SDL_EVENT_MOUSE_WHEEL:
         if (e->wheel.y != 0) {
             const float y = e->wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -e->wheel.y : e->wheel.y;
-            screens_action(y > 0 ? A_UP : A_DOWN);
+            screens_wheel(y > 0 ? -1 : 1);
         }
         break;
     case SDL_EVENT_KEY_DOWN:
@@ -88,6 +88,11 @@ static void handle_event(SDL_Renderer *r, SDL_Event *e)
         if (e->button.button == SDL_BUTTON_LEFT) {
             SDL_ConvertEventToRenderCoordinates(r, e);
             screens_mouse((int)e->button.x, (int)e->button.y, true);
+        }
+        break;
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+        if (e->button.button == SDL_BUTTON_LEFT) {
+            screens_mouse_release();
         }
         break;
     default: break;

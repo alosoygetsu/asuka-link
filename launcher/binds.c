@@ -83,6 +83,26 @@ void binds_reset(void)
     SDL_memcpy(s_pad, DEFAULT_PAD, sizeof s_pad);
 }
 
+/* Cancel on B: Triangle (the game's cancel, bit 12) and Circle (13) trade keys and pad button; again, it undoes */
+void binds_swap_cancel(void)
+{
+    for (int i = 0; i < 2; i++) {
+        const int k = s_keys[12][i];
+        s_keys[12][i] = s_keys[13][i];
+        s_keys[13][i] = k;
+    }
+    const int p = s_pad[12];
+    s_pad[12] = s_pad[13];
+    s_pad[13] = p;
+    s_dirty[12] = s_dirty[13] = true;
+}
+
+bool binds_swapped(void)
+{
+    return !SDL_memcmp(s_keys[12], DEFAULT_KEYS[13], sizeof s_keys[12]) && !SDL_memcmp(s_keys[13], DEFAULT_KEYS[12], sizeof s_keys[13]) &&
+           s_pad[12] == DEFAULT_PAD[13] && s_pad[13] == DEFAULT_PAD[12];
+}
+
 /* a button back at its default loses its lines, as the game writes only what differs */
 bool binds_save(void)
 {
