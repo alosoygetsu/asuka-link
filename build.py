@@ -98,12 +98,20 @@ def apply_patches():
     for patch in (NATIVE / "patches").rglob("*.patch"):
         rel = patch.relative_to(NATIVE / "patches").with_suffix("")
         out = PATCHED / rel
-        if out.exists() and out.stat().st_mtime >= max(patch.stat().st_mtime, (DECOMP / rel).stat().st_mtime):
+        # the co-op's own layer (coop/patches/), over the port's patched file: kept apart so the port's updates merge
+        coop = NATIVE / "coop" / "patches" / patch.relative_to(NATIVE / "patches")
+        stamps = [patch.stat().st_mtime, (DECOMP / rel).stat().st_mtime] + ([coop.stat().st_mtime] if coop.exists() else [])
+        if out.exists() and out.stat().st_mtime >= max(stamps):
             continue
         out.parent.mkdir(parents=True, exist_ok=True)
         r = run(["patch", "-s", "-o", out, DECOMP / rel, patch])
         if r.returncode != 0:
             sys.exit(f"patch {patch} failed:\n{r.stdout}{r.stderr}")
+        if coop.exists():
+            r = run(["patch", "-s", "--no-backup-if-mismatch", "-r", "-", out, coop])
+            if r.returncode != 0:
+                out.unlink()  # half patched: the next build tries again
+                sys.exit(f"co-op patch {coop} failed over the port's {patch} (the port changed that code):\n{r.stdout}{r.stderr}")
 
 
 def game_sources():

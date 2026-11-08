@@ -173,15 +173,7 @@ static void read_ini(int data_only) {
             g_full_exp_share = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "save_anywhere") == 0) {
             g_save_anywhere = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "coop") == 0) {
-            g_coop = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "coop_peer") == 0) {
-            SDL_strlcpy(g_coop_peer, value, sizeof g_coop_peer);
-            for (char *e = g_coop_peer + SDL_strlen(g_coop_peer); e > g_coop_peer && (e[-1] == ' ' || e[-1] == '\t'); ) {
-                *--e = 0;
-            }
-        } else if (SDL_strcasecmp(key, "coop_port") == 0 && atoi(value) > 0 && atoi(value) < 65536) {
-            g_coop_port = atoi(value);
+        } else if (native_coop_ini(key, value)) {
         } else if (SDL_strcasecmp(key, "custom_effects") == 0) {
             g_custom_effects = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "custom_sounds") == 0) {

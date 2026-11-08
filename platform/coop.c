@@ -21,6 +21,24 @@
 int g_coop = 0; /* coop = 1: the ghost (main.c reads native.ini) */
 int g_coop_debug = 0; /* DW3_COOP_DEBUG=1: the ghost's state in the log every 2 s (main.c) */
 
+int native_coop_ini(const char *key, const char *value) {
+    if (SDL_strcasecmp(key, "coop") == 0) {
+        g_coop = SDL_atoi(value) != 0;
+    } else if (SDL_strcasecmp(key, "coop_peer") == 0) {
+        SDL_strlcpy(g_coop_peer, value, sizeof g_coop_peer);
+        for (char *e = g_coop_peer + SDL_strlen(g_coop_peer); e > g_coop_peer && (e[-1] == ' ' || e[-1] == '\t');) {
+            *--e = 0;
+        }
+    } else if (SDL_strcasecmp(key, "coop_port") == 0) {
+        if (SDL_atoi(value) > 0 && SDL_atoi(value) < 65536) {
+            g_coop_port = SDL_atoi(value);
+        }
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
 /* --- VRAM: the slots kept for the field's actors --- */
 
 static uint8_t s_reserved[VRAM_H][VRAM_W / 8];
