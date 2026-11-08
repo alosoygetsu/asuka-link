@@ -134,6 +134,9 @@ void native_coop_publish(const NativeCoopState *now) {
         coop_net_receive();
         return;
     }
+    if (g_coop_peer[0] != 0) {
+        return; /* a coop_peer that didn't work (coop.log says why): nobody, not the ghost */
+    }
     s_history[s_head] = *now;
     s_head = (s_head + 1) % COOP_HISTORY;
     if (s_count < COOP_HISTORY) {
@@ -145,7 +148,7 @@ int native_coop_peer(NativeCoopState *out) {
     if (g_coop_net_on) {
         return coop_net_peer(out);
     }
-    if (s_count < COOP_HISTORY) {
+    if (g_coop_peer[0] != 0 || s_count < COOP_HISTORY) {
         return 0;
     }
     static int offset = -1;
