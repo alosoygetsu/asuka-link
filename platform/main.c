@@ -173,6 +173,8 @@ static void read_ini(int data_only) {
             g_full_exp_share = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "save_anywhere") == 0) {
             g_save_anywhere = atoi(value) != 0;
+        } else if (SDL_strcasecmp(key, "coop") == 0) {
+            g_coop = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "custom_effects") == 0) {
             g_custom_effects = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "custom_sounds") == 0) {
@@ -305,6 +307,7 @@ int main(int argc, char **argv) {
     native_fast_travel_setup(); /* the stages' doors, their variables put back */
     read_ini(0);
     NTSC_MODE = s_fps60; /* the game's own 60 Hz mode, set before it boots */
+    g_coop_debug = getenv("DW3_COOP_DEBUG") != NULL;
     if (getenv("DW3_LOG") != NULL) {
         g_log = log_bits(getenv("DW3_LOG"));
     }
@@ -322,7 +325,7 @@ int main(int argc, char **argv) {
     }
     for (int i = 1; i + 1 < argc; i++) {
         if (SDL_strcmp(argv[i], "--field") == 0) {
-            g_field_mode = SDL_atoi(argv[++i]);
+            g_field_mode = (int)SDL_strtol(argv[++i], NULL, 0); /* 560 or 0x230 */
         } else if (SDL_strcmp(argv[i], "--arg") == 0) {
             g_field_arg = (int)SDL_strtol(argv[++i], NULL, 0);
         } else if (SDL_strcmp(argv[i], "--event") == 0 && i + 1 < argc) {
@@ -330,7 +333,8 @@ int main(int argc, char **argv) {
         } else if (SDL_strcmp(argv[i], "--at") == 0) {
             SDL_sscanf(argv[++i], "%d,%d", &g_field_at_x, &g_field_at_y);
         } else if (SDL_strcmp(argv[i], "--party") == 0 && i + 1 < argc) {
-            g_field_party = SDL_clamp(SDL_atoi(argv[++i]), 0, 2);
+            int party = SDL_atoi(argv[++i]); /* SDL_clamp reads its argument more than once */
+            g_field_party = SDL_clamp(party, 0, 2);
         } else if (SDL_strcmp(argv[i], "--give") == 0) {
             g_give_form = (int)SDL_strtol(argv[++i], NULL, 0);
         } else if (SDL_strcmp(argv[i], "--progress") == 0) {

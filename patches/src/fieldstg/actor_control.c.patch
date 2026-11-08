@@ -16,3 +16,16 @@
              addPrim(ot, prim.any);
              prim.tpage++;
          }
+@@ -877,7 +882,12 @@
+     set = actor->animSet;
+     file = actor->animFile & 0xFFFF0000;
+     if (actor->loadedSet != set) {
++#ifdef NATIVE
++        /* co-op's ghost of the player (fieldstg/field.c) has the player's files under an id of its own */
++        if (actor->key1 == 2 || actor->key1 == 0x7F02) {
++#else
+         if (actor->key1 == 2) {
++#endif
+             do {
+                 if (set < 8) {
+                     actor->animFile = SET_FILE_0;
