@@ -1,0 +1,27 @@
+--- a/src/stfgtrep/report.c
++++ b/src/stfgtrep/report.c
+@@ -121,6 +121,9 @@
+     if (stats->equip[4] == 0x142 || stats->equip[5] == 0x142) {
+         money += STFGTREP_rewards[BATTLE_RESULT.battle].money / 5;
+     }
++#ifdef NATIVE
++    money *= g_money_mult; /* money_multiplier (platform/coop.c) */
++#endif
+     children->message->setString(children->message, FILE_CACHE.load(TEXT_FILE(TEXT_FIGHT_REPORT)), 10);
+     children->message->setNumber(children->message, 1, money);
+     children->message->setTypeDelay(children->message, 6);
+@@ -336,10 +339,13 @@
+                 exp = STFGTREP_rewards[BATTLE_RESULT.battle].exp / 3;
+                 break;
+             }
++#ifdef NATIVE
++            exp *= g_exp_mult; /* exp_multiplier (platform/coop.c) */
++#endif
+             for (i = 0; i < report->count; i++) {
+ #ifdef NATIVE
+                 if (g_full_exp_report) {
+-                    s32 full = g_full_exp_eligible[i] ? STFGTREP_rewards[BATTLE_RESULT.battle].exp : 0;
++                    s32 full = g_full_exp_eligible[i] ? STFGTREP_rewards[BATTLE_RESULT.battle].exp * g_exp_mult : 0;
+ 
+                     children->partners[i] = STFGTREP_createPartner(report, i, full);
+                     if (full != 0) {

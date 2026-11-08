@@ -1,30 +1,35 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,162 @@
+@@ -362,10 +362,189 @@
      }
  }
  
 +#ifdef NATIVE
 +/*
-+ * Co-op, phase 1 (platform/coop.c, coop = 1 in native.ini): the other player,
-+ * an actor that looks like the player and stands where the other one is. For
-+ * now that is the local player's own state of COOP_DELAY frames ago.
++ * Co-op (platform/coop.c, coop = 1 in native.ini): the other players, up to
++ * 3 (COOP_GHOSTS), each an actor that looks like the player and stands where
++ * that player is (coop_peers; without it, the local player's own state of a
++ * moment ago, to test alone).
 + *
-+ * Its frames need a box in VRAM that nothing else of the field uses. Once the
-+ * field has run a moment (its files and every actor's first frame loaded), a
-+ * blank box is looked for in the player's texture page, away from the slots
-+ * of the party and the map's characters, and else in another page right of
-+ * the frame buffers, with a copy of the player's CLUT (the same character).
++ * Their frames need a box in VRAM that nothing else of the field uses. Once
++ * the field has run a moment (its files and every actor's first frame
++ * loaded), a blank box is looked for in the player's texture page, away from
++ * the slots of the party and the map's characters, and else in another page
++ * right of the frame buffers. Each takes a copy of the player's CLUT under
++ * its frames, its colours turned so the players tell each other apart.
 + */
-+#define COOP_GHOST_KEY1 0x7F02 /* the ghost's character: the player's look (2) under an id nothing looks for */
++#define COOP_GHOSTS 3
++/* the ghosts' characters: the player's look (2) under ids nothing looks for, other player n's 0x7C02 + n * 0x100
++   (actor_control.c's animateActor knows them) */
++#define COOP_GHOST_KEY1(n) (0x7C02 + (n) * 0x100)
 +#define COOP_GHOST_KIND 0x10 /* not the player (0), a partner (2, 4, 8) nor a map character (1):
 +                                nothing bumps into it or talks to it */
 +#define COOP_SLOT_W 16 /* the box of a frame, in VRAM words: 64 pixels at 4 bits */
 +#define COOP_SLOT_H 64
-+#define COOP_WAIT 30 /* frames of the field before the ghost is made */
++#define COOP_WAIT 30 /* frames of the field before the ghosts are made */
 +
-+static Actor *coopGhost;
-+static ActorImage coopGhostImage;
++static Actor *coopGhost[COOP_GHOSTS];
++static ActorImage coopGhostImage[COOP_GHOSTS];
 +static s32 coopWait;
 +static s32 coopTried;
 +
@@ -35,33 +40,73 @@
 +    native_coop_vram_reserve(slot->clutX, slot->clutY, 16, 1);
 +}
 +
-+/* As the field starts: no ghost yet, and no slots kept */
++/* As the field starts: no ghosts yet, and no slots kept */
 +static void coopFieldStart(void) {
-+    coopGhost = NULL;
++    s32 i;
++
++    for (i = 0; i < COOP_GHOSTS; i++) {
++        coopGhost[i] = NULL;
++    }
 +    coopWait = 0;
 +    coopTried = 0;
 +    native_coop_vram_reset();
 +}
 +
-+/* Makes the ghost in a free place of the field's characters (FieldChildren.npcs): a task only runs as a
-+   child of one that runs */
-+static void coopCreateGhost(FieldChildren *children, Actor *player) {
++/* Makes ghost n in a free place of the field's characters (FieldChildren.npcs): a task only runs as a child of one
++   that runs. The slots of the party and the map's characters are kept already (coopCreateGhosts) */
++static void coopCreateGhost(FieldChildren *children, Actor *player, s32 n) {
 +    ActorImage *mine = player->image;
-+    FieldActorEntry **list;
++    ActorImage *image = &coopGhostImage[n];
 +    Point page;
 +    s32 slot;
-+    s32 i;
 +    s32 x;
 +    s32 y;
 +
-+    if (player->key1 != FIELD_CHARACTER_PLAYER) {
-+        native_log("coop: mode %X: the player is character %X here, no ghost", GAME.funcs.getMode(), player->key1);
-+        return;
-+    }
 +    for (slot = 0; slot < 15 && children->npcs[slot] != NULL; slot++) {
 +    }
 +    if (slot == 15) {
-+        native_log("coop: mode %X: the field has 15 characters already, no ghost", GAME.funcs.getMode());
++        native_log("coop: mode %X: the field has 15 characters already, no player %d", GAME.funcs.getMode(), n + 2);
++        return;
++    }
++    /* the frames and, under them at a multiple of 16 as a CLUT's x must be, the CLUT: in the player's page, or in
++       another */
++    page.x = mine->x;
++    page.y = mine->y;
++    if (!native_coop_find_vram(mine->x, mine->y, COOP_SLOT_W * 2, COOP_SLOT_H + 1, &x, &y) &&
++        !native_coop_find_vram_any(COOP_SLOT_W * 2, COOP_SLOT_H + 1, &x, &y, &page.x, &page.y)) {
++        native_log("coop: mode %X: no free VRAM for player %d", GAME.funcs.getMode(), n + 2);
++        native_coop_vram_dump(mine->x, mine->y);
++        return;
++    }
++    native_coop_vram_reserve(x, y, COOP_SLOT_W * 2, COOP_SLOT_H + 1);
++    *image = *mine;
++    image->x = page.x;
++    image->y = page.y;
++    image->clutX = (x + 15) & ~15;
++    image->clutY = y + COOP_SLOT_H;
++    native_coop_vram_copy(mine->clutX, mine->clutY, image->clutX, image->clutY, 16, 1);
++    native_coop_vram_tint(image->clutX, image->clutY, n);
++    image->imageX = x;
++    image->imageY = y;
++    image->u = (x - image->x) * 4;
++    image->v = y - image->y;
++    coopGhost[n] = children->npcs[slot] = FIELDSTG_createActor(FIELD_CHARACTER_PLAYER, COOP_GHOST_KIND, 0, NULL);
++    coopGhost[n]->key1 = COOP_GHOST_KEY1(n);
++    coopGhost[n]->image = image;
++    native_log("coop: mode %X: player %d's frames at VRAM (%d, %d), page (%d, %d)", GAME.funcs.getMode(), n + 2, x, y,
++               image->x, image->y);
++}
++
++static void coopCreateGhosts(FieldChildren *children, Actor *player) {
++    FieldActorEntry **list;
++    s32 i;
++    s32 n = native_coop_peer_slots();
++
++    if (n == 0) {
++        return;
++    }
++    if (player->key1 != FIELD_CHARACTER_PLAYER) {
++        native_log("coop: mode %X: the player is character %X here, nobody else shown", GAME.funcs.getMode(), player->key1);
 +        return;
 +    }
 +    for (i = -2; i < 4; i++) {
@@ -70,40 +115,18 @@
 +    for (list = FIELDSTG_state.actors; list != NULL && *list != NULL; list++) {
 +        coopReserveSlot((*list)->image);
 +    }
-+    coopGhostImage = *mine;
-+    if (native_coop_find_vram(mine->x, mine->y, COOP_SLOT_W, COOP_SLOT_H, &x, &y)) {
-+        /* in the player's page, with the player's CLUT */
-+        native_coop_vram_reserve(x, y, COOP_SLOT_W, COOP_SLOT_H);
-+    } else if (native_coop_find_vram_any(COOP_SLOT_W * 2, COOP_SLOT_H + 1, &x, &y, &page.x, &page.y)) {
-+        /* in another page, with a copy of the player's CLUT under the frames,
-+           at a multiple of 16 as a CLUT's x must be */
-+        native_coop_vram_reserve(x, y, COOP_SLOT_W * 2, COOP_SLOT_H + 1);
-+        coopGhostImage.x = page.x;
-+        coopGhostImage.y = page.y;
-+        coopGhostImage.clutX = (x + 15) & ~15;
-+        coopGhostImage.clutY = y + COOP_SLOT_H;
-+        native_coop_vram_copy(mine->clutX, mine->clutY, coopGhostImage.clutX, coopGhostImage.clutY, 16, 1);
-+    } else {
-+        native_log("coop: mode %X: no free VRAM for the ghost", GAME.funcs.getMode());
-+        native_coop_vram_dump(mine->x, mine->y);
-+        return;
++    for (i = 0; i < n && i < COOP_GHOSTS; i++) {
++        coopCreateGhost(children, player, i);
 +    }
-+    coopGhostImage.imageX = x;
-+    coopGhostImage.imageY = y;
-+    coopGhostImage.u = (x - coopGhostImage.x) * 4;
-+    coopGhostImage.v = y - coopGhostImage.y;
-+    coopGhost = children->npcs[slot] = FIELDSTG_createActor(FIELD_CHARACTER_PLAYER, COOP_GHOST_KIND, 0, NULL);
-+    coopGhost->key1 = COOP_GHOST_KEY1;
-+    coopGhost->image = &coopGhostImage;
-+    native_log("coop: mode %X: ghost's frames at VRAM (%d, %d), page (%d, %d)", GAME.funcs.getMode(), x, y,
-+               coopGhostImage.x, coopGhostImage.y);
 +}
 +
-+/* Every frame of the running field: the player's state out, the other's in */
++/* Every frame of the running field: the player's state out, the others' in */
 +static void coopUpdate(FieldChildren *children) {
 +    Actor *player = children->actors[0];
 +    NativeCoopState now;
 +    NativeCoopState peer;
++    Actor *ghost;
++    s32 i;
 +
 +    if (!g_coop || player == NULL) {
 +        return;
@@ -117,38 +140,40 @@
 +    now.animSet = player->animSet;
 +    now.depth = player->depth;
 +    native_coop_publish(&now);
-+    if (coopGhost == NULL && !coopTried && ++coopWait >= COOP_WAIT) {
++    if (!coopTried && ++coopWait >= COOP_WAIT) {
 +        coopTried = 1;
-+        coopCreateGhost(children, player);
++        coopCreateGhosts(children, player);
 +    }
-+    if (coopGhost == NULL) {
-+        return;
-+    }
-+    /* an event's startWalk or anything else doesn't get to move it */
-+    coopGhost->control = NULL;
-+    if (coopGhost->substate != ACTOR_POSED) {
-+        coopGhost->setSubstate(coopGhost, ACTOR_POSED);
-+    }
-+    if (native_coop_peer(&peer) && peer.mode == now.mode && peer.stageFile == now.stageFile) {
-+        coopGhost->pos.x = peer.x;
-+        coopGhost->pos.y = peer.y;
-+        coopGhost->z = peer.z;
-+        coopGhost->dir = peer.dir;
-+        coopGhost->depth = peer.depth;
-+        if (coopGhost->animSet != peer.animSet) {
-+            FIELDSTG_setActorAnim(coopGhost, peer.animSet);
++    for (i = 0; i < COOP_GHOSTS; i++) {
++        ghost = coopGhost[i];
++        if (ghost == NULL) {
++            continue;
 +        }
-+        if (g_coop_debug && ++coopWait % 100 == 0) {
-+            native_log("coop: ghost state %d/%X at (%d, %d) z %d anim %X/%X frame %dx%d at %d,%d depth %d, player at (%d, %d) depth %d",
-+                       coopGhost->state, coopGhost->substate, coopGhost->tile.x, coopGhost->tile.y, coopGhost->z,
-+                       coopGhost->animFile, coopGhost->animSet, coopGhost->frameWidth, coopGhost->frameHeight,
-+                       coopGhost->frame[2], coopGhost->frame[3], coopGhost->depth, player->tile.x, player->tile.y,
-+                       player->depth);
++        /* an event's startWalk or anything else doesn't get to move it */
++        ghost->control = NULL;
++        if (ghost->substate != ACTOR_POSED) {
++            ghost->setSubstate(ghost, ACTOR_POSED);
 +        }
-+    } else {
-+        /* elsewhere: at tile (0, 0), which FIELDSTG_updateActor doesn't draw */
-+        coopGhost->pos.x = 0;
-+        coopGhost->pos.y = 0;
++        if (native_coop_peer(i, &peer) && peer.mode == now.mode && peer.stageFile == now.stageFile) {
++            ghost->pos.x = peer.x;
++            ghost->pos.y = peer.y;
++            ghost->z = peer.z;
++            ghost->dir = peer.dir;
++            ghost->depth = peer.depth;
++            if (ghost->animSet != peer.animSet) {
++                FIELDSTG_setActorAnim(ghost, peer.animSet);
++            }
++            if (g_coop_debug && ++coopWait % 100 == 0) {
++                native_log("coop: player %d state %d/%X at (%d, %d) z %d anim %X/%X frame %dx%d depth %d, you at (%d, %d)",
++                           i + 2, ghost->state, ghost->substate, ghost->tile.x, ghost->tile.y, ghost->z, ghost->animFile,
++                           ghost->animSet, ghost->frameWidth, ghost->frameHeight, ghost->depth, player->tile.x,
++                           player->tile.y);
++            }
++        } else {
++            /* elsewhere: at tile (0, 0), which FIELDSTG_updateActor doesn't draw */
++            ghost->pos.x = 0;
++            ghost->pos.y = 0;
++        }
 +    }
 +}
 +#endif
@@ -158,12 +183,14 @@
      s32 i;
  
 +#ifdef NATIVE
-+    coopGhost = NULL; /* one of the npcs: it ends with them */
++    for (i = 0; i < COOP_GHOSTS; i++) {
++        coopGhost[i] = NULL; /* among the npcs: they end with them */
++    }
 +#endif
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +744,9 @@
+@@ -592,6 +771,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -173,7 +200,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +800,9 @@
+@@ -645,6 +827,9 @@
          }
          break;
      case TASK_RUN:

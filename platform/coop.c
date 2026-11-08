@@ -21,10 +21,13 @@
 int g_coop = 0; /* coop = 1: the ghost (main.c reads native.ini) */
 int g_coop_debug = 0; /* DW3_COOP_DEBUG=1: the ghost's state in the log every 2 s (main.c) */
 
+int g_exp_mult = 1;   /* exp_multiplier: the battle report's EXP times this (coop/patches stfgtrep/report.c) */
+int g_money_mult = 1; /* money_multiplier: and its money */
+
 int native_coop_ini(const char *key, const char *value) {
     if (SDL_strcasecmp(key, "coop") == 0) {
         g_coop = SDL_atoi(value) != 0;
-    } else if (SDL_strcasecmp(key, "coop_peer") == 0) {
+    } else if (SDL_strcasecmp(key, "coop_peer") == 0 || SDL_strcasecmp(key, "coop_peers") == 0) {
         SDL_strlcpy(g_coop_peer, value, sizeof g_coop_peer);
         for (char *e = g_coop_peer + SDL_strlen(g_coop_peer); e > g_coop_peer && (e[-1] == ' ' || e[-1] == '\t');) {
             *--e = 0;
@@ -33,6 +36,12 @@ int native_coop_ini(const char *key, const char *value) {
         if (SDL_atoi(value) > 0 && SDL_atoi(value) < 65536) {
             g_coop_port = SDL_atoi(value);
         }
+    } else if (SDL_strcasecmp(key, "exp_multiplier") == 0) {
+        g_exp_mult = SDL_clamp(SDL_atoi(value), 1, 5);
+    } else if (SDL_strcasecmp(key, "money_multiplier") == 0) {
+        g_money_mult = SDL_clamp(SDL_atoi(value), 1, 5);
+    } else if (SDL_strcasecmp(key, "heal_on_levelup") == 0 || SDL_strcasecmp(key, "save_anywhere") == 0) {
+        /* options this build takes out: taken here, so they stay off whatever the file says */
     } else {
         return 0;
     }
@@ -118,6 +127,32 @@ void native_coop_vram_copy(int from_x, int from_y, int to_x, int to_y, int w, in
     gl_refresh(to_x, to_y, w, h);
 }
 
+/* Turns the colours of the 16-colour CLUT at (x, y) for other player n (0-2), so the players tell each other apart:
+   blue to red, to green, to purple. The other colours (skin, greys, the transparent 0) stay. */
+void native_coop_vram_tint(int x, int y, int n) {
+    uint16_t *clut = &g_vram[y * VRAM_W + x];
+    int i;
+
+    soft_write(x, y, 16, 1);
+    for (i = 0; i < 16; i++) {
+        int c = clut[i], r = c & 31, g = (c >> 5) & 31, b = (c >> 10) & 31;
+        int hi = SDL_max(r, SDL_max(g, b)), lo = SDL_min(r, SDL_min(g, b)), nr, ng, nb;
+
+        /* only the blues (hair, clothes): what it makes isn't blue any more, so turning it again changes nothing */
+        if (c == 0 || hi - lo <= 3 || b <= r || b <= g) {
+            continue;
+        }
+        switch (n) {
+        case 0: nr = b; ng = g; nb = r; break;           /* red and blue swapped */
+        case 1: nr = r; ng = b; nb = g; break;           /* green and blue swapped */
+        default: nr = (b * 3) / 4; ng = g; nb = b; break; /* blue with red: purple */
+        }
+        clut[i] = (uint16_t)((c & 0x8000) | nr | (ng << 5) | (nb << 10));
+    }
+    gl_vram_dirty(x, y, 16, 1);
+    gl_refresh(x, y, 16, 1);
+}
+
 /* The page as text, one character per 4 x 8 words: '.' free, '#' taken (when
    no box was found, to see why) */
 void native_coop_vram_dump(int page_x, int page_y) {
@@ -162,11 +197,16 @@ void native_coop_publish(const NativeCoopState *now) {
     }
 }
 
-int native_coop_peer(NativeCoopState *out) {
+/* How many other players there can be: coop_peers' (found), or 1, the ghost, without it */
+int native_coop_peer_slots(void) {
+    return g_coop_net_on ? coop_net_peer_count() : g_coop_peer[0] != 0 ? 0 : 1;
+}
+
+int native_coop_peer(int i, NativeCoopState *out) {
     if (g_coop_net_on) {
-        return coop_net_peer(out);
+        return coop_net_peer(i, out);
     }
-    if (g_coop_peer[0] != 0 || s_count < COOP_HISTORY) {
+    if (i != 0 || g_coop_peer[0] != 0 || s_count < COOP_HISTORY) {
         return 0;
     }
     static int offset = -1;

@@ -62,6 +62,9 @@ static void handle_event(SDL_Renderer *r, SDL_Event *e)
         bind_event(e);
         return;
     }
+    if (coop_row_event(e)) {
+        return;
+    }
     switch (e->type) {
     case SDL_EVENT_MOUSE_WHEEL:
         if (e->wheel.y != 0) {

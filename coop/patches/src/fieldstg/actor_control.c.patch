@@ -6,10 +6,23 @@
      if (actor->loadedSet != set) {
 +#ifdef NATIVE
 +        /* co-op's ghost of the player (fieldstg/field.c) has the player's files under an id of its own */
-+        if (actor->key1 == 2 || actor->key1 == 0x7F02) {
++        if (actor->key1 == 2 || actor->key1 == 0x7C02 || actor->key1 == 0x7D02 || actor->key1 == 0x7E02) { /* the co-op's ghosts */
 +#else
          if (actor->key1 == 2) {
 +#endif
              do {
                  if (set < 8) {
                      actor->animFile = SET_FILE_0;
+@@ -958,6 +963,12 @@
+         loader.setImagePos(image->imageX, image->imageY);
+         loader.setClutPos(image->clutX, image->clutY);
+         loader.load(FILE_CACHE.getEntry(actor->frame[0]));
++#ifdef NATIVE
++        if (actor->key1 == 0x7C02 || actor->key1 == 0x7D02 || actor->key1 == 0x7E02) {
++            /* a co-op ghost: each frame brings the player's CLUT along, turned again to that player's colours */
++            native_coop_vram_tint(image->clutX, image->clutY, (actor->key1 >> 8) - 0x7C);
++        }
++#endif
+         actor->frame[1] = actor->frame[0];
+         actor->frameWidth = (s16)loader.w * 4;
+         actor->frameHeight = loader.h;

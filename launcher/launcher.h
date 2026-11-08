@@ -42,6 +42,7 @@ enum {
     O_ICONS, O_RUMBLE, O_DEADZONE, O_FF_MENUS, O_SKIP_START, O_MENU_WRAP,
     O_FAST_TEXT, O_FAST_TRAVEL, O_OBJECTIVE, O_JOURNAL, O_PACKS,
     O_BLADEGARURUMON, O_FULL_EXP_SHARE, O_HEAL_LEVELUP, O_SAVE_ANYWHERE, O_CUSTOM_EFFECTS, O_CUSTOM_SOUNDS, O_CUSTOM_SCRIPTS,
+    O_COOP, O_EXP_MULT, O_MONEY_MULT, /* the co-op's (coop_rows.c) */
     O_COUNT
 };
 enum {
@@ -62,6 +63,7 @@ enum {
     S_SAVES, S_SAVES_D, S_EXPORT, S_EXPORT_D, S_IMPORT, S_IMPORT_D, S_UNDO, S_UNDO_D, S_SV_FOLDER, S_SV_FOLDER_D,
     S_SV_SLOT, S_SV_EMPTY, S_SV_DAMAGED, S_SV_NONE, S_SV_OK, S_SV_STALE, S_SV_NEWER, S_SV_BAD, S_SV_NOCARD,
     S_SV_EXPORTED, S_SV_IMPORTED, S_SV_WARN, S_SV_REJECT, S_SV_RESTORED, S_SV_NO_BACKUP, S_SV_FAILED,
+    S_COOP, S_COOP_PEER, S_COOP_PEER_D, S_COOP_TYPING, S_COOP_EMPTY, S_COOP_MINE, S_COOP_MINE_D, S_COOP_NO_IP, /* the co-op's */
     S_COUNT
 };
 typedef struct { const char *name, *desc; } Text;
@@ -163,7 +165,7 @@ int release_finished_manual(void); /* once after a manual check: a string to sho
 int release_selftest(void);
 
 /* screens.c: what's on screen */
-enum { R_ACTION, R_OPTION, R_LANGUAGE, R_HEADING, R_BIND, R_END };
+enum { R_ACTION, R_OPTION, R_LANGUAGE, R_HEADING, R_BIND, R_TEXT, R_END }; /* R_TEXT: the co-op's (coop_rows.c) */
 enum { SC_HOME, SC_SETTINGS, SC_TOOLS, SC_SAVES, SC_COUNT };
 enum { ST_READY, ST_NO_GAME, ST_ERROR };
 typedef struct { Uint8 kind; short id; } Row; /* action: its name's string; the description is the next one */
@@ -198,6 +200,14 @@ void screens_draw(void);
 /* input.c: what's done with it */
 enum { A_NONE, A_UP, A_DOWN, A_LEFT, A_RIGHT, A_OK, A_BACK, A_PREV, A_NEXT, A_CLEAR };
 void screens_action(int action);
+/* coop_rows.c: the co-op's rows of the Mods tab (R_TEXT, ids 0-2 the other players, 3 this PC) */
+void coop_rows_load(void);
+bool coop_rows_save(void);
+bool coop_row_editing(void);
+void coop_row_activate(int id);
+bool coop_row_event(const SDL_Event *e);
+void coop_row_draw(int id, int x, int right, int y, bool sel);
+const char *coop_row_desc(int id);
 void screens_mouse(int x, int y, bool clicked);
 bool scroll_mouse(int x, int y, bool clicked); /* scroll.c: true while the scroll bar holds the pointer */
 int scrollbar_state(void);   /* 0 at rest, 1 pointer over the bar, 2 held */

@@ -120,6 +120,7 @@ static void read_ini(int data_only) {
             snprintf(s_data, sizeof s_data, "%s%s", absolute ? "" : SDL_GetBasePath(), value);
         } else if (data_only) {
             continue;
+        } else if (native_coop_ini(key, value)) { /* the co-op's keys, and the options it takes out */
         } else if (SDL_strcasecmp(key, "fullscreen") == 0) {
             s_fullscreen = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "scale") == 0 && atoi(value) >= 1) {
@@ -183,7 +184,6 @@ static void read_ini(int data_only) {
             g_heal_on_levelup = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "save_anywhere") == 0) {
             g_save_anywhere = atoi(value) != 0;
-        } else if (native_coop_ini(key, value)) {
         } else if (SDL_strcasecmp(key, "custom_effects") == 0) {
             g_custom_effects = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "custom_sounds") == 0) {

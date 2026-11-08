@@ -19,7 +19,8 @@ static const Row TABS[4][27] = {
     {OPT(O_ICONS), OPT(O_RUMBLE), OPT(O_DEADZONE), OPT(O_FF_MENUS), OPT(O_SKIP_START), OPT(O_MENU_WRAP), ACT(S_SWAP), {R_HEADING, S_BUTTONS},
      BIND(14), BIND(13), BIND(15), BIND(12), BIND(10), BIND(11), BIND(8), BIND(9), BIND(1), BIND(2), BIND(3), BIND(0), BIND(4), BIND(6), BIND(7), BIND(5),
      ACT(S_RESET), ACT(S_BACK), {R_END}},
-    {OPT(O_FAST_TEXT), OPT(O_FAST_TRAVEL), OPT(O_OBJECTIVE), OPT(O_JOURNAL), OPT(O_PACKS), OPT(O_FULL_EXP_SHARE), OPT(O_HEAL_LEVELUP), OPT(O_SAVE_ANYWHERE), OPT(O_CUSTOM_EFFECTS), OPT(O_CUSTOM_SOUNDS), OPT(O_CUSTOM_SCRIPTS), {R_HEADING, S_PLAYABLE}, OPT(O_BLADEGARURUMON), ACT(S_RESET), ACT(S_BACK), {R_END}},
+    {OPT(O_FAST_TEXT), OPT(O_FAST_TRAVEL), OPT(O_OBJECTIVE), OPT(O_JOURNAL), OPT(O_PACKS), OPT(O_FULL_EXP_SHARE), OPT(O_EXP_MULT), OPT(O_MONEY_MULT), OPT(O_CUSTOM_EFFECTS), OPT(O_CUSTOM_SOUNDS), OPT(O_CUSTOM_SCRIPTS), {R_HEADING, S_PLAYABLE}, OPT(O_BLADEGARURUMON),
+     {R_HEADING, S_COOP}, OPT(O_COOP), {R_TEXT, 0}, {R_TEXT, 1}, {R_TEXT, 2}, {R_TEXT, 3}, ACT(S_RESET), ACT(S_BACK), {R_END}},
 };
 static const short TAB_NAME[4] = {S_DISPLAY, S_GRAPHICS, S_INPUT, S_MODS};
 const Lang *const LANG_TABLE[LANGS] = {&LANG_EN, &LANG_ES, &LANG_FR, &LANG_DE, &LANG_IT};
@@ -177,6 +178,10 @@ static void draw_list(void)
             draw_bind(&r[i], y, sel);
             continue;
         }
+        if (r[i].kind == R_TEXT) {
+            coop_row_draw(r[i].id, a.x, a.x + a.w - 8 - list_inset(), y, sel);
+            continue;
+        }
         const int tool = row_tool(&r[i]);
         if (tool >= 0) {
             char value[64];
@@ -221,6 +226,7 @@ static void draw_description(void)
                   : r->kind == R_OPTION ? L->option[r->id].desc
                   : r->kind == R_LANGUAGE ? L->s[S_LANGUAGE_D]
                   : r->kind == R_BIND ? L->s[S_BIND_D]
+                  : r->kind == R_TEXT ? coop_row_desc(r->id)
                   : row_tool(r) >= 0 && g_app.btn && tool_update_has(row_tool(r)) ? L->s[S_T_UPDATE_D]
                   : L->s[r->id + 1];
     const bool home = s_screen == SC_HOME; /* two lines under the team, with room around it */

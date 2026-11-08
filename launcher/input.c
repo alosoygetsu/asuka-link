@@ -244,6 +244,10 @@ void screens_action(int a)
             }
         } else if (r->kind == R_OPTION) {
             option_step(r->id, dir);
+        } else if (r->kind == R_TEXT) {
+            if (a == A_OK) {
+                coop_row_activate(r->id);
+            }
         } else if (r->kind == R_LANGUAGE) {
             if (a == A_OK) {
                 picker_set_open(true);

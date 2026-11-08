@@ -137,6 +137,14 @@ const Lang LANG_FR = {
         [S_SV_RESTORED] = "Restaurée. La carte que vous aviez est dans saves/backups.",
         [S_SV_NO_BACKUP] = "Pas encore de copie où revenir.",
         [S_SV_FAILED] = "Le fichier n'a pas pu être copié. Rien n'a changé.",
+        [S_COOP] = "Coop",
+        [S_COOP_PEER] = "IP du joueur %d",
+        [S_COOP_PEER_D] = "L'adresse du PC d'un autre joueur (Tailscale, réseau local, ZeroTier...), avec :port si le sien n'est pas 27500. Entrée pour la saisir.",
+        [S_COOP_TYPING] = "Saisis l'adresse ; Entrée la garde, Échap annule. Suppr l'efface.",
+        [S_COOP_EMPTY] = "aucune",
+        [S_COOP_MINE] = "Ton IP",
+        [S_COOP_MINE_D] = "Donne aux autres l'une de celles-ci :",
+        [S_COOP_NO_IP] = "aucune trouvée",
     },
     .option = {
         [O_FPS] = {"Images par seconde", "50 est l'original européen, 60 le mode 60 Hz du jeu lui-même. La vitesse de marche suit à la zone suivante."},
@@ -172,5 +180,8 @@ const Lang LANG_FR = {
         [O_CUSTOM_EFFECTS] = {"Effets perso", "Utilise les images propres des effets 2D de combat (data/mods/effects) au lieu de celles du jeu. Se change en jeu."},
         [O_CUSTOM_SOUNDS] = {"Sons perso", "Joue les sons de coup que les mods donnent aux effets de combat, à la place de ceux du jeu. Se change en jeu."},
         [O_CUSTOM_SCRIPTS] = {"Scripts perso", "Joue les scripts de combat que les mods donnent à un Digimon, à la place de ceux du jeu. Se change en jeu."},
+        [O_COOP] = {"Coop", "Vois les autres joueurs sur ta carte, chacun avec sa sauvegarde. Leurs adresses vont en dessous ; tous doivent l'activer."},
+        [O_EXP_MULT] = {"Multiplicateur d'EXP", "L'EXP d'un combat, des partenaires et des Digimon, multipliée par ceci. x1 : celle du jeu."},
+        [O_MONEY_MULT] = {"Multiplicateur d'argent", "L'argent d'un combat, multiplié par ceci. x1 : celui du jeu."},
     },
 };

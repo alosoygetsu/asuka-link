@@ -137,6 +137,14 @@ const Lang LANG_EN = {
         [S_SV_RESTORED] = "Restored. The card you had is in saves/backups.",
         [S_SV_NO_BACKUP] = "No copy to go back to yet.",
         [S_SV_FAILED] = "The file couldn't be copied. Nothing changed.",
+        [S_COOP] = "Co-op",
+        [S_COOP_PEER] = "Player %d's IP",
+        [S_COOP_PEER_D] = "The address of another player's PC (Tailscale, LAN, ZeroTier...), with :port if theirs isn't 27500. Enter to type it.",
+        [S_COOP_TYPING] = "Type the address, Enter to keep it, Esc to cancel. Delete clears it.",
+        [S_COOP_EMPTY] = "none",
+        [S_COOP_MINE] = "Your IP",
+        [S_COOP_MINE_D] = "Give the others one of these:",
+        [S_COOP_NO_IP] = "none found",
     },
     .option = {
         [O_FPS] = {"Frame rate", "50 is the European original, 60 the game's own 60 Hz mode. Walking speed follows at the next area."},
@@ -172,5 +180,8 @@ const Lang LANG_EN = {
         [O_CUSTOM_EFFECTS] = {"Custom effects", "Plays the 2D battle effects' own images (data/mods/effects) instead of the game's. Switches in game."},
         [O_CUSTOM_SOUNDS] = {"Custom sounds", "Plays the hit sounds mods give to battle effects instead of the game's. Switches in game."},
         [O_CUSTOM_SCRIPTS] = {"Custom scripts", "Plays the battle scripts mods give to a Digimon (data/mods/scripts) instead of the game's. Switches in game."},
+        [O_COOP] = {"Co-op", "See the other players on your map, each with their own save. Their addresses go below; all of you need it on."},
+        [O_EXP_MULT] = {"EXP multiplier", "The EXP a battle gives, partners' and Digimon's, times this. x1 is the game's own."},
+        [O_MONEY_MULT] = {"Money multiplier", "The money a battle gives, times this. x1 is the game's own."},
     },
 };
