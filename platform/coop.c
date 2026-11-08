@@ -176,6 +176,16 @@ void native_coop_vram_dump(int page_x, int page_y) {
 static NativeCoopState s_history[COOP_HISTORY];
 static int s_head, s_count;
 
+/* The ghost of yourself, to test alone: DW3_COOP_GHOST=1 and no coop_peers. Players without addresses yet see nobody */
+static int coop_ghost(void) {
+    static int ghost = -1;
+
+    if (ghost < 0) {
+        ghost = g_coop_peer[0] == 0 && SDL_getenv("DW3_COOP_GHOST") != NULL;
+    }
+    return ghost;
+}
+
 void native_coop_reset(void) {
     s_head = 0;
     s_count = 0;
@@ -187,7 +197,7 @@ void native_coop_publish(const NativeCoopState *now) {
         coop_net_receive();
         return;
     }
-    if (g_coop_peer[0] != 0) {
+    if (!coop_ghost()) {
         return; /* a coop_peer that didn't work (coop.log says why): nobody, not the ghost */
     }
     s_history[s_head] = *now;
@@ -199,14 +209,14 @@ void native_coop_publish(const NativeCoopState *now) {
 
 /* How many other players there can be: coop_peers' (found), or 1, the ghost, without it */
 int native_coop_peer_slots(void) {
-    return g_coop_net_on ? coop_net_peer_count() : g_coop_peer[0] != 0 ? 0 : 1;
+    return g_coop_net_on ? coop_net_peer_count() : coop_ghost();
 }
 
 int native_coop_peer(int i, NativeCoopState *out) {
     if (g_coop_net_on) {
         return coop_net_peer(i, out);
     }
-    if (i != 0 || g_coop_peer[0] != 0 || s_count < COOP_HISTORY) {
+    if (i != 0 || !coop_ghost() || s_count < COOP_HISTORY) {
         return 0;
     }
     static int offset = -1;

@@ -180,7 +180,7 @@ int coop_net_start(void) {
     }
     s_net_tried = 1;
     if (g_coop_peer[0] == 0) {
-        coop_log("no coop_peers in native.ini, the ghost of yourself (milestone 1)");
+        coop_log("no other players' addresses yet (launcher: Settings, Mods, Co-op; or coop_peers in native.ini)");
         return 0;
     }
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
