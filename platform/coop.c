@@ -16,6 +16,7 @@
 #include <string.h>
 #include "platform.h"
 #include "../include/native.h"
+#include "coop_net.h"
 
 int g_coop = 0; /* coop = 1: the ghost (main.c reads native.ini) */
 int g_coop_debug = 0; /* DW3_COOP_DEBUG=1: the ghost's state in the log every 2 s (main.c) */
@@ -114,7 +115,7 @@ void native_coop_vram_dump(int page_x, int page_y) {
     }
 }
 
-/* --- The player's history, which stands in for the network for now --- */
+/* --- The player's history: the ghost of milestone 1, without coop_peer --- */
 
 #define COOP_DELAY 100 /* frames: 2 s at 50 Hz */
 #define COOP_HISTORY (COOP_DELAY + 1)
@@ -128,6 +129,11 @@ void native_coop_reset(void) {
 }
 
 void native_coop_publish(const NativeCoopState *now) {
+    if (coop_net_start()) {
+        coop_net_send(now);
+        coop_net_receive();
+        return;
+    }
     s_history[s_head] = *now;
     s_head = (s_head + 1) % COOP_HISTORY;
     if (s_count < COOP_HISTORY) {
@@ -136,6 +142,9 @@ void native_coop_publish(const NativeCoopState *now) {
 }
 
 int native_coop_peer(NativeCoopState *out) {
+    if (g_coop_net_on) {
+        return coop_net_peer(out);
+    }
     if (s_count < COOP_HISTORY) {
         return 0;
     }

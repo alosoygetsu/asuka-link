@@ -255,6 +255,8 @@ void native_log(const char *fmt, ...);
    of the local one for now. coop = 1 in native.ini turns it on. */
 extern int g_coop;
 extern int g_coop_debug;
+extern char g_coop_peer[128]; /* coop_peer = host:port, the other player (platform/coop.c) */
+extern int g_coop_port;       /* coop_port: where this copy listens, 27500 */
 /* What the field shows of a player: the field's mode and stage file (the same
    place when both match), the actor's pos and z (1/256 units), direction,
    animation set and depth layer */

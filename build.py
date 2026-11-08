@@ -78,7 +78,7 @@ PLATFORM_CFLAGS = ["-std=c11", "-c", "-O2", "-g", "-Wall", "-Wno-unused-paramete
 # fixed image base (no ASLR): the GPU tags keep 24-bit addresses, so the
 # game's memory has to stay below 16 MB (main.c checks it at startup)
 LDFLAGS = ["-g", "-Wl,--no-dynamicbase",
-           f"-L{SDL / 'lib'}", "-lSDL3", *SAN_FLAGS]
+           f"-L{SDL / 'lib'}", "-lSDL3", "-lws2_32", *SAN_FLAGS]
 
 
 def run(cmd, **kw):
