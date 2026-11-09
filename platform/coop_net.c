@@ -19,7 +19,7 @@
 #include "coop_net.h"
 
 #define COOP_MAGIC 0x43335744u /* "DW3C" */
-#define COOP_VERSION 2
+#define COOP_VERSION 3 /* 3: the look and the name */
 #define COOP_BUFFER_MS 80 /* the least; more with jitter */
 #define COOP_TIMEOUT_MS 2000
 #define COOP_RX 32 /* states kept, ~0.6 s at 50 Hz */
@@ -38,6 +38,9 @@ typedef struct CoopPacket {
     uint32_t ack_time; /* the newest packet's time the sender got from the one it goes to, 0 none: the ping */
     uint32_t ack_age;  /* ms between that packet's arrival and this one leaving */
     int32_t mode, stageFile, x, y, z, dir, animSet, depth;
+    int16_t model; /* the character creator's look (NativeCoopState) */
+    uint8_t tone, hasLook;
+    char name[16];
 } CoopPacket;
 
 typedef struct CoopRx {
@@ -266,6 +269,10 @@ void coop_net_send(const NativeCoopState *now) {
     p.dir = now->dir;
     p.animSet = now->animSet;
     p.depth = now->depth;
+    p.model = (int16_t)now->model;
+    p.tone = (uint8_t)now->tone;
+    p.hasLook = (uint8_t)now->hasLook;
+    SDL_memcpy(p.name, now->name, sizeof p.name);
     for (int i = 0; i < s_peer_count; i++) {
         CoopPeer *peer = &s_peers[i];
 
@@ -324,6 +331,12 @@ static void take(CoopPeer *peer, const CoopPacket *p) {
     r->state.dir = p->dir;
     r->state.animSet = p->animSet;
     r->state.depth = p->depth;
+    /* a look this copy can't draw: Junior in the player's colour */
+    r->state.hasLook = p->hasLook && native_coop_model_ok(p->model) && p->tone < 8;
+    r->state.model = r->state.hasLook ? p->model : 0;
+    r->state.tone = r->state.hasLook ? p->tone : 0;
+    SDL_memcpy(r->state.name, p->name, sizeof r->state.name);
+    r->state.name[sizeof r->state.name - 1] = 0;
     peer->rx_head = (peer->rx_head + 1) % COOP_RX;
     if (peer->rx_count < COOP_RX) {
         peer->rx_count++;

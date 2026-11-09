@@ -22,6 +22,9 @@ typedef struct NativeCoopState {
     int dir;
     int animSet;
     int depth;
+    /* the character creator's look: shown (0 Junior in the player's colour), its model (Actor.key1, 0 Junpei), tone */
+    int hasLook, model, tone;
+    char name[16]; /* GAME.name, the game's text bytes */
 } NativeCoopState;
 void native_coop_reset(void);
 void native_coop_publish(const NativeCoopState *now);
@@ -31,6 +34,13 @@ int native_coop_peer(int i, NativeCoopState *out);
 int native_coop_peer_slots(void);
 /* a line in coop.log (and the console): what a player can send when something is off */
 void native_coop_note(const char *fmt, ...);
+/* the name tags over the other players: where ghost n's head was drawn this frame (screen, 320x240) */
+void native_coop_tag(int n, int x, int y);
+int native_coop_tags_due(void); /* 1 while a tag was drawn just now: video.c then draws the overlay */
+struct SDL_Renderer;
+void native_coop_draw_tags(struct SDL_Renderer *r);
+/* a model a player may have (the character creator's): 1 for Junpei (0) and the curated ones */
+int native_coop_model_ok(int model);
 /* VRAM for the field's actors: the slots kept, cleared when the field
    starts, a box kept for one, and a blank box free in a texture page */
 void native_coop_vram_reset(void);

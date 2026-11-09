@@ -1,6 +1,28 @@
 --- a/src/fieldstg/actor_control.c
 +++ b/src/fieldstg/actor_control.c
-@@ -857,6 +857,263 @@
+@@ -756,6 +756,9 @@
+  * mirrored for the directions 5 and up, and, when it has one, its shadow, a
+  * sprite with its own texture page. The match depends on the shadow's y offset
+  * cast to s16. */
++#ifdef NATIVE
++static s32 coopGhost(Actor *actor); /* a co-op ghost's player, -1 none */
++#endif
+ void FIELDSTG_drawActor(void *arg, void *arg2) {
+     Actor *actor = arg;
+     Layer *layer = arg2;
+@@ -809,6 +812,11 @@
+         prim.ft4->clut = getClut(image->clutX, image->clutY);
+         prim.ft4->tpage = getTPage(0, 0, image->x, image->y);
+         addPrim(ot, prim.any);
++#ifdef NATIVE
++        if (coopGhost(actor) >= 0) { /* its name tag above its head (platform/coop.c) */
++            native_coop_tag(coopGhost(actor), pos.x, actor->frame[3] + pos.y);
++        }
++#endif
+         pos.y += actor->z >> 8;
+         prim.ft4++;
+         if (actor->hasShadow != 0) {
+@@ -857,6 +865,291 @@
  #define SET_FILE_OTHER 0x03CA0064
  #endif
  
@@ -22,6 +44,24 @@
 +    return 0;
 +}
 +
++/* the field's: each ghost's look (field.c) */
++extern s32 coopGhostModel[];
++extern s32 coopGhostTone[];
++
++static s32 coopGhost(Actor *actor) {
++    return actor->key1 == 0x7C02 || actor->key1 == 0x7D02 || actor->key1 == 0x7E02 ? (actor->key1 >> 8) - 0x7C : -1;
++}
++
++/* the model actor shows: the player's and the scenes' Junpei the look picked, a ghost its player's */
++static s32 coopActorModel(Actor *actor) {
++    s32 n = coopGhost(actor);
++
++    if (n >= 0) {
++        return coopGhostModel[n];
++    }
++    return actor->key1 == 2 || actor->key1 == 1 ? coopModel() : 0;
++}
++
 +static s32 coopTone(void) {
 +    if (native_player_tone() >= 0) {
 +        return native_player_tone();
@@ -29,12 +69,22 @@
 +    return GAME.pad5[0] == COOP_LOOK_MAGIC && GAME.progress >= 2 ? GAME.pad5[2] % NATIVE_TONES : 0;
 +}
 +
-+/* After a frame of the player's (or the scenes' Junpei) is loaded: its CLUT again, from the frame's TIM, turned to
-+   the tone; from the TIM, so a frame loaded twice isn't turned twice */
-+static void coopToneFrame(Actor *actor) {
++/* The look sent to the other players (field.c): 1 when there's one (the creator's, from the movie on), its model and
++   tone */
++s32 coopPlayerLook(s32 *model, s32 *tone) {
++    s32 shown = native_player_model() != 0 || native_player_tone() >= 0 ||
++                (GAME.pad5[0] == COOP_LOOK_MAGIC && GAME.progress >= 2);
++
++    *model = shown ? coopModel() : 0;
++    *tone = shown ? coopTone() : 0;
++    return shown;
++}
++
++/* After a frame of the player's (or the scenes' Junpei, or a ghost's) is loaded: its CLUT again, from the frame's
++   TIM, turned to the tone; from the TIM, so a frame loaded twice isn't turned twice */
++static void coopToneFrame(Actor *actor, s32 tone) {
 +    u32 *tim = FILE_CACHE.getEntry(actor->frame[0]);
 +    u16 colors[16];
-+    s32 tone = coopTone();
 +
 +    if (tone == 0 || tim[0] != 0x10 || (tim[1] & 8) == 0) {
 +        return;
@@ -75,7 +125,7 @@
 +   (BACK), or standing turned to the directions beside, looking around (LOOK) */
 +enum { COOP_SRC_STAND, COOP_SRC_WALK, COOP_SRC_BACK, COOP_SRC_LOOK };
 +#define COOP_SYNTH_FRAMES 24
-+#define COOP_SYNTH_ACTORS 4
++#define COOP_SYNTH_ACTORS 6 /* the player, the scenes' Junpei, 3 ghosts */
 +
 +typedef struct CoopSynth {
 +    Actor *actor; /* whose, NULL free */
@@ -264,7 +314,7 @@
  /*
   * Plays an actor's animation: when its set (animSet) changes, it loads the
   * set's animations for the five directions (character 2 picks the file by
-@@ -882,8 +1139,22 @@
+@@ -882,8 +1175,22 @@
      set = actor->animSet;
      file = actor->animFile & 0xFFFF0000;
      if (actor->loadedSet != set) {
@@ -278,8 +328,8 @@
 +#endif
              do {
 +#ifdef NATIVE
-+                if (actor->key1 == 2 && coopModel() != 0) { /* another character's look, its own file */
-+                    actor->animFile = FIELDSTG_fileEntries[coopModel()];
++                if (coopActorModel(actor) != 0) { /* another character's look, its own file */
++                    actor->animFile = FIELDSTG_fileEntries[coopActorModel(actor)];
 +                    look = coopModelSet(actor->animFile, set);
 +                    break;
 +                }
@@ -287,7 +337,7 @@
                  if (set < 8) {
                      actor->animFile = SET_FILE_0;
                      break;
-@@ -908,8 +1179,19 @@
+@@ -908,8 +1215,19 @@
              } while (0);
              file = actor->animFile & 0xFFFF0000;
          }
@@ -307,13 +357,13 @@
                  break;
              }
          }
-@@ -919,6 +1201,14 @@
+@@ -919,6 +1237,14 @@
          for (i = 0; i < 5; i++) {
              actor->setAnims[i] = entry[i + 1] | file;
          }
 +#ifdef NATIVE
 +        /* a model's missing set made of its drawings, or nothing (the nearest it has, as found) */
-+        if (coopModel() != 0 && actor->key1 == 2) {
++        if (coopActorModel(actor) != 0 && actor->key1 != 1) { /* the player, a ghost */
 +            coopSynthesize(actor, set, 0);
 +        } else if (coopModel() != 0 && actor->key1 == 1) {
 +            coopSynthesize(actor, set, 1); /* the scenes' Junpei: the model too */
@@ -322,7 +372,7 @@
          actor->loadedSet = set;
          actor->animDone = 0;
      }
-@@ -927,7 +1217,11 @@
+@@ -927,7 +1253,11 @@
      } else {
          dir = 8 - actor->dir;
      }
@@ -334,17 +384,19 @@
      do {
          if (actor->animTime > 0) {
              break;
-@@ -958,6 +1252,15 @@
+@@ -958,6 +1288,17 @@
          loader.setImagePos(image->imageX, image->imageY);
          loader.setClutPos(image->clutX, image->clutY);
          loader.load(FILE_CACHE.getEntry(actor->frame[0]));
 +#ifdef NATIVE
 +        if (actor->key1 == 2 || actor->key1 == 1) {
-+            coopToneFrame(actor); /* the player's tone */
++            coopToneFrame(actor, coopTone()); /* the player's tone */
 +        }
-+        if (actor->key1 == 0x7C02 || actor->key1 == 0x7D02 || actor->key1 == 0x7E02) {
++        if (coopGhost(actor) >= 0 && coopGhostTone[coopGhost(actor)] >= 0) {
++            coopToneFrame(actor, coopGhostTone[coopGhost(actor)]); /* a co-op ghost with a look: its player's tone */
++        } else if (coopGhost(actor) >= 0) {
 +            /* a co-op ghost: each frame brings the player's CLUT along, turned again to that player's colours */
-+            native_coop_vram_tint(image->clutX, image->clutY, (actor->key1 >> 8) - 0x7C);
++            native_coop_vram_tint(image->clutX, image->clutY, coopGhost(actor));
 +        }
 +#endif
          actor->frame[1] = actor->frame[0];

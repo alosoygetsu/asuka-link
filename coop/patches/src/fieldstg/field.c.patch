@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,198 @@
+@@ -362,10 +362,217 @@
      }
  }
  
@@ -32,6 +32,11 @@
 +static ActorImage coopGhostImage[COOP_GHOSTS];
 +static s32 coopWait;
 +static s32 coopSeen[COOP_GHOSTS]; /* drawn on this map yet: coop.log says it once */
++/* each ghost's look (actor_control.c draws it): the model (Actor.key1, 0 Junpei) and tone, tone -1 none (Junior in
++   the player's colour) */
++s32 coopGhostModel[COOP_GHOSTS];
++s32 coopGhostTone[COOP_GHOSTS] = {-1, -1, -1};
++s32 coopPlayerLook(s32 *model, s32 *tone); /* actor_control.c: 1 when the player has the creator's look */
 +static s32 coopTried;
 +
 +static void coopReserveSlot(s32 image) {
@@ -51,6 +56,8 @@
 +    for (i = 0; i < COOP_GHOSTS; i++) {
 +        coopGhost[i] = NULL;
 +        coopSeen[i] = 0;
++        coopGhostModel[i] = 0;
++        coopGhostTone[i] = -1;
 +    }
 +    coopWait = 0;
 +    coopTried = 0;
@@ -144,6 +151,11 @@
 +    now.dir = player->dir;
 +    now.animSet = player->animSet;
 +    now.depth = player->depth;
++    now.hasLook = coopPlayerLook(&now.model, &now.tone);
++    for (i = 0; i < (s32)sizeof now.name; i++) {
++        now.name[i] = GAME.name[i];
++    }
++    now.name[sizeof now.name - 1] = 0;
 +    native_coop_publish(&now);
 +    if (!coopTried && ++coopWait >= COOP_WAIT) {
 +        coopTried = 1;
@@ -165,6 +177,13 @@
 +            ghost->z = peer.z;
 +            ghost->dir = peer.dir;
 +            ghost->depth = peer.depth;
++            /* another look: its file and frames again */
++            if (coopGhostModel[i] != peer.model || coopGhostTone[i] != (peer.hasLook ? peer.tone : -1)) {
++                coopGhostModel[i] = peer.model;
++                coopGhostTone[i] = peer.hasLook ? peer.tone : -1;
++                ghost->loadedSet = -1;
++                ghost->reloadImage = 1;
++            }
 +            if (ghost->animSet != peer.animSet) {
 +                FIELDSTG_setActorAnim(ghost, peer.animSet);
 +            }
@@ -199,7 +218,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +780,9 @@
+@@ -592,6 +799,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -209,7 +228,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +836,9 @@
+@@ -645,6 +855,9 @@
          }
          break;
      case TASK_RUN:

@@ -2,6 +2,7 @@
    PutDispEnv) and the options menu over it. */
 #include <SDL3/SDL.h>
 #include "platform.h"
+#include "../include/native_coop.h" /* the co-op's name tags */
 
 static SDL_Window *s_window;
 static SDL_Surface *s_menu;            /* the menu, drawn by SDL in software */
@@ -161,12 +162,16 @@ void present_frame(void) {
     int n = dump_due(), screenshot = s_screenshot && !menu_active();
 
     int ff = !menu_active() && g_ff_speed > 1, pf = !menu_active() && perf_on();
+    int tags = !menu_active() && native_coop_tags_due(); /* co-op: the other players' names */
 
     gl_sync(0);
-    if (menu_active() || ff || pf) {
+    if (menu_active() || ff || pf || tags) {
         SDL_SetRenderDrawColor(s_menu_renderer, 0, 0, 0, 0);
         SDL_RenderClear(s_menu_renderer);
         menu_draw(s_menu_renderer);
+        if (tags) {
+            native_coop_draw_tags(s_menu_renderer);
+        }
         if (ff) { /* fast forward's speed, in a corner */
             char text[8];
             SDL_FRect bg = {320 - 54, 6, 48, 14};
@@ -191,7 +196,7 @@ void present_frame(void) {
         }
         shot = NULL;
     }
-    gl_present(menu_active() || ff || pf ? s_menu : NULL, n ? &shot : NULL);
+    gl_present(menu_active() || ff || pf || tags ? s_menu : NULL, n ? &shot : NULL);
     if (n) {
         dump_vram(n, shot);
     }

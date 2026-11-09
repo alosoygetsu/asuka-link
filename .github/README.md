@@ -28,7 +28,7 @@ el router), pero también vale una red local, ZeroTier, Radmin, etc.
 2. Activa **Cooperativo**.
 3. En **Tu IP** ves tus direcciones; pásale la tuya a los demás.
 4. Escribe las de los demás en **IP del jugador 2, 3 y 4** (Enter para escribir, Enter para guardar).
-5. Entrad en el mismo mapa: a los 1-2 segundos os veréis. Cada jugador sale con un color distinto.
+5. Entrad en el mismo mapa: a los 1-2 segundos os veréis, cada uno con su personaje y su nombre encima.
 
 Si algo no va, junto a `dw2003.exe` hay un `coop.log` que dice quién está conectado, el ping y los errores
 habituales (IP equivocada, cortafuegos, versiones distintas). La guía completa está en `LEEME-COOP.txt`, dentro del
@@ -37,7 +37,7 @@ zip.
 ## Qué añade sobre el port original
 | | |
 |---|---|
-| Cooperativo | Hasta 4 jugadores en red, cada uno con su partida; os veis en el mismo mapa |
+| Cooperativo | Hasta 4 jugadores en red, cada uno con su partida; os veis en el mismo mapa, cada uno con su personaje y su nombre encima |
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Creador de personaje | Al empezar partida eliges ser Junior, Chico o Chica y uno de 8 tonos de color; con todas las animaciones, también en las escenas |
 | Multiplicador de EXP | x1 a x5 sobre la EXP de combate (compañeros y Digimon) |
@@ -50,7 +50,8 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 ## Hoja de ruta
 - [x] Verse en el mapa (hasta 4 jugadores, configuración en el launcher)
 - [x] Elegir tu propio equipo inicial de 3 Digimon
-- [ ] Nombre encima de cada jugador, chat y avisos ("X ha entrado en Asuka City")
+- [x] Nombre encima de cada jugador y su aspecto visible para los demás
+- [ ] Chat y avisos ("X ha entrado en Asuka City")
 - [ ] Intercambio de Digimon y objetos
 - [ ] Duelos de cartas entre jugadores
 - [ ] Combates entre jugadores
@@ -73,5 +74,5 @@ A fork of [Feerdus95/dw3-native-port](https://github.com/Feerdus95/dw3-native-po
 *Digimon World 2003*) with **online co-op for up to 4 players**: each plays their own save, and players on the same map
 see each other. You need your own European disc; nothing of the game is here. Get `dw2003-coop-<version>.zip` from the
 [latest release](https://github.com/alosoygetsu/dw3-native-port/releases/latest), set the other players' addresses in the launcher (Settings → Mods → Co-op),
-and meet on a map. A new game lets you pick your look (Junior, a boy or a girl, in 8 colours) and starts with a team you build yourself (any 3 of the 8 partners) instead of a starter
+and meet on a map: you see each other with your own look and name. A new game lets you pick your look (Junior, a boy or a girl, in 8 colours) and starts with a team you build yourself (any 3 of the 8 partners) instead of a starter
 pack, and there are EXP and money multipliers. Updates come through the launcher's Update button.

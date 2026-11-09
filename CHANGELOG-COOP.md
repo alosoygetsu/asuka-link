@@ -3,6 +3,16 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.905
+Sobre el port v0.18.9.
+
+- **Os veis como sois:** cada jugador ve a los demás con el personaje y el tono que eligieron en el creador, con
+  todas sus animaciones. Quien todavía no tiene aspecto (partida de antes del creador, o antes de entrar al Mundo
+  Digital) sigue saliendo como Junior con su color de jugador.
+- **Nombre encima de cada jugador**, en una placa con la franja de su color.
+- El paquete de red cambia (versión 3): **todos tenéis que actualizar**. Con una versión anterior, `coop.log` lo
+  avisa ("has another version of the co-op").
+
 ## v0.18.904
 Sobre el port v0.18.9.
 
