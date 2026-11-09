@@ -42,7 +42,7 @@
 +        native_coop_note("PvP test: giving up");
 +        return 1;
 +    }
-+    if (++coopAutoCount % 3 == 0 && fighter->id == DIGIMON_DATA[member].id) {
++    if ((++coopAutoCount % 3 == 0 || native_coop_auto_battle() == 3) && fighter->id == DIGIMON_DATA[member].id) {
 +        tech = DIGIMON_DATA[member].skills[6] | 0x8000;
 +        mp = FIGHTSTG_battleFuncs.getTechCost(0, tech);
 +        if (fighter->mp >= mp) {

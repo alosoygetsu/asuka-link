@@ -640,7 +640,7 @@ int native_coop_auto(void) {
         return -1;
     }
     done = 1;
-    return SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "giveup") == 0;
+    return SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "giveup") == 0 || SDL_strcmp(env, "tech") == 0;
 }
 
 int native_coop_auto_battle(void) {
@@ -649,7 +649,7 @@ int native_coop_auto_battle(void) {
     if (on < 0) {
         const char *env = SDL_getenv("DW3_COOP_AUTO");
 
-        on = env == NULL ? 0 : SDL_strcmp(env, "battle") == 0 ? 1 : SDL_strcmp(env, "giveup") == 0 ? 2 : 0;
+        on = env == NULL ? 0 : SDL_strcmp(env, "battle") == 0 ? 1 : SDL_strcmp(env, "giveup") == 0 ? 2 : SDL_strcmp(env, "tech") == 0 ? 3 : 0;
     }
     return on;
 }

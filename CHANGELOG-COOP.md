@@ -11,6 +11,9 @@ Sobre el port v0.18.9.
   dejabais de veros. Ahora el hueco del mapa anterior se reutiliza.
 - **Combates entre jugadores:** al cambiar de Digimon, el que entra lo hace en la forma elegida también en la pantalla
   del otro (antes conservaba la de antes, el daño salía distinto en cada juego y el combate se podía quedar atascado).
+- **Combates entre jugadores:** las técnicas del rival se ven en su sitio. Sus animaciones están hechas para el lado del
+  jugador, así que salía colocado encima de tu Digimon y con la cámara mirando a otra parte; ahora se le dan la vuelta
+  (posiciones, efectos y cámaras).
 - `coop.log` apunta cada orden del combate y cualquier diferencia de vida entre los dos juegos.
 
 ## v0.18.908
