@@ -3,6 +3,7 @@
    PadInitDirect, as libpad did in its interrupt. */
 #include <SDL3/SDL.h>
 #include "platform.h"
+#include "../include/native_coop.h" /* the co-op's PvP test presses */
 
 /* Raw button bits; the buffer has them clear while pressed */
 enum {
@@ -266,7 +267,7 @@ static void record_replay(uint16_t *held, uint8_t *sticks) {
 void pad_update(void) {
     const bool *keys = SDL_GetKeyboardState(NULL);
     static int frame;
-    uint16_t held = scripted(frame++);
+    uint16_t held = scripted(frame++) | (native_coop_auto_press() ? 1 << 14 : 0); /* 14: cross */
     uint8_t *b = s_buf[0];
     size_t i;
 

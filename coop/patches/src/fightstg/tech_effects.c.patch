@@ -1,0 +1,13 @@
+--- a/src/fightstg/tech_effects.c
++++ b/src/fightstg/tech_effects.c
+@@ -1,6 +1,10 @@
+ /* FIGHTSTG's technique effects and the start of an action. */
+ 
+ #include "fightstg.h"
++#ifdef NATIVE
++/* the co-op's PvP battle: the rolls the same on both games (platform/coop.c) */
++#define RANDOM (*native_coop_random(&RANDOM))
++#endif
+ 
+ /* TECH_EFFECT_POISON: poisons the target when rollPoison lets it, twice as
+    strongly when the acting fighter is special */

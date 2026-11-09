@@ -1,6 +1,17 @@
 --- a/src/fightstg/rolls.c
 +++ b/src/fightstg/rolls.c
-@@ -452,6 +452,11 @@
+@@ -2,6 +2,10 @@
+    running away and the statuses' own tests. */
+ 
+ #include "fightstg.h"
++#ifdef NATIVE
++/* the co-op's PvP battle: the rolls the same on both games (platform/coop.c) */
++#define RANDOM (*native_coop_random(&RANDOM))
++#endif
+ 
+ /* Whether a physical hit is critical: a chance of 4 in 128 with the
+    technique's critical boost or the accessory's, more against the target's
+@@ -452,6 +456,11 @@
      BattleStats *def;
      s32 chance;
      s32 *active;

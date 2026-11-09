@@ -250,6 +250,7 @@ void native_coop_vram_dump(int page_x, int page_y) {
 #define COOP_HISTORY (COOP_DELAY + 1)
 
 static NativeCoopState s_history[COOP_HISTORY];
+static NativeCoopState s_last; /* the field's state last published: in a battle the packets carry it, off the field */
 static int s_head, s_count;
 
 /* The ghost of yourself, to test alone: DW3_COOP_GHOST=1 and no coop_peers. Players without addresses yet see nobody */
@@ -268,6 +269,7 @@ void native_coop_reset(void) {
 }
 
 void native_coop_publish(const NativeCoopState *now) {
+    s_last = *now;
     if (coop_net_start()) {
         coop_net_send(now);
         coop_net_receive();
@@ -443,16 +445,117 @@ NativeCoopPvp *native_coop_pvp(void) {
     return s_pvp.on ? &s_pvp : NULL;
 }
 
-void native_coop_pvp_begin(int peer, const void *team, int size, const void *save) {
-    SDL_memset(s_pvp.team, 0, sizeof s_pvp.team);
+void native_coop_pvp_begin(int peer, const void *team, int size, const void *save, int battle, int first) {
+    SDL_memset(&s_pvp, 0, sizeof s_pvp);
     SDL_memcpy(s_pvp.team, team, SDL_min(size, (int)sizeof s_pvp.team));
     SDL_memcpy(s_pvp.save, save, sizeof s_pvp.save);
     s_pvp.peer = peer;
+    s_pvp.battle = battle & 0xFFFF;
+    s_pvp.first = first;
     s_pvp.on = 1;
+    native_coop_commands_out(peer, s_pvp.out);
 }
 
 void native_coop_pvp_end(void) {
     s_pvp.on = 0;
+    SDL_memset(s_pvp.out, 0, sizeof s_pvp.out);
+    native_coop_commands_out(s_pvp.peer, s_pvp.out);
+}
+
+void native_coop_pvp_pump(void) {
+    NativeCoopState off = s_last;
+
+    off.mode = -1; /* nobody draws this player while it battles */
+    if (coop_net_start()) {
+        coop_net_send(&off);
+        coop_net_receive();
+    }
+}
+
+void native_coop_pvp_send(NativeCoopCommand *c) {
+    c->battle = (unsigned short)s_pvp.battle;
+    c->number = (unsigned short)++s_pvp.sent;
+    SDL_memmove(&s_pvp.out[1], &s_pvp.out[0], sizeof s_pvp.out[0] * (COOP_COMMANDS - 1));
+    s_pvp.out[0] = *c;
+    native_coop_commands_out(s_pvp.peer, s_pvp.out);
+    if (g_coop_debug) {
+        native_coop_note("PvP: sent command %d: action %d arg %d digimon %d%s", c->number, c->action, c->arg,
+                         c->digimon, c->knockOut ? " (after a knockout)" : "");
+    }
+}
+
+int native_coop_pvp_take(NativeCoopCommand *c) {
+    NativeCoopCommand in[COOP_COMMANDS];
+    int n;
+    unsigned int now = SDL_GetTicks();
+
+    if (!s_pvp.on) {
+        return -1;
+    }
+    n = native_coop_commands_in(s_pvp.peer, in);
+    if (s_pvp.waitFrom == 0) {
+        s_pvp.waitFrom = now;
+    }
+    if (n == 0) {
+        /* the other silent: gone, after a while (a battle's loading is silent too, a moment) */
+        if (now - s_pvp.waitFrom > 8000) {
+            s_pvp.over = 2;
+            native_coop_note("PvP: player %d is gone", s_pvp.peer + 2);
+            return -1;
+        }
+        return 0;
+    }
+    for (int i = 0; i < n; i++) {
+        if (in[i].battle == (unsigned short)s_pvp.battle && in[i].number == s_pvp.taken + 1) {
+            *c = in[i];
+            s_pvp.taken++;
+            s_pvp.waitFrom = 0;
+            if (c->action == 1) {
+                s_pvp.over = 1;
+            }
+            if (g_coop_debug) {
+                native_coop_note("PvP: took command %d: action %d arg %d digimon %d%s", c->number, c->action, c->arg,
+                                 c->digimon, c->knockOut ? " (after a knockout)" : "");
+            }
+            return 1;
+        }
+    }
+    s_pvp.waitFrom = s_pvp.waitFrom != 0 ? s_pvp.waitFrom : now;
+    if (now - s_pvp.waitFrom > 8000) {
+        /* here, but not in a battle any more: back on the field (a battle sends mode -1) */
+        NativeCoopState st;
+
+        if (native_coop_peer(s_pvp.peer, &st) && st.mode != -1) {
+            s_pvp.over = 2;
+            native_coop_note("PvP: player %d left the battle", s_pvp.peer + 2);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+/* the battle's rolls: a struct laid out as the game's Random (include/dw3/random.h) */
+struct Random {
+    int index;
+    void (*seed)(int seed);
+    int (*next)(void);
+};
+
+static unsigned int s_roll = 1;
+
+static int pvp_roll(void) {
+    s_roll = s_roll * 1103515245u + 12345u;
+    return (int)((s_roll >> 16) & 0xFFF); /* as RANDOM's: 0 to RANDOM_COUNT - 1 */
+}
+
+static struct Random s_pvp_random = {0, NULL, pvp_roll};
+
+struct Random *native_coop_random(struct Random *game) {
+    return s_pvp.on ? &s_pvp_random : game;
+}
+
+void native_coop_pvp_seed(unsigned int seed) {
+    s_roll = seed;
 }
 
 /* DW3_COOP_AUTO=trade or battle (tests): a field waits at a Guardromon for that by itself, once; -1 none */
@@ -464,5 +567,28 @@ int native_coop_auto(void) {
         return -1;
     }
     done = 1;
-    return SDL_strcmp(env, "battle") == 0;
+    return SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "giveup") == 0;
+}
+
+int native_coop_auto_battle(void) {
+    static int on = -1;
+
+    if (on < 0) {
+        const char *env = SDL_getenv("DW3_COOP_AUTO");
+
+        on = env == NULL ? 0 : SDL_strcmp(env, "battle") == 0 ? 1 : SDL_strcmp(env, "giveup") == 0 ? 2 : 0;
+    }
+    return on;
+}
+
+int native_coop_auto_press(void) {
+    static int frame;
+
+    return s_pvp.on && native_coop_auto_battle() && ++frame % 40 < 4;
+}
+
+unsigned int native_coop_coin(void) {
+    Uint64 t = SDL_GetPerformanceCounter();
+
+    return (unsigned int)(t ^ (t >> 32)) * 2654435761u ^ (unsigned int)g_coop_port * 40503u;
 }

@@ -1,0 +1,26 @@
+--- a/src/fightstg/events.c
++++ b/src/fightstg/events.c
+@@ -5,6 +5,10 @@
+    one's. */
+ 
+ #include "fightstg.h"
++#ifdef NATIVE
++/* the co-op's PvP battle: the rolls the same on both games (platform/coop.c) */
++#define RANDOM (*native_coop_random(&RANDOM))
++#endif
+ 
+ /* FIGHTSTG_events.funcs.push: queues an event in the first free one of the
+    99 slots, due after its delay */
+@@ -224,6 +228,12 @@
+ s32 FIGHTSTG_getEventDelay(u8 side, s32 kind) {
+     s32 delay;
+ 
++#ifdef NATIVE
++    if (native_coop_pvp() != NULL && (kind == 0 || kind == 1)) {
++        return FIGHTSTG_eventDelays[kind].div; /* the PvP battle: turns one each, whatever the speeds */
++    }
++#endif
++
+     /* the match depends on each case having its own row and stats */
+     switch (kind) {
+     case 2: {

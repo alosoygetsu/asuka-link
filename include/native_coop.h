@@ -51,6 +51,8 @@ typedef struct NativeCoopTrade {
 void native_coop_tags_block(int on); /* no name tags while on */
 int native_coop_test_cards(void); /* DW3_COOP_CARDS (tests) */
 int native_coop_auto(void); /* DW3_COOP_AUTO (tests): 0 trade, 1 battle, -1 none */
+int native_coop_auto_battle(void); /* DW3_COOP_AUTO=battle: and in the PvP battle, the commands picked by themselves; =giveup (2): the third gives up */
+int native_coop_auto_press(void); /* and cross pressed now and then, for its messages (platform/pad.c) */
 int native_coop_guard_key(void); /* the character whose talk offers the trade: Guardromon */
 /* Blobs bigger than a packet, to one player, in pieces: id (not 0) names it; sent tells it's all there */
 #define COOP_BLOB_MAX 4096
@@ -61,14 +63,47 @@ int native_coop_blob_recv(int peer, int id, void *out, int max); /* its size whe
 /* The PvP battle (fieldstg/field.c starts it, FIGHTSTG and WFIGHTMN read it): the other player's team, and the save
    as it was before, put back after */
 #define COOP_PVP_SAVE 0x26C4 /* GAME_SAVE_SIZE (EU) */
+/* Its turns: each side's commands, numbered, ride on the packets to the other, the newest few every packet. A command
+   is what that side's player turn did, with the seed of its rolls and the fighters as that side had them (its side
+   first), which the other takes over */
+#define COOP_COMMANDS 4
+typedef struct NativeCoopCommand {
+    unsigned short battle;   /* the battle's (its session's), so an old battle's commands aren't taken */
+    unsigned short number;   /* 1 the side's first command */
+    signed char action;      /* the player turn's: 0 attack, 1 give up, 4 a technique, 5 a switch, -1 nothing */
+    unsigned char knockOut;  /* a switch after a knockout */
+    short arg, digimon;      /* the technique, or the party slot and the Digimon switched in */
+    unsigned int seed;       /* native_coop_random's, for the action */
+    short hp[2][3], mp[2][3];
+    unsigned char active[2], pad[2];
+} NativeCoopCommand;
 typedef struct NativeCoopPvp {
     int on, peer;
+    int battle;               /* NativeCoopCommand.battle */
+    int first;                /* 1 when this side goes first on a tie of speeds */
+    int sent, taken;          /* commands sent, and the other's taken */
+    int over;                 /* 1 the other gave up, 2 the other is gone */
+    unsigned int waitFrom;    /* SDL ms the wait for the other's command began, 0 none */
+    NativeCoopCommand out[COOP_COMMANDS]; /* the newest sent first */
     unsigned char team[COOP_BLOB_MAX]; /* fieldstg/field.c's CoopTeam */
     unsigned char save[COOP_PVP_SAVE];
 } NativeCoopPvp;
 NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one */
-void native_coop_pvp_begin(int peer, const void *team, int size, const void *save);
+void native_coop_pvp_begin(int peer, const void *team, int size, const void *save, int battle, int first);
 void native_coop_pvp_end(void);
+unsigned int native_coop_coin(void); /* a number of this copy's own, for who goes first */
+void native_coop_pvp_pump(void); /* each battle frame: the packets go on (as off the field) */
+void native_coop_pvp_send(NativeCoopCommand *c); /* numbers it and sends it */
+/* the other's next command: 1 taken, 0 not here yet, -1 the other is gone */
+int native_coop_pvp_take(NativeCoopCommand *c);
+/* In a PvP battle the rolls (FIGHTSTG's damage, hits, statuses, delays) are the battle's own, seeded by each command,
+   so both games roll the same: those files have #define RANDOM (*native_coop_random(&RANDOM)) */
+struct Random;
+struct Random *native_coop_random(struct Random *game);
+void native_coop_pvp_seed(unsigned int seed);
+/* the other's commands as they came (coop_net.c) */
+int native_coop_commands_in(int peer, NativeCoopCommand *out); /* how many (COOP_COMMANDS), 0 when it's gone */
+void native_coop_commands_out(int peer, const NativeCoopCommand *c);
 void native_coop_trade_out(int peer, const NativeCoopTrade *t); /* what goes to peer from now on */
 int native_coop_trade_in(int peer, NativeCoopTrade *t); /* peer's side as it last came: 0 when it's gone */
 /* the name tags over the other players: where ghost n's head was drawn this frame (screen, 320x240) */

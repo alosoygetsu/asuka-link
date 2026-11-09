@@ -1,0 +1,122 @@
+--- a/src/fightstg/player_turn.c
++++ b/src/fightstg/player_turn.c
+@@ -3,6 +3,41 @@
+ 
+ #include "fightstg.h"
+ 
++#ifdef NATIVE
++/* DW3_COOP_AUTO=battle (tests): the PvP battle's commands picked by themselves, an attack or, every third, the
++   partner's own technique; after a knockout, the first partner standing */
++static s32 coopAutoFrames;
++static s32 coopAutoCount;
++
++static s32 coopAutoCommand(PlayerTurn *task) {
++    BattleFighter *fighter = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
++    s32 member = GAME.funcs.getPartyMember(FIGHTSTG_battle.active[0]);
++    s32 tech;
++    s32 mp;
++
++    if (native_coop_pvp() == NULL || !native_coop_auto_battle() || ++coopAutoFrames < 45) {
++        return 0;
++    }
++    coopAutoFrames = 0;
++    task->action = 0;
++    if (native_coop_auto_battle() == 2 && native_coop_pvp()->sent >= 4) {
++        task->action = 1; /* DW3_COOP_AUTO=giveup: the fifth command gives up */
++        native_coop_note("PvP test: giving up");
++        return 1;
++    }
++    if (++coopAutoCount % 3 == 0 && fighter->id == DIGIMON_DATA[member].id) {
++        tech = DIGIMON_DATA[member].skills[6] | 0x8000;
++        mp = FIGHTSTG_battleFuncs.getTechCost(0, tech);
++        if (fighter->mp >= mp) {
++            fighter->mp -= mp;
++            task->action = 4;
++            task->arg = tech & SKILL_ID;
++        }
++    }
++    return 1;
++}
++#endif
++
+ /* Opens the command menu with the HUD, the partner view and the shot camera,
+    then goes to the menu of the command picked */
+ static inline void runCommandMenu(PlayerTurn *task, PlayerTurnChild *children) {
+@@ -24,6 +59,12 @@
+         task->result = -1;
+         task->tickCounter(task);
+     case 1:
++#ifdef NATIVE
++        if (task->result == -1 && coopAutoCommand(task)) {
++            task->setSubstate(task, 0);
++            break;
++        }
++#endif
+         if (task->result != -1) {
+             task->command = task->result;
+             switch (task->result) {
+@@ -35,6 +76,13 @@
+                 task->setStep(task, 3);
+                 break;
+             case BATTLE_COMMAND_DIGIVOLVE:
++#ifdef NATIVE
++                if (native_coop_pvp() != NULL) {
++                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's PvP battle: not yet */
++                    task->setSubstate(task, 2);
++                    break;
++                }
++#endif
+                 task->setStep(task, 1);
+                 break;
+             case BATTLE_COMMAND_SWITCH:
+@@ -42,6 +90,13 @@
+                 task->switchLine = 0;
+                 break;
+             case BATTLE_COMMAND_ITEM:
++#ifdef NATIVE
++                if (native_coop_pvp() != NULL) {
++                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's PvP battle: no items */
++                    task->setSubstate(task, 2);
++                    break;
++                }
++#endif
+                 task->setStep(task, 2);
+                 break;
+             case BATTLE_COMMAND_RUN:
+@@ -168,6 +223,11 @@
+                 task->switchLine = 0;
+             } else {
+                 task->action = 6;
++#ifdef NATIVE
++                if (native_coop_pvp() != NULL) {
++                    task->action = 5; /* the co-op's PvP battle: a plain switch */
++                }
++#endif
+                 task->digimon = task->result >> 4;
+                 task->setSubstate(task, 0);
+                 task->switchLine = 0;
+@@ -226,6 +286,24 @@
+         }
+         task->tickCounter(task);
+     case 1:
++#ifdef NATIVE
++        if (task->result == -1 && native_coop_pvp() != NULL && native_coop_auto_battle() && ++coopAutoFrames > 45) {
++            s32 i;
++
++            coopAutoFrames = 0;
++            for (i = 0; i < 3; i++) {
++                if (FIGHTSTG_battle.fighters[0][i].id != 0 && FIGHTSTG_battle.fighters[0][i].hp != 0) {
++                    task->action = 5;
++                    task->arg = i;
++                    task->digimon = FIGHTSTG_battle.fighters[0][i].id;
++                    task->switchLine = 0;
++                    task->setSubstate(task, 0);
++                    break;
++                }
++            }
++            break;
++        }
++#endif
+         if (task->result != -1) {
+             task->arg = task->result;
+             children[4].switchInMenu = FIGHTSTG_createSwitchInMenu(&task->result);

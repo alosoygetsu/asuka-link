@@ -1,0 +1,123 @@
+--- a/src/fightstg/enemy_turn.c
++++ b/src/fightstg/enemy_turn.c
+@@ -3,6 +3,107 @@
+ 
+ #include "fightstg.h"
+ 
++#ifdef NATIVE
++/* The co-op's PvP battle: the enemy is the other player, whose turns are its commands (platform/coop.c), sent by its
++   player turn (wfightmn/menu.c's FIGHTSTG_coopPvpSend) and done here as the enemy's */
++
++/* The fighters as the other side had them before its command (its side first, the enemy here): this side takes them
++   over, so both games stay the same whatever came out differently (a knockout is the damage's, never this) */
++void FIGHTSTG_coopPvpTake(const NativeCoopCommand *c) {
++    BattleFighter *fighter;
++    s32 side;
++    s32 i;
++
++    for (side = 0; side < 2; side++) {
++        for (i = 0; i < 3; i++) {
++            fighter = &FIGHTSTG_battle.fighters[1 - side][i];
++            if (fighter->id == 0 || fighter->hp == 0) {
++                continue;
++            }
++            if (fighter->hp != c->hp[side][i] || fighter->mp != c->mp[side][i]) {
++                if (g_coop_debug) {
++                    native_coop_note("PvP: %s %d was HP %d MP %d, the other's %d %d", side == 0 ? "enemy" : "partner", i,
++                                     fighter->hp, fighter->mp, c->hp[side][i], c->mp[side][i]);
++                }
++                fighter->hp = c->hp[side][i] > 0 ? c->hp[side][i] : 1;
++                fighter->mp = c->mp[side][i];
++            }
++        }
++    }
++}
++
++/* Sends this side's command: what its player turn does now, with a new seed for its rolls (both games take it) */
++void FIGHTSTG_coopPvpSend(s32 action, s32 arg, s32 digimon, s32 knockOut) {
++    NativeCoopCommand c;
++    s32 side;
++    s32 i;
++
++    memset(&c, 0, sizeof c);
++    c.action = (signed char)action;
++    c.arg = (short)arg;
++    c.digimon = (short)digimon;
++    c.knockOut = (unsigned char)knockOut;
++    c.seed = ((u32)RANDOM.next() << 20) ^ ((u32)RANDOM.next() << 8) ^ ((u32)GFX.funcs.getTime() * 2654435761u);
++    for (side = 0; side < 2; side++) {
++        for (i = 0; i < 3; i++) {
++            c.hp[side][i] = FIGHTSTG_battle.fighters[side][i].hp;
++            c.mp[side][i] = FIGHTSTG_battle.fighters[side][i].mp;
++        }
++        c.active[side] = (unsigned char)FIGHTSTG_battle.active[side];
++    }
++    native_coop_pvp_send(&c);
++    native_coop_pvp_seed(c.seed);
++}
++
++/* The enemy's turn in a PvP battle: waits for the other's command, then does it (an attack, a technique, a switch),
++   or ends the battle when the other gave up or is gone */
++static void coopPvpEnemyTurn(EnemyTurn *task, BattleChild *children) {
++    NativeCoopCommand c;
++    BattleFighter *enemies = FIGHTSTG_battle.fighters[1];
++    s32 got = native_coop_pvp_take(&c);
++
++    if (got == 0) {
++        return; /* the other still picking */
++    }
++    if (got < 0 || c.action == 1) {
++        children->message = FIGHTSTG_createMessage();
++        task->lines[0] = 0x5F;
++        task->lines[1] = 0x10;
++        children->message->show(children->message, 2, task->lines);
++        FIGHTSTG_endBattle(BATTLE_FLED);
++        task->substate = 3;
++        return;
++    }
++    FIGHTSTG_coopPvpTake(&c);
++    native_coop_pvp_seed(c.seed);
++    switch (c.action) {
++    case 0:
++        task->target = 1;
++        task->substate = 2;
++        break;
++    case 4:
++        children->tech = FIGHTSTG_startTechAction(SIDE_ENEMY, c.arg);
++        task->substate = 3;
++        break;
++    case 5:
++        if (c.arg >= 0 && c.arg < 3 && c.arg != FIGHTSTG_battle.active[1] && enemies[c.arg].id != 0 &&
++            enemies[c.arg].hp != 0) {
++            task->switchTo = c.arg;
++            children->message = FIGHTSTG_createMessage();
++            task->lines[0] = 0x4D;
++            children->message->show(children->message, 1, task->lines);
++            task->substate = 5;
++            break;
++        }
++        task->substate = 3;
++        break;
++    default:
++        task->substate = 3; /* nothing: asleep, paralysed, confused */
++        break;
++    }
++}
++#endif
++
+ /* The enemy that the enemy's turn (FIGHTSTG_updateEnemyTurn) switches to:
+    task->target's, or one of the others at random (not the active one), -1
+    for none */
+@@ -199,6 +300,12 @@
+             showRunAway(task, children);
+             break;
+         case 1:
++#ifdef NATIVE
++            if (native_coop_pvp() != NULL) {
++                coopPvpEnemyTurn(task, children);
++                break;
++            }
++#endif
+             fighter = &FIGHTSTG_battle.fighters[1][FIGHTSTG_battle.active[1]];
+             if (fighter->flags & FIGHTER_ASLEEP) {
+                 children->message = FIGHTSTG_createMessage();

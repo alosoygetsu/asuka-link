@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1066 @@
+@@ -362,10 +362,1071 @@
      }
  }
  
@@ -671,6 +671,7 @@
 +    s32 party[3];
 +    s32 ids[3];
 +    Partner partners[3];
++    u32 coin; /* who goes first on a tie of speeds (the smaller): fightstg/stats.c's ends before it */
 +} CoopTeam;
 +
 +static CoopTeam coopTeamMine;
@@ -686,7 +687,10 @@
 +    s32 member;
 +    PartnerStats *st;
 +
-+    native_coop_pvp_begin(coopTrade.peer, &coopTeamTheirs, sizeof coopTeamTheirs, &GAME);
++    /* a tie of speeds: the smaller coin first (a tie of coins too: the party's bytes, both see the same two) */
++    native_coop_pvp_begin(coopTrade.peer, &coopTeamTheirs, sizeof coopTeamTheirs, &GAME, coopPvpBlob(),
++                          coopTeamMine.coin != coopTeamTheirs.coin ? coopTeamMine.coin < coopTeamTheirs.coin
++                                                                   : memcmp(&coopTeamMine, &coopTeamTheirs, sizeof coopTeamMine) < 0);
 +    native_coop_note("PvP battle with player %d", coopTrade.peer + 2);
 +    coopTradeEnd(COOP_TRADE_DONE, -1);
 +    coopTrade.quiet = 0;
@@ -735,6 +739,7 @@
 +                coopTeamMine.partners[i] = GAME.partners[member];
 +            }
 +        }
++        coopTeamMine.coin = native_coop_coin();
 +        native_coop_blob_send(coopTrade.peer, &coopTeamMine, sizeof coopTeamMine, coopPvpBlob());
 +        coopTrade.teamSent = 1;
 +    }
@@ -1067,7 +1072,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1648,9 @@
+@@ -592,6 +1653,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1077,7 +1082,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1704,9 @@
+@@ -645,6 +1709,9 @@
          }
          break;
      case TASK_RUN:

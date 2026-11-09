@@ -19,7 +19,7 @@
 #include "coop_net.h"
 
 #define COOP_MAGIC 0x43335744u /* "DW3C" */
-#define COOP_VERSION 5 /* 3: the look and the name; 4: the card trade; 5: blobs (the PvP battle's teams) */
+#define COOP_VERSION 6 /* 3: the look and the name; 4: the card trade; 5: blobs (the PvP battle's teams); 6: the PvP battle's commands */
 #define COOP_BUFFER_MS 80 /* the least; more with jitter */
 #define COOP_TIMEOUT_MS 2000
 #define COOP_RX 32 /* states kept, ~0.6 s at 50 Hz */
@@ -46,6 +46,7 @@ typedef struct CoopPacket {
        other's blob this copy has whole */
     uint16_t blob_id, blob_size, blob_at, blob_got;
     uint8_t blob[COOP_BLOB_PIECE];
+    NativeCoopCommand commands[COOP_COMMANDS]; /* the PvP battle's, the newest first */
 } CoopPacket;
 
 typedef struct CoopRx {
@@ -71,6 +72,7 @@ typedef struct CoopPeer {
     Uint64 report_at;
     int said_version;
     NativeCoopTrade trade_in, trade_out;
+    NativeCoopCommand commands_in[COOP_COMMANDS], commands_out[COOP_COMMANDS];
     uint8_t blob_out[COOP_BLOB_MAX], blob_in[COOP_BLOB_MAX];
     uint16_t out_id, out_size, out_at; /* what goes to it, and the next piece */
     uint16_t in_id, in_size, in_whole, got_id; /* what comes from it; got_id: the id of ours it has whole */
@@ -289,6 +291,7 @@ void coop_net_send(const NativeCoopState *now) {
         p.ack_time = peer->ack_time;
         p.ack_age = peer->ack_time != 0 ? (uint32_t)(t - peer->ack_at) : 0;
         p.trade = peer->trade_out;
+        SDL_memcpy(p.commands, peer->commands_out, sizeof p.commands);
         p.blob_id = 0;
         p.blob_got = peer->in_whole ? peer->in_id : 0;
         if (peer->out_id != 0 && peer->got_id != peer->out_id) {
@@ -360,6 +363,7 @@ static void take(CoopPeer *peer, const CoopPacket *p) {
     SDL_memcpy(r->state.name, p->name, sizeof r->state.name);
     r->state.name[sizeof r->state.name - 1] = 0;
     peer->trade_in = p->trade;
+    SDL_memcpy(peer->commands_in, p->commands, sizeof peer->commands_in);
     peer->got_id = p->blob_got;
     if (p->blob_id != 0 && p->blob_size <= COOP_BLOB_MAX && p->blob_at < p->blob_size && p->blob_at % COOP_BLOB_PIECE == 0) {
         int piece = p->blob_at / COOP_BLOB_PIECE, n = (p->blob_size + COOP_BLOB_PIECE - 1) / COOP_BLOB_PIECE, all = 1;
@@ -534,4 +538,18 @@ int native_coop_blob_recv(int i, int id, void *out, int max) {
     }
     SDL_memcpy(out, s_peers[i].blob_in, s_peers[i].in_size);
     return s_peers[i].in_size;
+}
+
+void native_coop_commands_out(int i, const NativeCoopCommand *c) {
+    if (i >= 0 && i < s_peer_count) {
+        SDL_memcpy(s_peers[i].commands_out, c, sizeof s_peers[i].commands_out);
+    }
+}
+
+int native_coop_commands_in(int i, NativeCoopCommand *out) {
+    if (i < 0 || i >= s_peer_count || s_peers[i].rx_count == 0 || SDL_GetTicks() - s_peers[i].last_rx >= COOP_TIMEOUT_MS) {
+        return 0;
+    }
+    SDL_memcpy(out, s_peers[i].commands_in, sizeof s_peers[i].commands_in);
+    return COOP_COMMANDS;
 }

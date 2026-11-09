@@ -1,0 +1,13 @@
+--- a/src/fightstg/battle.c
++++ b/src/fightstg/battle.c
+@@ -2,6 +2,10 @@
+    FIGHTSTG_battleFuncs) and the events of the partner's special techniques. */
+ 
+ #include "fightstg.h"
++#ifdef NATIVE
++/* the co-op's PvP battle: the rolls the same on both games (platform/coop.c) */
++#define RANDOM (*native_coop_random(&RANDOM))
++#endif
+ 
+ /* the event types of FIGHTSTG_startRestriction, by whether the technique's effect is TECH_EFFECT_NO_DIGIVOLVE */
+ s32 FIGHTSTG_techEvents[] = {

@@ -1,10 +1,94 @@
 --- a/src/wfightmn/menu.c
 +++ b/src/wfightmn/menu.c
-@@ -552,6 +552,25 @@
+@@ -6,6 +6,15 @@
+ 
+ #include "wfightmn.h"
+ 
++#ifdef NATIVE
++/* the co-op's PvP battle (fightstg/enemy_turn.c) */
++void FIGHTSTG_coopPvpTake(const NativeCoopCommand *c);
++void FIGHTSTG_coopPvpSend(s32 action, s32 arg, s32 digimon, s32 knockOut);
++/* the PvP battle ended (its save put back): the end's last state runs every frame till the field comes, and has to go
++   on to the field, not to the report or the title */
++static s32 coopPvpEnded;
++#endif
++
+ /* Sets the battle's kind from the mode it came from and the battle: the
+    escape, UNK2, no-damage and final battles, or a normal one */
+ static inline void setBattleKind(void) {
+@@ -62,6 +71,27 @@
+     BattleStats *stats;
+     s32 chance;
+ 
++#ifdef NATIVE
++    coopPvpEnded = 0;
++    if (native_coop_pvp() != NULL) {
++        /* the co-op's PvP battle: the faster first (a tie: NativeCoopPvp.first), then a turn each */
++        s32 mine = FIGHTSTG_battleFuncs.computeStats(SIDE_PLAYER, 1, FIGHTSTG_battle.active[0])->stats[BATTLE_STAT_SPEED];
++        s32 theirs = FIGHTSTG_battleFuncs.computeStats(SIDE_ENEMY, 0, FIGHTSTG_battle.active[1])->stats[BATTLE_STAT_SPEED];
++
++        if (mine > theirs || (mine == theirs && native_coop_pvp()->first)) {
++            FIGHTSTG_queuePlayerTurn(0);
++            FIGHTSTG_queueEnemyTurn(FIGHTSTG_events.funcs.getDelay(0, 0) / 2);
++        } else {
++            FIGHTSTG_queueEnemyTurn(0);
++            FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0) / 2);
++            FIGHTSTG_setPlayerTurnStep(1);
++        }
++        native_coop_note("PvP: speed %d, the other's %d: %s first", mine, theirs,
++                         mine > theirs || (mine == theirs && native_coop_pvp()->first) ? "this side" : "the other");
++        task->nextState(task);
++        return;
++    }
++#endif
+     if (task->counter != 0) {
+         FIGHTSTG_queueEnemyTurn(0);
+         FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0) / 2);
+@@ -122,6 +152,11 @@
+    partner is confused and the battle's music again after
+    (switchConfusionMusic) */
+ void WFIGHTMN_updateMenu(BattleMenu *task, BattleMenuChildren *children) {
++#ifdef NATIVE
++    if (native_coop_pvp() != NULL) {
++        native_coop_pvp_pump();
++    }
++#endif
+     switch (task->state) {
+     case 0:
+     default:
+@@ -259,6 +294,11 @@
+                 children->task.message->show(children->task.message, 2, task->args);
+                 FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0));
+                 task->setSubstate(task, 2);
++#ifdef NATIVE
++                if (native_coop_pvp() != NULL) {
++                    FIGHTSTG_coopPvpSend(-1, 0, 0, 0);
++                }
++#endif
+             } else if (unit->flags & FIGHTER_CONFUSED) {
+                 task->setSubstate(task, 0x11);
+             } else {
+@@ -269,6 +309,11 @@
+         break;
+     case 2:
+         if (FIGHTSTG_isPlayerChoosing() == 0) {
++#ifdef NATIVE
++            if (native_coop_pvp() != NULL) {
++                FIGHTSTG_coopPvpSend(children->commands->action, children->commands->arg, children->commands->digimon, 0);
++            }
++#endif
+             switch (children->commands->action) {
+             case 1:
+                 FIGHTSTG_battle.runAttempts++;
+@@ -552,6 +597,32 @@
          break;
      case 2:
          WFIGHTMN_cancelBlast();
 +#ifdef NATIVE
++        if (coopPvpEnded) {
++            GAME.funcs.requestMode(GAME.fieldMode, 0);
++            break;
++        }
 +        if (native_coop_pvp() != NULL) {
 +            /* the co-op's PvP battle (fieldstg/field.c): won, lost or given up, the save as it was before, where the
 +               field was left; no report, no game over */
@@ -17,8 +101,11 @@
 +            GAME.fieldPos = fieldPos;
 +            GAME.fieldDir = fieldDir;
 +            native_coop_note("PvP battle with player %d: %s", native_coop_pvp()->peer + 2,
++                             native_coop_pvp()->over == 1 ? "won, the other gave up" :
++                             native_coop_pvp()->over == 2 ? "over, the other left" :
 +                             FIGHTSTG_events.funcs.result == BATTLE_WON ? "won" : FIGHTSTG_events.funcs.result == BATTLE_LOST ? "lost" : "given up");
 +            native_coop_pvp_end();
++            coopPvpEnded = 1;
 +            GAME.funcs.requestMode(GAME.fieldMode, 0);
 +            break;
 +        }
@@ -26,3 +113,59 @@
          switch (FIGHTSTG_events.funcs.result) {
          case BATTLE_FLED:
          default:
+@@ -830,6 +901,11 @@
+         break;
+     case 1:
+         if (FIGHTSTG_isPlayerChoosing() == 0) {
++#ifdef NATIVE
++            if (native_coop_pvp() != NULL) {
++                FIGHTSTG_coopPvpSend(children->commands->action == 0 ? 0 : -1, 0, 0, 0);
++            }
++#endif
+             if (children->commands->action == 0) {
+                 children->task.attack = FIGHTSTG_startFirstTech(0);
+                 task->setSubstate(task, 2);
+@@ -1110,6 +1186,31 @@
+                     FIGHTSTG_setPlayerTurnStep(4);
+                     task->step = 2;
+                 } else {
++#ifdef NATIVE
++                    if (native_coop_pvp() != NULL) {
++                        /* the co-op's PvP battle: the other picks its next fighter */
++                        NativeCoopCommand c;
++                        s32 got = native_coop_pvp_take(&c);
++
++                        if (got == 0) {
++                            break;
++                        }
++                        if (got < 0 || c.action == 1) {
++                            children->task.message = FIGHTSTG_createMessage();
++                            task->args[0] = 0x5F;
++                            task->args[1] = 0x10;
++                            children->task.message->show(children->task.message, 2, task->args);
++                            FIGHTSTG_endBattle(BATTLE_FLED);
++                            task->setSubstate(task, 2);
++                            break;
++                        }
++                        FIGHTSTG_coopPvpTake(&c);
++                        native_coop_pvp_seed(c.seed);
++                        if (c.arg >= 0 && c.arg < 3 && unit[c.arg].id != 0 && unit[c.arg].hp != 0) {
++                            slot = c.arg;
++                        }
++                    }
++#endif
+                     unit = FIGHTSTG_battle.fighters[1] + slot;
+                     task->step = 3;
+                     task->args[0] = slot;
+@@ -1125,6 +1226,11 @@
+         break;
+     case 2:
+         if (FIGHTSTG_isPlayerChoosing() == 0) {
++#ifdef NATIVE
++            if (native_coop_pvp() != NULL) {
++                FIGHTSTG_coopPvpSend(5, children->commands->arg, children->commands->digimon, 1);
++            }
++#endif
+             task->setSubstate(task, 5);
+             task->step = 1;
+         }

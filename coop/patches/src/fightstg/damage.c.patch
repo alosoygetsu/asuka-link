@@ -1,0 +1,13 @@
+--- a/src/fightstg/damage.c
++++ b/src/fightstg/damage.c
+@@ -1,6 +1,10 @@
+ /* FIGHTSTG's damage and healing. */
+ 
+ #include "fightstg.h"
++#ifdef NATIVE
++/* the co-op's PvP battle: the rolls the same on both games (platform/coop.c) */
++#define RANDOM (*native_coop_random(&RANDOM))
++#endif
+ 
+ /* the element whose boost (FIGHTSTG_getElementBoost) weakens each one */
+ s32 FIGHTSTG_opposedElements[] = {
