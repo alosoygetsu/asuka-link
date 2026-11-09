@@ -1,6 +1,6 @@
 --- a/src/stplnmet/choice.c
 +++ b/src/stplnmet/choice.c
-@@ -11,11 +11,282 @@
+@@ -11,11 +11,506 @@
  #define CHOICE_PARTNERS(c) STPLNMET_funcs.choices[c]
  #endif
  
@@ -73,6 +73,11 @@
 +    s32 i;
 +
 +    windows->title->setString(windows->title, (void *)coop, COOP_TEXT_TITLE);
++    windows->name->setVisible(windows->name, 1);
++    for (i = 0; i < 3; i++) {
++        windows->labels[i]->setPos(windows->labels[i], TEAM_PICK_X(i) - 4, 0x63);
++    }
++    windows->partners[0].name->setPos(windows->partners[0].name, TEAM_ACCEPT_X, TEAM_ACCEPT_Y);
 +    for (i = 0; name[i] == SJIS_SPACE; i++) {
 +    }
 +    windows->name->setText(windows->name, &name[i]);
@@ -271,6 +276,225 @@
 +}
 +#endif
 +
++#ifdef NATIVE
++/* The character creator's page, before the name (screen.c): the three looks standing on the team panel's platforms
++   with their names, Accept beside them, and a row of the eight tones with the look picked in each. The cursor picks
++   as it moves (left/right along a row, up/down between them); cross goes on to the tones, then to Accept, which
++   ends it (start too). Its drawings are the looks' standing frames, loaded once into a box of VRAM that nothing uses
++   (platform/coop.c), each look's image and CLUT, and a CLUT a tone */
++#define LOOK_MODELS 3
++#define LOOK_PANEL_Y 0x40
++#define LOOK_FOOT_X(i) (TEAM_PICK_X(i) + 0x11)
++#define LOOK_FOOT_Y (LOOK_PANEL_Y + 0x2A)
++#define LOOK_ACCEPT 3
++#define LOOK_TONE0 4 /* the cursor on tone k: LOOK_TONE0 + k */
++static const s32 LOOK_FILES[LOOK_MODELS] = {0x01870070, 0x03120020, 0x0193002A}; /* Junpei, 0x31, 0x10 (EU) */
++static s32 STPLNMET_lookMode = 1; /* the page shows, before the name */
++static s32 STPLNMET_lookModel;
++static s32 STPLNMET_lookTone;
++static s32 STPLNMET_lookCursor;
++static s32 STPLNMET_lookLoaded; /* 1 drawn from the box, -1 no box: nothing drawn */
++static s32 STPLNMET_lookX; /* the box: the looks' images side by side, their CLUTs under, then the tones' */
++static s32 STPLNMET_lookY;
++static s32 STPLNMET_lookW[LOOK_MODELS];
++static s32 STPLNMET_lookH[LOOK_MODELS];
++static s32 STPLNMET_lookOX[LOOK_MODELS];
++static s32 STPLNMET_lookOY[LOOK_MODELS];
++static u16 STPLNMET_lookClut[LOOK_MODELS][16];
++
++/* the screen's step (screen.c): whether the page is still to be passed, and the look for GAME.pad5 */
++s32 STPLNMET_lookPending(void) {
++    return STPLNMET_lookMode;
++}
++
++void STPLNMET_lookResult(u8 *pad) {
++    pad[0] = 0xC0; /* actor_control.c's COOP_LOOK_MAGIC */
++    pad[1] = (u8)STPLNMET_lookModel;
++    pad[2] = (u8)STPLNMET_lookTone;
++}
++
++static void STPLNMET_lookTones(void) {
++    u16 colors[16];
++    s32 k;
++
++    for (k = 0; k < NATIVE_TONES; k++) {
++        native_tone_clut(colors, STPLNMET_lookClut[STPLNMET_lookModel], k);
++        native_vram_clut(STPLNMET_lookX + (k % 4) * 16, STPLNMET_lookY + 65 + k / 4, colors);
++    }
++}
++
++static void STPLNMET_loadLooks(void) {
++    TimLoader loader;
++    s32 pageX;
++    s32 pageY;
++    s16 *entry;
++    s32 *frames;
++    u32 *tim;
++    s32 x;
++    s32 y;
++    s32 m;
++
++    native_coop_vram_reset();
++    if (!native_coop_find_vram_any(64, 67, &x, &y, &pageX, &pageY)) {
++        STPLNMET_lookLoaded = -1;
++        return;
++    }
++    native_coop_vram_reserve(x, y, 64, 67);
++    STPLNMET_lookX = x;
++    STPLNMET_lookY = y;
++    for (m = 0; m < LOOK_MODELS; m++) {
++        for (entry = FILE_CACHE.getEntry(LOOK_FILES[m]); entry[0] != 0 && entry[0] != 1; entry += 6) {
++        }
++        if (entry[0] == 0) {
++            entry = FILE_CACHE.getEntry(LOOK_FILES[m]);
++        }
++        frames = FILE_CACHE.getEntry((LOOK_FILES[m] & 0xFFFF0000) | (u16)entry[1]); /* standing, to the south */
++        tim = FILE_CACHE.getEntry((LOOK_FILES[m] & 0xFFFF0000) | (frames[1] & 0xFFFF));
++        initTimLoader(&loader);
++        loader.setImagePos(x + m * 16, y);
++        loader.setClutPos(x + m * 16, y + 64);
++        loader.load(tim);
++        STPLNMET_lookW[m] = loader.w * 4;
++        STPLNMET_lookH[m] = loader.h;
++        STPLNMET_lookOX[m] = frames[2];
++        STPLNMET_lookOY[m] = frames[3];
++        memcpy(STPLNMET_lookClut[m], &tim[5], 32);
++    }
++    STPLNMET_lookLoaded = 1;
++    STPLNMET_lookTones();
++}
++
++/* look m with the CLUT at (cx, cy), its feet at (fx, fy), scaled num / 8 */
++static void STPLNMET_drawLook(PartnerChoice *task, s32 m, s32 cx, s32 cy, s32 fx, s32 fy, s32 num) {
++    Layer *layer = GFX.funcs.getLayer(task->layer);
++    u_long *ot = (u_long *)layer->getOtEntry(layer, task->depth);
++    POLY_FT4 *poly = GFX.funcs.getPrim();
++    s32 page = STPLNMET_lookX & ~63;
++    s32 u = (STPLNMET_lookX + m * 16 - page) * 4;
++    s32 v = STPLNMET_lookY & 255;
++    s32 x = fx + STPLNMET_lookOX[m] * num / 8;
++    s32 y = fy + STPLNMET_lookOY[m] * num / 8;
++    s32 w = STPLNMET_lookW[m] * num / 8;
++    s32 h = STPLNMET_lookH[m] * num / 8;
++
++    setPolyFT4(poly);
++    setRGB0(poly, 0x80, 0x80, 0x80);
++    setXY4(poly, x, y, x + w, y, x, y + h, x + w, y + h);
++    setUV4(poly, u, v, u + STPLNMET_lookW[m], v, u, v + STPLNMET_lookH[m], u + STPLNMET_lookW[m], v + STPLNMET_lookH[m]);
++    poly->clut = getClut(cx, cy);
++    poly->tpage = getTPage(0, 0, page, STPLNMET_lookY & ~255);
++    addPrim(ot, poly);
++    GFX.funcs.setPrim(poly + 1);
++}
++
++static void STPLNMET_showLook(PartnerChoice *task, PartnerChoiceWindows *windows) {
++    const void *coop = native_coop_text(LANGUAGE);
++    s32 i;
++
++    windows->title->setString(windows->title, (void *)coop, COOP_TEXT_LOOK_TITLE);
++    windows->name->setVisible(windows->name, 0);
++    for (i = 0; i < LOOK_MODELS; i++) {
++        windows->labels[i]->setPos(windows->labels[i], TEAM_PICK_X(i) - 2, LOOK_PANEL_Y + 0x43); /* under the panel: the heads go above it */
++        windows->labels[i]->setString(windows->labels[i], (void *)coop, COOP_TEXT_LOOK_NAME + i);
++    }
++    windows->partners[0].name->setPos(windows->partners[0].name, TEAM_ACCEPT_X, LOOK_PANEL_Y + 0x15);
++    windows->partners[0].name->setString(windows->partners[0].name, (void *)coop, COOP_TEXT_ACCEPT);
++    for (i = 0; i < 3; i++) {
++        windows->partners[i].text->setVisible(windows->partners[i].text, 0);
++        if (i > 0) {
++            windows->partners[i].name->setVisible(windows->partners[i].name, 0);
++        }
++    }
++    windows->text->setString(windows->text, (void *)coop, COOP_TEXT_LOOK_HELP);
++    (void)task;
++}
++
++static void STPLNMET_drawLookPage(PartnerChoice *task) {
++    SpriteDrawer sprite;
++    s32 i;
++    s32 k;
++
++    if (STPLNMET_lookLoaded == 0) {
++        STPLNMET_loadLooks();
++    }
++    initSpriteDrawer(&sprite);
++    if (STPLNMET_lookLoaded > 0) {
++        for (i = 0; i < LOOK_MODELS; i++) { /* the looks: the one picked in its tone */
++            if (i == STPLNMET_lookModel) {
++                STPLNMET_drawLook(task, i, STPLNMET_lookX + (STPLNMET_lookTone % 4) * 16, STPLNMET_lookY + 65 + STPLNMET_lookTone / 4,
++                                  LOOK_FOOT_X(i), LOOK_FOOT_Y, 8);
++            } else {
++                STPLNMET_drawLook(task, i, STPLNMET_lookX + i * 16, STPLNMET_lookY + 64, LOOK_FOOT_X(i), LOOK_FOOT_Y, 8);
++            }
++        }
++        for (k = 0; k < NATIVE_TONES; k++) { /* the tones: the look picked in each */
++            STPLNMET_drawLook(task, STPLNMET_lookModel, STPLNMET_lookX + (k % 4) * 16, STPLNMET_lookY + 65 + k / 4,
++                              TEAM_ROW_X(k) + 0xA, TEAM_ROW_Y + 0x18, 5);
++        }
++    }
++    /* the team panel, as the team page has it, higher */
++    sprite.setLayerId(task->layer, task->depth - 1);
++    sprite.setTexture(0x280, 0x100);
++    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 10, 0x37, LOOK_PANEL_Y);
++    sprite.setLayerId(task->layer, task->depth);
++    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 9, 0x37, LOOK_PANEL_Y);
++    for (k = 0; k < NATIVE_TONES; k++) {
++        STPLNMET_teamRect(task, 0, TEAM_ROW_X(k) - 7, TEAM_ROW_Y - 3, 0x22, 0x1E,
++                          k == STPLNMET_lookTone ? 0x28 : 0x08, k == STPLNMET_lookTone ? 0x38 : 0x10,
++                          k == STPLNMET_lookTone ? 0x80 : 0x30);
++    }
++    STPLNMET_teamRect(task, 0, 0x10, 0xC6, 0x120, 0x24, 0x08, 0x10, 0x30);
++    if (STPLNMET_lookCursor < LOOK_MODELS) {
++        STPLNMET_teamFrame(task, TEAM_PICK_X(STPLNMET_lookCursor) - 8, LOOK_PANEL_Y + 0x02, 0x34, 0x3A);
++    } else if (STPLNMET_lookCursor == LOOK_ACCEPT) {
++        STPLNMET_teamFrame(task, TEAM_ACCEPT_X - 4, LOOK_PANEL_Y + 0x12, 0x34, 0x12);
++    } else {
++        STPLNMET_teamFrame(task, TEAM_ROW_X(STPLNMET_lookCursor - LOOK_TONE0) - 7, TEAM_ROW_Y - 3, 0x22, 0x1E);
++    }
++}
++
++static void STPLNMET_runLook(PartnerChoice *task, PartnerChoiceWindows *windows) {
++    s32 *c = &STPLNMET_lookCursor;
++    s32 old = *c;
++
++    if (PAD_PRESSED(PAD_LEFT) || PAD_REPEATED(PAD_LEFT)) {
++        if (*c > 0 && *c != LOOK_TONE0) {
++            (*c)--;
++        }
++    } else if (PAD_PRESSED(PAD_RIGHT) || PAD_REPEATED(PAD_RIGHT)) {
++        if (*c < LOOK_ACCEPT || (*c >= LOOK_TONE0 && *c < LOOK_TONE0 + NATIVE_TONES - 1)) {
++            (*c)++;
++        }
++    } else if (PAD_PRESSED(PAD_DOWN) && *c <= LOOK_ACCEPT) {
++        *c = LOOK_TONE0 + STPLNMET_lookTone;
++    } else if (PAD_PRESSED(PAD_UP) && *c >= LOOK_TONE0) {
++        *c = STPLNMET_lookModel;
++    }
++    if (old != *c) {
++        SOUND.playSound(SOUND_MENU_MOVE);
++        if (*c < LOOK_MODELS && *c != STPLNMET_lookModel) { /* picked as the cursor goes */
++            STPLNMET_lookModel = *c;
++            if (STPLNMET_lookLoaded > 0) {
++                STPLNMET_lookTones();
++            }
++        } else if (*c >= LOOK_TONE0) {
++            STPLNMET_lookTone = *c - LOOK_TONE0;
++        }
++    }
++    if (PAD_PRESSED(PAD_START) || (PAD_PRESSED(PAD_CROSS) && *c == LOOK_ACCEPT)) {
++        SOUND.playSound(SOUND_MENU_CONFIRM);
++        STPLNMET_lookMode = 0;
++        task->substate = 100;
++        return;
++    }
++    if (PAD_PRESSED(PAD_CROSS)) { /* on to the tones, then to Accept */
++        SOUND.playSound(SOUND_MENU_CONFIRM);
++        *c = *c < LOOK_MODELS ? LOOK_TONE0 + STPLNMET_lookTone : LOOK_ACCEPT;
++    }
++    (void)windows;
++}
++#endif
++
  /* Creates the choice's windows: the title, the three labels, the partners'
     name and text, and each partner's name and text */
  void STPLNMET_createChoiceWindows(PartnerChoice *task, PartnerChoiceWindows *windows) {
@@ -283,18 +507,22 @@
      windows->title = createTextWindow(task->layer, 1, 0x20, 0x1A);
      windows->title->setPalette(windows->title, PALETTE_GREEN);
      for (i = 0; i < 3; i++) {
-@@ -42,6 +313,10 @@
+@@ -42,6 +537,14 @@
      s32 *partners;
  
      if (show != 0) {
 +#ifdef NATIVE
++        if (STPLNMET_lookMode) {
++            STPLNMET_showLook(task, windows); /* the character creator, before the name */
++            return;
++        }
 +        STPLNMET_showTeam(task, windows); /* the free team in place of the packs */
 +        return;
 +#endif
          partners = CHOICE_PARTNERS(task->choice);
          windows->title->setString(windows->title, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), 6);
  #ifdef NATIVE
-@@ -73,6 +348,9 @@
+@@ -73,6 +576,9 @@
          }
          return;
      }
@@ -304,34 +532,47 @@
      windows->title->setVisible(windows->title, 0);
      for (i = 0; i < 3; i++) {
          windows->labels[i]->setVisible(windows->labels[i], 0);
-@@ -92,6 +370,10 @@
+@@ -92,6 +598,14 @@
      s32 *partners = CHOICE_PARTNERS(task->choice);
      PartnerAnim *anim;
      s32 i;
 +#ifdef NATIVE
++    if (STPLNMET_lookMode) {
++        STPLNMET_drawLookPage(task);
++        return;
++    }
 +    STPLNMET_drawTeam(task);
 +    return;
 +#endif
  
      initSpriteDrawer(&sprite);
      sprite.setLayerId(task->layer, task->depth);
-@@ -135,6 +417,10 @@
+@@ -135,6 +649,14 @@
      s32 old = task->choice;
      s32 i;
  
 +#ifdef NATIVE
++    if (STPLNMET_lookMode) {
++        STPLNMET_runLook(task, windows);
++        return;
++    }
 +    STPLNMET_runTeam(task, windows);
 +    return;
 +#endif
      if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP)) {
          task->choice--;
          if (task->choice < 0) {
-@@ -209,6 +495,9 @@
+@@ -209,6 +731,14 @@
      PartnerChoice *task = createTask(STPLNMET_updateChoice, sizeof(PartnerChoice), sizeof(PartnerChoiceWindows));
  
      task->hide = STPLNMET_hideChoice;
 +#ifdef NATIVE
 +    STPLNMET_resetTeam();
++    STPLNMET_lookMode = 1; /* a new screen opens on the look */
++    STPLNMET_lookModel = 0;
++    STPLNMET_lookTone = 0;
++    STPLNMET_lookCursor = 0;
++    STPLNMET_lookLoaded = 0;
 +#endif
      task->layer = 0x1001;
      task->depth = 6;

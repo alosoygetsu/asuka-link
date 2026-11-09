@@ -3,6 +3,18 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.904
+Sobre el port v0.18.9.
+
+- **Creador de personaje** al empezar partida, antes del nombre: eliges entre **Junior** (Junpei), **Chico** y
+  **Chica**, y uno de **8 tonos** de color (pelo y ropa; la piel no cambia). La fila de tonos muestra a tu personaje
+  en cada color.
+  - Se aplica **después de la cinemática de entrada al Mundo Digital**; antes sigues siendo Junior.
+  - Sale también en las escenas de historia.
+  - Chico y Chica tienen todas las animaciones de Junior: las que no tenían (correr, trepar, caer, gestos de las
+    escenas…) se generan con sus propios dibujos y el ritmo de las de Junior.
+  - Se guarda con tu partida, en bytes que el juego no usa: la memory card sigue siendo normal.
+
 ## v0.18.903
 Sobre el port v0.18.9.
 

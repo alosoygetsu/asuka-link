@@ -112,6 +112,18 @@ def apply_patches():
             if r.returncode != 0:
                 out.unlink()  # half patched: the next build tries again
                 sys.exit(f"co-op patch {coop} failed over the port's {patch} (the port changed that code):\n{r.stdout}{r.stderr}")
+    # the co-op's patches of files the port leaves as they are: over the decomp's own
+    for coop in (NATIVE / "coop" / "patches").rglob("*.patch"):
+        rel = coop.relative_to(NATIVE / "coop" / "patches").with_suffix("")
+        if (NATIVE / "patches" / f"{rel.as_posix()}.patch").exists():
+            continue  # done above, over the port's
+        out = PATCHED / rel
+        if out.exists() and out.stat().st_mtime >= max(coop.stat().st_mtime, (DECOMP / rel).stat().st_mtime):
+            continue
+        out.parent.mkdir(parents=True, exist_ok=True)
+        r = run(["patch", "-s", "-o", out, DECOMP / rel, coop])
+        if r.returncode != 0:
+            sys.exit(f"co-op patch {coop} failed (the decomp changed that code):\n{r.stdout}{r.stderr}")
 
 
 def game_sources():

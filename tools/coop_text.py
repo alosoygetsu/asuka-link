@@ -8,7 +8,7 @@ characters those texts have. Run from anywhere: python native/tools/coop_text.py
 Index: 0 "", 1 the team choice's title, 2 its help, 3 the confirmation's "Your team", 4 the welcome's sentence
 about the partners (in place of the one about the three packs), 5-7 the picks' marks "1" "2" "3", 8 the team's
 separator ", ", 9 the team line before any pick,
-10 the team page's Accept.
+10 the team page's Accept, 11 the look page's title, 12 its help, 13-15 the models' names.
 """
 import re
 import sys
@@ -20,18 +20,18 @@ LANGUAGES = ["eng", "fra", "ita", "ger", "spn"]
 
 TEXTS = {
     "eng": ["", "Choose your Partners", "Pick 3 partners; pick one again\nto drop it. Then Accept.", "Your Team",
-            "Please choose three partner\nDigimon, any three you like.", "1", "2", "3", ", ", "No partners yet", "Accept"],
+            "Please choose three partner\nDigimon, any three you like.", "1", "2", "3", ", ", "No partners yet", "Accept", "Choose your Look", "Pick who you are and a colour.", "Junior", "Boy", "Girl"],
     "fra": ["", "Choisis tes partenaires", "Choisis 3 partenaires; le choisir\nà nouveau le retire. Puis Valider.",
             "Ton équipe", "Choisis trois Digimon\npartenaires, ceux que tu veux.", "1", "2", "3", ", ",
-            "Aucun partenaire", "Valider"],
+            "Aucun partenaire", "Valider", "Choisis ton look", "Choisis qui tu es et une couleur.", "Junior", "Garçon", "Fille"],
     "ita": ["", "Scegli i tuoi partner", "Scegli 3 partner; sceglierlo di\nnuovo lo toglie. Poi Conferma.",
             "La tua squadra", "Scegli tre Digimon partner,\nquelli che preferisci.", "1", "2", "3", ", ",
-            "Nessun partner", "Conferma"],
+            "Nessun partner", "Conferma", "Scegli il tuo aspetto", "Scegli chi sei e un colore.", "Junior", "Ragazzo", "Ragazza"],
     "ger": ["", "Wähle deine Partner", "Wähle 3 Partner; erneut wählen\nentfernt ihn. Dann Weiter.", "Dein Team",
-            "Wähle drei Partner-Digimon,\nganz nach deinem Geschmack.", "1", "2", "3", ", ", "Noch keine Partner", "Weiter"],
+            "Wähle drei Partner-Digimon,\nganz nach deinem Geschmack.", "1", "2", "3", ", ", "Noch keine Partner", "Weiter", "Wähle dein Aussehen", "Wähle, wer du bist, und eine Farbe.", "Junior", "Junge", "Mädchen"],
     "spn": ["", "Elige tus compañeros", "Elige 3 compañeros; elegir otra\nvez lo quita. Luego, Aceptar.",
             "Tu equipo", "Elige a tres Digimon\ncompañeros, los que quieras.", "1", "2", "3", ", ",
-            "Sin compañeros aún", "Aceptar"],
+            "Sin compañeros aún", "Aceptar", "Elige tu personaje", "Elige quién eres y un color.", "Junior", "Chico", "Chica"],
 }
 
 

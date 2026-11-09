@@ -1,0 +1,50 @@
+--- a/src/stplnmet/screen.c
++++ b/src/stplnmet/screen.c
+@@ -3,6 +3,12 @@
+ 
+ #include "stplnmet.h"
+ 
++#ifdef NATIVE
++s32 STPLNMET_lookPending(void); /* choice.c: the character creator's page */
++void STPLNMET_lookResult(u8 *pad);
++static s32 STPLNMET_lookShown;
++#endif
++
+ /* Creates the three tabs at the top (the name, the partners, the confirmation), hidden */
+ void STPLNMET_createTabs(PlayerNameScreen *screen, PlayerNameScreenChildren *children) {
+     s32 i;
+@@ -60,6 +66,24 @@
+             if (STPLNMET_funcs.updateFade(&screen->fade) != 0) {
+                 STPLNMET_showTabs(screen, children, 1);
+             }
++#ifdef NATIVE
++            /* the character creator's page before the name, in the partners' task */
++            if (STPLNMET_lookPending()) {
++                if (!STPLNMET_lookShown && children->partners->state == TASK_DONE) {
++                    children->name->hide(children->name, 1);
++                    children->partners->hide(children->partners, 0);
++                    STPLNMET_lookShown = 1;
++                }
++                break;
++            }
++            if (STPLNMET_lookShown) { /* passed: the name now */
++                STPLNMET_lookShown = 0;
++                children->partners->hide(children->partners, 1);
++                children->name->state = TASK_RUN; /* opened as at the start: the keyboard's tween, then its windows */
++                children->name->substate = 0;
++                break;
++            }
++#endif
+             if (children->name->substate == 100) {
+                 children->name->hide(children->name, 1);
+                 children->partners->hide(children->partners, 0);
+@@ -103,6 +127,9 @@
+             if (STPLNMET_funcs.updateFade(&screen->fade) != 0 && children->confirm == NULL) {
+                 children->name->getName(children->name, GAME.name);
+                 GAME.funcs.setParty(children->partners->choice);
++#ifdef NATIVE
++                STPLNMET_lookResult(GAME.pad5); /* the look picked (actor_control.c) */
++#endif
+                 screen->state = TASK_KILL;
+             }
+             break;

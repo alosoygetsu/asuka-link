@@ -8,7 +8,8 @@ extern char g_coop_peer[256]; /* coop_peers = a, b, c: the other players, host o
 extern int g_coop_port;       /* coop_port: where this copy listens, 27500 */
 /* native.ini's coop, coop_peer and coop_port (main.c's read_ini): 1 when key was one of them */
 int native_coop_ini(const char *key, const char *value);
-int native_player_model(void); /* the player's look: a character (Actor.key1), 0 Junpei's own */
+int native_player_model(void);
+int native_player_tone(void); /* DW3_PLAYER_TONE (tests), -1 none */ /* the player's look: a character (Actor.key1), 0 Junpei's own */
 extern int g_exp_mult;   /* exp_multiplier = 1-5 */
 extern int g_money_mult; /* money_multiplier = 1-5 */
 /* What the field shows of a player: the field's mode and stage file (the same
@@ -39,6 +40,10 @@ int native_coop_find_vram_any(int w, int h, int *out_x, int *out_y, int *page_x,
 void native_coop_vram_copy(int from_x, int from_y, int to_x, int to_y, int w, int h);
 /* the CLUT at (x, y) recoloured for other player n (0-2) */
 void native_coop_vram_tint(int x, int y, int n);
+/* the character creator's tones: src's 16 colours turned for tone (0 as drawn, 1-7) into dst; and a CLUT into VRAM */
+#define NATIVE_TONES 8
+void native_tone_clut(unsigned short *dst, const unsigned short *src, int tone);
+void native_vram_clut(int x, int y, const unsigned short *colors);
 
 /* The free team (platform/team.c): GAME.partySet of a picked team, NATIVE_TEAM_BASE + a + b * 8 + c * 64 */
 #define NATIVE_TEAM_BASE 0x40
@@ -55,5 +60,8 @@ const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a 
 #define COOP_TEXT_SEPARATOR 8
 #define COOP_TEXT_NO_TEAM 9
 #define COOP_TEXT_ACCEPT 10
+#define COOP_TEXT_LOOK_TITLE 11
+#define COOP_TEXT_LOOK_HELP 12
+#define COOP_TEXT_LOOK_NAME 13 /* 13-15: Junior, the boy, the girl */
 
 #endif /* NATIVE_COOP_H */

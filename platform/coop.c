@@ -40,6 +40,18 @@ int native_player_model(void) {
     return model;
 }
 
+/* DW3_PLAYER_TONE=<0-7> (tests): the tone with DW3_PLAYER_MODEL, the save's otherwise; -1 none set */
+int native_player_tone(void) {
+    static int tone = -2;
+
+    if (tone == -2) {
+        const char *env = SDL_getenv("DW3_PLAYER_TONE");
+
+        tone = env != NULL ? SDL_atoi(env) & 7 : -1;
+    }
+    return tone;
+}
+
 int native_coop_ini(const char *key, const char *value) {
     if (SDL_strcasecmp(key, "coop") == 0) {
         g_coop = SDL_atoi(value) != 0;
@@ -166,6 +178,53 @@ void native_coop_vram_tint(int x, int y, int n) {
         }
         clut[i] = (uint16_t)((c & 0x8000) | nr | (ng << 5) | (nb << 10));
     }
+    gl_vram_dirty(x, y, 16, 1);
+    gl_refresh(x, y, 16, 1);
+}
+
+/* The character creator's tones: a 16-colour CLUT's colours turned for tone (0 as drawn, 1-7 the hue turned by
+   45 degrees each), from src to dst (both BGR555, the semi-transparency bit kept). Greys, black, white and skin (light,
+   a little saturated, between red and yellow) stay */
+void native_tone_clut(uint16_t *dst, const uint16_t *src, int tone) {
+    int i;
+
+    for (i = 0; i < 16; i++) {
+        int c = src[i], r = c & 31, g = (c >> 5) & 31, b = (c >> 10) & 31;
+        int hi = SDL_max(r, SDL_max(g, b)), lo = SDL_min(r, SDL_min(g, b)), sat = hi - lo, hue, h6, f, p, q, t;
+
+        dst[i] = (uint16_t)c;
+        if (tone <= 0 || c == 0 || sat <= 3) {
+            continue;
+        }
+        /* the hue, 0-359 */
+        hue = hi == r ? 60 * (g - b) / sat : hi == g ? 120 + 60 * (b - r) / sat : 240 + 60 * (r - g) / sat;
+        hue = (hue + 360) % 360;
+        if (hue >= 5 && hue <= 50 && hi >= 22 && sat <= 16) {
+            continue; /* skin */
+        }
+        hue = (hue + tone * 45) % 360;
+        /* back to RGB at the same value and saturation */
+        h6 = hue / 60;
+        f = hue % 60;
+        p = lo;
+        q = hi - sat * f / 60;
+        t = lo + sat * f / 60;
+        switch (h6) {
+        case 0: r = hi; g = t; b = p; break;
+        case 1: r = q; g = hi; b = p; break;
+        case 2: r = p; g = hi; b = t; break;
+        case 3: r = p; g = q; b = hi; break;
+        case 4: r = t; g = p; b = hi; break;
+        default: r = hi; g = p; b = q; break;
+        }
+        dst[i] = (uint16_t)((c & 0x8000) | r | (g << 5) | (b << 10));
+    }
+}
+
+/* Writes a 16-colour CLUT at (x, y) in VRAM */
+void native_vram_clut(int x, int y, const uint16_t *colors) {
+    soft_write(x, y, 16, 1);
+    memcpy(&g_vram[y * VRAM_W + x], colors, 32);
     gl_vram_dirty(x, y, 16, 1);
     gl_refresh(x, y, 16, 1);
 }
