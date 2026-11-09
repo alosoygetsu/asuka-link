@@ -3,6 +3,16 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.909
+Sobre el port v0.18.9.
+
+- **Os volvéis a ver al cambiar de mapa.** Cada mapa gastaba un hueco de la memoria de vídeo para dibujar a los demás
+  y no lo devolvía; tras unos cuantos cambios de mapa ya no quedaba sitio ("has no room in VRAM" en `coop.log`) y
+  dejabais de veros. Ahora el hueco del mapa anterior se reutiliza.
+- **Combates entre jugadores:** al cambiar de Digimon, el que entra lo hace en la forma elegida también en la pantalla
+  del otro (antes conservaba la de antes, el daño salía distinto en cada juego y el combate se podía quedar atascado).
+- `coop.log` apunta cada orden del combate y cualquier diferencia de vida entre los dos juegos.
+
 ## v0.18.908
 Sobre el port v0.18.9.
 

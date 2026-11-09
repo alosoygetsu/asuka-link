@@ -125,7 +125,7 @@
              if (children->commands->action == 0) {
                  children->task.attack = FIGHTSTG_startFirstTech(0);
                  task->setSubstate(task, 2);
-@@ -1110,6 +1186,31 @@
+@@ -1110,6 +1186,37 @@
                      FIGHTSTG_setPlayerTurnStep(4);
                      task->step = 2;
                  } else {
@@ -149,15 +149,21 @@
 +                        }
 +                        FIGHTSTG_coopPvpTake(&c);
 +                        native_coop_pvp_seed(c.seed);
++                        if (!c.knockOut) {
++                            native_coop_note("PvP: out of step: command %d isn't a pick after a knockout", c.number);
++                        }
 +                        if (c.arg >= 0 && c.arg < 3 && unit[c.arg].id != 0 && unit[c.arg].hp != 0) {
 +                            slot = c.arg;
++                            if (c.digimon > 0 && GET_DIGIMON(c.digimon) != NULL) {
++                                unit[c.arg].id = c.digimon; /* as the form the other picked */
++                            }
 +                        }
 +                    }
 +#endif
                      unit = FIGHTSTG_battle.fighters[1] + slot;
                      task->step = 3;
                      task->args[0] = slot;
-@@ -1125,6 +1226,11 @@
+@@ -1125,6 +1232,11 @@
          break;
      case 2:
          if (FIGHTSTG_isPlayerChoosing() == 0) {

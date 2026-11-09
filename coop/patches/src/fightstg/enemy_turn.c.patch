@@ -1,6 +1,6 @@
 --- a/src/fightstg/enemy_turn.c
 +++ b/src/fightstg/enemy_turn.c
-@@ -3,6 +3,118 @@
+@@ -3,6 +3,121 @@
  
  #include "fightstg.h"
  
@@ -22,7 +22,7 @@
 +                continue;
 +            }
 +            if (fighter->hp != c->hp[side][i] || fighter->mp != c->mp[side][i]) {
-+                if (g_coop_debug) {
++                if (fighter->hp != c->hp[side][i] || g_coop_debug) { /* the HP apart: the two games went apart */
 +                    native_coop_note("PvP: %s %d was HP %d MP %d, the other's %d %d", side == 0 ? "enemy" : "partner", i,
 +                                     fighter->hp, fighter->mp, c->hp[side][i], c->mp[side][i]);
 +                }
@@ -89,6 +89,9 @@
 +    case 5:
 +        if (c.arg >= 0 && c.arg < 3 && c.arg != FIGHTSTG_battle.active[1] && enemies[c.arg].id != 0 &&
 +            enemies[c.arg].hp != 0) {
++            if (c.digimon > 0 && GET_DIGIMON(c.digimon) != NULL) {
++                enemies[c.arg].id = c.digimon; /* it comes in as the form the other picked */
++            }
 +            task->switchTo = c.arg;
 +            children->message = FIGHTSTG_createMessage();
 +            task->lines[0] = 0x4D;
@@ -119,7 +122,7 @@
  /* The enemy that the enemy's turn (FIGHTSTG_updateEnemyTurn) switches to:
     task->target's, or one of the others at random (not the active one), -1
     for none */
-@@ -199,6 +311,12 @@
+@@ -199,6 +314,12 @@
              showRunAway(task, children);
              break;
          case 1:

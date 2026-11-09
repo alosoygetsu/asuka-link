@@ -119,6 +119,9 @@ int native_coop_model_ok(int model);
    starts, a box kept for one, and a blank box free in a texture page */
 void native_coop_vram_reset(void);
 void native_coop_vram_reserve(int x, int y, int w, int h);
+/* the other players' boxes: one taken (mine), and the last map's blanked again when the new one left them (reclaim) */
+void native_coop_vram_mine(int x, int y, int w, int h);
+void native_coop_vram_reclaim(void);
 int native_coop_find_vram(int page_x, int page_y, int w, int h, int *out_x, int *out_y);
 void native_coop_vram_dump(int page_x, int page_y);
 /* or in any page right of the frame buffers, and a copy of VRAM (a CLUT) */

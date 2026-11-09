@@ -80,6 +80,24 @@ int native_coop_ini(const char *key, const char *value) {
 /* --- VRAM: the slots kept for the field's actors --- */
 
 static uint8_t s_reserved[VRAM_H][VRAM_W / 8];
+#define COOP_MINE 8
+
+static struct {
+    int x, y, w, h, live;
+    uint32_t hash;
+} s_mine[COOP_MINE];
+
+static uint32_t box_hash(int x, int y, int w, int h) {
+    uint32_t hash = 2166136261u;
+
+    for (int j = y; j < y + h; j++) {
+        for (int i = x; i < x + w; i++) {
+            hash = (hash ^ g_vram[j * VRAM_W + i]) * 16777619u;
+        }
+    }
+    return hash;
+}
+
 
 static int taken(int x, int y, int w, int h) {
     int i, j;
@@ -96,6 +114,13 @@ static int taken(int x, int y, int w, int h) {
 
 void native_coop_vram_reset(void) {
     memset(s_reserved, 0, sizeof s_reserved);
+    /* as the field starts, before its stage loads: the last map's boxes as it left them, for native_coop_vram_reclaim */
+    for (int k = 0; k < COOP_MINE; k++) {
+        if (s_mine[k].w != 0) {
+            s_mine[k].hash = box_hash(s_mine[k].x, s_mine[k].y, s_mine[k].w, s_mine[k].h);
+            s_mine[k].live = 0;
+        }
+    }
 }
 
 void native_coop_vram_reserve(int x, int y, int w, int h) {
@@ -142,6 +167,54 @@ int native_coop_find_vram_any(int w, int h, int *out_x, int *out_y, int *page_x,
         }
     }
     return 0;
+}
+
+/* The boxes the other players' frames took, map after map: a box must be blank to be taken, and a map leaves its
+   players' frames behind, so each map would take a new one till none was left. A box of the last map whose words are
+   as they were when it was left (the new map put nothing there) is blanked for the new map's players to take again */
+
+
+void native_coop_vram_mine(int x, int y, int w, int h) {
+    int k, free = -1;
+
+    for (k = 0; k < COOP_MINE; k++) {
+        if (s_mine[k].w == 0 || (s_mine[k].x == x && s_mine[k].y == y)) {
+            free = k;
+            if (s_mine[k].w != 0) {
+                break;
+            }
+        }
+    }
+    if (free < 0) {
+        free = 0; /* full: the oldest goes */
+        SDL_memmove(&s_mine[0], &s_mine[1], sizeof s_mine[0] * (COOP_MINE - 1));
+        free = COOP_MINE - 1;
+    }
+    s_mine[free].x = x;
+    s_mine[free].y = y;
+    s_mine[free].w = w;
+    s_mine[free].h = h;
+    s_mine[free].live = 1;
+    s_mine[free].hash = box_hash(x, y, w, h);
+}
+
+void native_coop_vram_reclaim(void) {
+    for (int k = 0; k < COOP_MINE; k++) {
+        if (s_mine[k].w == 0 || s_mine[k].live) {
+            continue;
+        }
+        int x = s_mine[k].x, y = s_mine[k].y, w = s_mine[k].w, h = s_mine[k].h;
+
+        if (box_hash(x, y, w, h) == s_mine[k].hash) {
+            soft_write(x, y, w, h);
+            for (int j = 0; j < h; j++) {
+                memset(&g_vram[(y + j) * VRAM_W + x], 0, (size_t)w * 2);
+            }
+            gl_vram_dirty(x, y, w, h);
+            gl_refresh(x, y, w, h);
+        }
+        s_mine[k].w = 0; /* blanked, or the map's own now */
+    }
 }
 
 /* Copies w x h words of VRAM, for a CLUT the ghost takes along */
@@ -478,7 +551,7 @@ void native_coop_pvp_send(NativeCoopCommand *c) {
     SDL_memmove(&s_pvp.out[1], &s_pvp.out[0], sizeof s_pvp.out[0] * (COOP_COMMANDS - 1));
     s_pvp.out[0] = *c;
     native_coop_commands_out(s_pvp.peer, s_pvp.out);
-    if (g_coop_debug) {
+    if (1) { /* each command in coop.log: what a stuck battle was waiting for */
         native_coop_note("PvP: sent command %d: action %d arg %d digimon %d%s", c->number, c->action, c->arg,
                          c->digimon, c->knockOut ? " (after a knockout)" : "");
     }
@@ -513,7 +586,7 @@ int native_coop_pvp_take(NativeCoopCommand *c) {
             if (c->action == 1) {
                 s_pvp.over = 1;
             }
-            if (g_coop_debug) {
+            if (1) {
                 native_coop_note("PvP: took command %d: action %d arg %d digimon %d%s", c->number, c->action, c->arg,
                                  c->digimon, c->knockOut ? " (after a knockout)" : "");
             }

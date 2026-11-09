@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1079 @@
+@@ -362,10 +362,1081 @@
      }
  }
  
@@ -93,6 +93,7 @@
 +        return;
 +    }
 +    native_coop_vram_reserve(x, y, COOP_SLOT_W * 2, COOP_SLOT_H + 1);
++    native_coop_vram_mine(x, y, COOP_SLOT_W * 2, COOP_SLOT_H + 1);
 +    *image = *mine;
 +    image->x = page.x;
 +    image->y = page.y;
@@ -123,6 +124,7 @@
 +        native_coop_note("map %X: you are character %X here, the others aren't shown", GAME.funcs.getMode(), player->key1);
 +        return;
 +    }
++    native_coop_vram_reclaim(); /* the last map's players' boxes, when nothing came over them */
 +    for (i = -2; i < 4; i++) {
 +        coopReserveSlot(i);
 +    }
@@ -1080,7 +1082,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1661,9 @@
+@@ -592,6 +1663,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1090,7 +1092,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1717,9 @@
+@@ -645,6 +1719,9 @@
          }
          break;
      case TASK_RUN:
