@@ -19,7 +19,7 @@
 #include "coop_net.h"
 
 #define COOP_MAGIC 0x43335744u /* "DW3C" */
-#define COOP_VERSION 4 /* 3: the look and the name; 4: the card trade */
+#define COOP_VERSION 5 /* 3: the look and the name; 4: the card trade; 5: blobs (the PvP battle's teams) */
 #define COOP_BUFFER_MS 80 /* the least; more with jitter */
 #define COOP_TIMEOUT_MS 2000
 #define COOP_RX 32 /* states kept, ~0.6 s at 50 Hz */
@@ -42,6 +42,10 @@ typedef struct CoopPacket {
     uint8_t tone, hasLook;
     char name[16];
     NativeCoopTrade trade; /* this copy's side of its trade with the one it goes to */
+    /* a blob (native_coop_blob_send) in pieces, one a packet, round and round until the other has it all; and the
+       other's blob this copy has whole */
+    uint16_t blob_id, blob_size, blob_at, blob_got;
+    uint8_t blob[COOP_BLOB_PIECE];
 } CoopPacket;
 
 typedef struct CoopRx {
@@ -67,6 +71,10 @@ typedef struct CoopPeer {
     Uint64 report_at;
     int said_version;
     NativeCoopTrade trade_in, trade_out;
+    uint8_t blob_out[COOP_BLOB_MAX], blob_in[COOP_BLOB_MAX];
+    uint16_t out_id, out_size, out_at; /* what goes to it, and the next piece */
+    uint16_t in_id, in_size, in_whole, got_id; /* what comes from it; got_id: the id of ours it has whole */
+    uint8_t in_have[COOP_BLOB_MAX / COOP_BLOB_PIECE + 1];
 } CoopPeer;
 
 static SOCKET s_sock = INVALID_SOCKET;
@@ -281,6 +289,17 @@ void coop_net_send(const NativeCoopState *now) {
         p.ack_time = peer->ack_time;
         p.ack_age = peer->ack_time != 0 ? (uint32_t)(t - peer->ack_at) : 0;
         p.trade = peer->trade_out;
+        p.blob_id = 0;
+        p.blob_got = peer->in_whole ? peer->in_id : 0;
+        if (peer->out_id != 0 && peer->got_id != peer->out_id) {
+            int at = peer->out_at;
+
+            p.blob_id = peer->out_id;
+            p.blob_size = peer->out_size;
+            p.blob_at = (uint16_t)at;
+            SDL_memcpy(p.blob, peer->blob_out + at, SDL_min(COOP_BLOB_PIECE, peer->out_size - at));
+            peer->out_at = (uint16_t)(at + COOP_BLOB_PIECE < peer->out_size ? at + COOP_BLOB_PIECE : 0);
+        }
         sendto(s_sock, (const char *)&p, sizeof p, 0, (const struct sockaddr *)&peer->addr, sizeof peer->addr);
     }
 }
@@ -341,6 +360,25 @@ static void take(CoopPeer *peer, const CoopPacket *p) {
     SDL_memcpy(r->state.name, p->name, sizeof r->state.name);
     r->state.name[sizeof r->state.name - 1] = 0;
     peer->trade_in = p->trade;
+    peer->got_id = p->blob_got;
+    if (p->blob_id != 0 && p->blob_size <= COOP_BLOB_MAX && p->blob_at < p->blob_size && p->blob_at % COOP_BLOB_PIECE == 0) {
+        int piece = p->blob_at / COOP_BLOB_PIECE, n = (p->blob_size + COOP_BLOB_PIECE - 1) / COOP_BLOB_PIECE, all = 1;
+
+        if (p->blob_id != peer->in_id || p->blob_size != peer->in_size) {
+            peer->in_id = p->blob_id; /* a new one: start over */
+            peer->in_size = p->blob_size;
+            peer->in_whole = 0;
+            SDL_memset(peer->in_have, 0, sizeof peer->in_have);
+        }
+        if (!peer->in_whole) {
+            SDL_memcpy(peer->blob_in + p->blob_at, p->blob, SDL_min(COOP_BLOB_PIECE, p->blob_size - p->blob_at));
+            peer->in_have[piece] = 1;
+            for (int k = 0; k < n; k++) {
+                all &= peer->in_have[k];
+            }
+            peer->in_whole = all;
+        }
+    }
     if (peer->trade_in.count > COOP_TRADE_KINDS) {
         peer->trade_in.count = COOP_TRADE_KINDS;
     }
@@ -473,4 +511,27 @@ int native_coop_trade_in(int i, NativeCoopTrade *t) {
     }
     *t = s_peers[i].trade_in;
     return 1;
+}
+
+void native_coop_blob_send(int i, const void *data, int size, int id) {
+    if (i >= 0 && i < s_peer_count && size > 0 && size <= COOP_BLOB_MAX) {
+        CoopPeer *peer = &s_peers[i];
+
+        SDL_memcpy(peer->blob_out, data, size);
+        peer->out_size = (uint16_t)size;
+        peer->out_at = 0;
+        peer->out_id = (uint16_t)id;
+    }
+}
+
+int native_coop_blob_sent(int i, int id) {
+    return i >= 0 && i < s_peer_count && s_peers[i].got_id == (uint16_t)id && id != 0;
+}
+
+int native_coop_blob_recv(int i, int id, void *out, int max) {
+    if (i < 0 || i >= s_peer_count || !s_peers[i].in_whole || s_peers[i].in_id != (uint16_t)id || s_peers[i].in_size > max) {
+        return 0;
+    }
+    SDL_memcpy(out, s_peers[i].blob_in, s_peers[i].in_size);
+    return s_peers[i].in_size;
 }

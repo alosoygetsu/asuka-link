@@ -1,0 +1,106 @@
+--- a/src/fightstg/stats.c
++++ b/src/fightstg/stats.c
+@@ -33,6 +33,74 @@
+     stats->damageBonus = fighter->charge;
+ }
+ 
++#ifdef NATIVE
++/* The PvP battle (fieldstg/field.c): the enemy side is the other player's party, whose stats are worked out as the
++   player's are, from its partners: the party and those partners swapped into GAME a moment (coopPvpSwap), the
++   fighter the enemy's (coopPvpSide) */
++typedef struct CoopTeam {
++    s32 party[3];
++    s32 ids[3];
++    Partner partners[3];
++} CoopTeam;
++
++static s32 coopPvpSide;
++
++static void coopPvpSwap(void) {
++    CoopTeam *team = (CoopTeam *)native_coop_pvp()->team;
++    u8 *a;
++    u8 *b;
++    u8 t;
++    s32 i;
++    s32 k;
++
++    for (i = 0; i < 3; i++) {
++        k = GAME.party[i];
++        GAME.party[i] = team->party[i];
++        team->party[i] = k;
++    }
++    for (i = 0; i < 3; i++) {
++        if (GAME.party[i] < 0 || GAME.party[i] >= PARTNER_COUNT) {
++            continue;
++        }
++        a = (u8 *)&GAME.partners[GAME.party[i]];
++        b = (u8 *)&team->partners[i];
++        for (k = 0; k < (s32)sizeof(Partner); k++) {
++            t = a[k];
++            a[k] = b[k];
++            b[k] = t;
++        }
++    }
++}
++
++/* the swap undone: the partners back first, by the party swapped in, then the party */
++static void coopPvpUnswap(void) {
++    CoopTeam *team = (CoopTeam *)native_coop_pvp()->team;
++    u8 *a;
++    u8 *b;
++    u8 t;
++    s32 i;
++    s32 k;
++
++    for (i = 0; i < 3; i++) {
++        if (GAME.party[i] < 0 || GAME.party[i] >= PARTNER_COUNT) {
++            continue;
++        }
++        a = (u8 *)&GAME.partners[GAME.party[i]];
++        b = (u8 *)&team->partners[i];
++        for (k = 0; k < (s32)sizeof(Partner); k++) {
++            t = a[k];
++            a[k] = b[k];
++            b[k] = t;
++        }
++    }
++    for (i = 0; i < 3; i++) {
++        k = GAME.party[i];
++        GAME.party[i] = team->party[i];
++        team->party[i] = k;
++    }
++}
++#endif
++
+ /* Works out a side's stats into its BattleStats: the partner's totals with
+    the fighter's boosts, its resistances and what its equipment and
+    accessories add, or the enemy's (computeEnemyStats). The match depends on
+@@ -55,6 +123,16 @@
+     s32 found;
+     s32 i;
+ 
++#ifdef NATIVE
++    if (side != 0 && coopPvpSide == 0 && native_coop_pvp() != NULL) {
++        coopPvpSwap();
++        coopPvpSide = 1;
++        stats = FIGHTSTG_computeStats(0, which, index);
++        coopPvpSide = 0;
++        coopPvpUnswap();
++        return stats;
++    }
++#endif
+     if (which) {
+         stats = &FIGHTSTG_battleFuncs.stats[0];
+     } else {
+@@ -62,7 +140,11 @@
+     }
+     HEAP.zero(stats, sizeof(BattleStats));
+     if (side == 0) {
++#ifdef NATIVE
++        fighter = &FIGHTSTG_battle.fighters[coopPvpSide][index]; /* the PvP's enemy, as a player's */
++#else
+         fighter = &FIGHTSTG_battle.fighters[0][index];
++#endif
+         member = GAME.funcs.getPartyMember(index);
+         digimon = &DIGIMON_DATA[member];
+         GAME.funcs.computeStats(member, &totals);

@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,939 @@
+@@ -362,10 +362,1066 @@
      }
  }
  
@@ -157,7 +157,7 @@
 +enum {
 +    T_TITLE, T_YOURS, T_THEIRS, T_SPARE, T_NO_SPARE, T_WANTS, T_ACCEPT, T_LEAVE, T_WAITING, T_READY, T_CONFIRM,
 +    T_DONE, T_CANCELLED, T_DECLINED, T_NO_ROOM, T_AMOUNT, T_CONFIRMED, T_NOTHING, T_FULL, T_CHANGE, T_WAIT_DOTS,
-+    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER
++    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING
 +};
 +
 +static struct {
@@ -167,7 +167,9 @@
 +    s32 frames; /* in the phase */
 +    s32 froze; /* busy was set here */
 +    u32 readyTheirs; /* their offer's hash when this side got ready */
-+    s32 menu; /* the Guardromon's choice: 0 talk, 1 trade */
++    s32 menu; /* the Guardromon's choice: 0 talk, 1 trade, 2 battle */
++    s32 kind; /* what the wait is for: 0 a card trade, 1 a PvP battle (NativeCoopTrade.pad[0]) */
++    s32 teamSent;
 +    Actor *talker; /* who talked to him, and where: his own talk, if that's the choice */
 +    Point talkAt;
 +    s32 passing; /* his own talk going on: not offered again */
@@ -583,14 +585,18 @@
 +        return;
 +    }
 +    if (coopTrade.phase == COOP_TRADE_MENU) {
-+        coopTradePanel(0x10, 0xA8, 0x120, 0x34);
-+        for (i = 0; i < 2; i++) {
++        coopTradePanel(0x10, 0x9A, 0x120, 0x42);
++        for (i = 0; i < 3; i++) {
 +            if (coopTrade.menu == i) {
-+                coopTradeRect(0x16, 0xAF + i * 14, 0x110, 12, 0x20, 0x38, 0x80, 0);
++                coopTradeRect(0x16, 0xA1 + i * 14, 0x110, 12, 0x20, 0x38, 0x80, 0);
 +            }
-+            coopTradeText(coopTradeString(i == 0 ? T_TALK : T_TRADE_OPTION), 0x1C, 0xB0 + i * 14,
-+                          coopTrade.menu == i ? PALETTE_YELLOW : PALETTE_WHITE, 0);
++            coopTradeText(coopTradeString(i == 0 ? T_TALK : i == 1 ? T_TRADE_OPTION : T_BATTLE_OPTION), 0x1C,
++                          0xA2 + i * 14, coopTrade.menu == i ? PALETTE_YELLOW : PALETTE_WHITE, 0);
 +        }
++        return;
++    }
++    if (coopTrade.kind == 1 && coopTrade.phase >= COOP_TRADE_OPEN) {
++        coopTradeSmall(coopTradeString(T_PREPARING), -1, T_LEAVE);
 +        return;
 +    }
 +    if (coopTrade.phase == COOP_TRADE_ASK) {
@@ -656,6 +662,109 @@
 +    }
 +}
 +
++/* ---- The PvP battle: once two players waiting at a Guardromon to battle find each other, each sends its party (its
++   three partners, whole) and, with both parties across, both start the battle: the other's party as the enemies, the
++   save kept to be put back after (wfightmn/menu.c), fightstg/stats.c working out the enemies' stats from their
++   partners ---- */
++
++typedef struct CoopTeam { /* fightstg/stats.c has it too */
++    s32 party[3];
++    s32 ids[3];
++    Partner partners[3];
++} CoopTeam;
++
++static CoopTeam coopTeamMine;
++static CoopTeam coopTeamTheirs;
++static Battle coopPvpBattle = {1, 15, MUSIC(2, 0)}; /* an encounter of none, the arena's stage and music */
++
++static s32 coopPvpBlob(void) {
++    return (s32)((coopTrade.session & 0x7FFF) | 1);
++}
++
++static void coopPvpStart(void) {
++    s32 i;
++    s32 member;
++    PartnerStats *st;
++
++    native_coop_pvp_begin(coopTrade.peer, &coopTeamTheirs, sizeof coopTeamTheirs, &GAME);
++    native_coop_note("PvP battle with player %d", coopTrade.peer + 2);
++    coopTradeEnd(COOP_TRADE_DONE, -1);
++    coopTrade.quiet = 0;
++    /* an exhibition: both sides whole (the save comes back after anyway) */
++    for (i = 0; i < 3; i++) {
++        member = GAME.party[i];
++        if (member >= 0 && member < PARTNER_COUNT) {
++            st = &GAME.partners[member].info;
++            st->stats[STAT_HP] = st->stats[STAT_MAX_HP];
++            st->stats[STAT_MP] = st->stats[STAT_MAX_MP];
++        }
++    }
++    FIELDSTG_startBattle(&coopPvpBattle);
++    BATTLE_SETUP.ambushChance = 0;
++    BATTLE_SETUP.encounterKind = 1;
++    BATTLE_SETUP.hasPrize = 0;
++    for (i = 0; i < 12; i++) {
++        BATTLE_SETUP.blocks[i] = 0;
++    }
++    for (i = 0; i < 3; i++) {
++        member = coopTeamTheirs.party[i];
++        BATTLE_SETUP.enemies[i].fighter = 0;
++        if (member < 0 || member >= PARTNER_COUNT) {
++            continue;
++        }
++        st = &coopTeamTheirs.partners[i].info;
++        BATTLE_SETUP.enemies[i].fighter = coopTeamTheirs.ids[i];
++        BATTLE_SETUP.enemies[i].level = st->stats[STAT_LEVEL];
++        BATTLE_SETUP.enemies[i].hp = st->stats[STAT_MAX_HP];
++        BATTLE_SETUP.enemies[i].mp = st->stats[STAT_MAX_MP];
++        BATTLE_SETUP.enemies[i].strength = 16;
++    }
++}
++
++/* The parties across (each side READY once it has both), then the battle, when both are */
++static void coopPvpUpdate(const NativeCoopTrade *in) {
++    s32 i;
++    s32 member;
++
++    if (!coopTrade.teamSent) {
++        for (i = 0; i < 3; i++) {
++            member = GAME.party[i];
++            coopTeamMine.party[i] = member;
++            coopTeamMine.ids[i] = member >= 0 && member < PARTNER_COUNT ? DIGIMON_DATA[member].id : 0;
++            if (member >= 0 && member < PARTNER_COUNT) {
++                coopTeamMine.partners[i] = GAME.partners[member];
++            }
++        }
++        native_coop_blob_send(coopTrade.peer, &coopTeamMine, sizeof coopTeamMine, coopPvpBlob());
++        coopTrade.teamSent = 1;
++    }
++    if (PAD_PRESSED(PAD_CIRCLE)) {
++        SOUND.playSound(SOUND_MENU_CANCEL);
++        coopTradeEnd(COOP_TRADE_NO, T_CANCELLED);
++        return;
++    }
++    if (g_coop_debug && coopTrade.frames % 30 == 0) {
++        native_log("coop: PvP wait: phase %d session %X; theirs phase %d session %X; blob in %d, ours across %d",
++                   coopTrade.phase, coopTrade.session, in->phase, in->session,
++                   native_coop_blob_recv(coopTrade.peer, coopPvpBlob(), &coopTeamTheirs, sizeof coopTeamTheirs),
++                   native_coop_blob_sent(coopTrade.peer, coopPvpBlob()));
++    }
++    if (coopTrade.phase == COOP_TRADE_OPEN &&
++        native_coop_blob_recv(coopTrade.peer, coopPvpBlob(), &coopTeamTheirs, sizeof coopTeamTheirs) == sizeof coopTeamTheirs &&
++        native_coop_blob_sent(coopTrade.peer, coopPvpBlob())) {
++        coopTrade.phase = COOP_TRADE_READY;
++    }
++    /* both ready: "go" goes out a few frames (the field is left at once after), then the battle */
++    if (coopTrade.phase == COOP_TRADE_READY && in->session == coopTrade.session && in->phase >= COOP_TRADE_READY &&
++        in->phase <= COOP_TRADE_DONE) {
++        coopTrade.phase = COOP_TRADE_CONFIRM;
++        coopTrade.frames = 0;
++    }
++    if (coopTrade.phase == COOP_TRADE_CONFIRM && coopTrade.frames >= 10) {
++        coopPvpStart();
++    }
++}
++
 +/* Every frame of the field with co-op on */
 +static void coopTradeUpdate(void) {
 +    NativeCoopTrade in;
@@ -682,6 +791,11 @@
 +    if (coopTrade.msgFrames > 0) {
 +        coopTrade.msgFrames--;
 +    }
++    if (coopTrade.phase == COOP_TRADE_NONE && coopTrade.frames > 200 && coopTradeFree() && (i = native_coop_auto()) >= 0) {
++        coopTradeStart(-1, 0, COOP_TRADE_ASK); /* tests: as if a Guardromon's choice had been made */
++        coopTrade.kind = i;
++        coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
++    }
 +    n = native_coop_test_cards();
 +    for (c = 1; c <= 5 && n > 0; c++) {
 +        GAME.funcs.addCards(c, n);
@@ -693,7 +807,7 @@
 +        switch (coopTrade.phase) {
 +        case COOP_TRADE_MENU:
 +            if (PAD_PRESSED(PAD_UP) || PAD_PRESSED(PAD_DOWN)) {
-+                coopTrade.menu ^= 1;
++                coopTrade.menu = (coopTrade.menu + (PAD_PRESSED(PAD_UP) ? 2 : 1)) % 3;
 +                SOUND.playSound(SOUND_CURSOR);
 +            } else if (PAD_PRESSED(PAD_CIRCLE) || (PAD_PRESSED(PAD_CROSS) && coopTrade.menu == 0)) {
 +                /* his own talk (saving), as if this weren't here */
@@ -702,6 +816,8 @@
 +                FIELDSTG_talkToActorAt(coopTrade.talker, &coopTrade.talkAt);
 +                coopTrade.passing = 0;
 +            } else if (PAD_PRESSED(PAD_CROSS)) {
++                coopTrade.kind = coopTrade.menu == 2;
++                coopTrade.teamSent = 0;
 +                coopTrade.phase = COOP_TRADE_ASK; /* wait for another player at a Guardromon */
 +                coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
 +                coopTrade.frames = 0;
@@ -715,7 +831,7 @@
 +                NativeCoopTrade other;
 +
 +                if (native_coop_trade_in(i, &other) && other.session != 0 &&
-+                    (other.phase == COOP_TRADE_ASK ||
++                    other.pad[0] == coopTrade.kind && (other.phase == COOP_TRADE_ASK ||
 +                     (other.phase == COOP_TRADE_OPEN && other.session == coopTrade.session)) &&
 +                    (n < 0 || other.session < in.session)) {
 +                    n = i;
@@ -737,10 +853,18 @@
 +            }
 +            break;
 +        default: /* open, ready, confirmed */
++            if (g_coop_debug && (!here || in.phase == COOP_TRADE_NO || (in.phase != COOP_TRADE_ASK && in.session != coopTrade.session))) {
++                native_log("coop: trade ends: here %d, theirs phase %d session %X, ours %X", here, in.phase, in.session,
++                           coopTrade.session);
++            }
 +            if (!here || in.phase == COOP_TRADE_NO ||
 +                (in.phase == COOP_TRADE_ASK ? coopTrade.frames > 60 : in.session != coopTrade.session) ||
 +                (in.phase == COOP_TRADE_NONE && coopTrade.frames > 30)) {
 +                coopTradeEnd(COOP_TRADE_NO, T_CANCELLED);
++                break;
++            }
++            if (coopTrade.kind == 1) {
++                coopPvpUpdate(&in);
 +                break;
 +            }
 +            if (coopTrade.phase == COOP_TRADE_OPEN) {
@@ -829,14 +953,17 @@
 +        send.phase = COOP_TRADE_NONE;
 +        send.count = 0;
 +        send.offer = send.seen = 0;
++        send.pad[0] = send.pad[1] = 0;
 +        if (coopTrade.phase == COOP_TRADE_ASK) {
 +            send.session = coopTrade.session; /* waiting: to everyone */
 +            send.phase = COOP_TRADE_ASK;
++            send.pad[0] = coopTrade.kind;
 +            send.offer = coopTradeHash(&send);
 +        } else if (coopTrade.phase >= COOP_TRADE_OPEN && coopTrade.phase <= COOP_TRADE_DONE && n == coopTrade.peer) {
 +            coopTradeOffer(&send);
 +            send.session = coopTrade.session;
 +            send.phase = coopTrade.phase;
++            send.pad[0] = coopTrade.kind;
 +            send.seen = coopTradeHash(&in);
 +        } else if (coopTrade.linger > 0 && n == coopTrade.msgPeer) {
 +            send = coopTrade.last;
@@ -940,7 +1067,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1521,9 @@
+@@ -592,6 +1648,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -950,7 +1077,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1577,9 @@
+@@ -645,6 +1704,9 @@
          }
          break;
      case TASK_RUN:

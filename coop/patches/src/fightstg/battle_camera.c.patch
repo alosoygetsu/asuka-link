@@ -1,0 +1,32 @@
+--- a/src/fightstg/battle_camera.c
++++ b/src/fightstg/battle_camera.c
+@@ -153,6 +153,16 @@
+         if (fighter == 0) {
+             break;
+         }
++#ifdef NATIVE
++        /* the co-op's PvP battle: an enemy that is a partner (the other player's) has a partner's entry, its cameras
++           as a partner's */
++        if ((id & 0xF0) && native_coop_pvp() != NULL) {
++            FIGHTSTG_fighterCache.funcs.getInfo(fighter);
++            if (!FIGHTSTG_fighterCache.isEnemy) {
++                id &= ~0xF0;
++            }
++        }
++#endif
+         if (!(id & 0xF0)) {
+             info = FIGHTSTG_fighterCache.funcs.getInfo(fighter);
+             FIGHTSTG_fighterView.vpx = info->camPos[camera].x;
+@@ -200,6 +210,12 @@
+             break;
+         }
+         FIGHTSTG_fighterCache.funcs.getInfo(fighter);
++#ifdef NATIVE
++        if (!FIGHTSTG_fighterCache.isEnemy) { /* a partner (the co-op's PvP) has no camera count: an enemy's usual 3 */
++            FIGHTSTG_getFighterView(task, 0, 2); /* 3 cameras: the last one's */
++            break;
++        }
++#endif
+         FIGHTSTG_getFighterView(task, 0, ((FighterInfoEnemy *)FIGHTSTG_fighterCache.enemyInfo)->cameraCount - 1);
+     } while (0);
+     return &FIGHTSTG_fighterView;

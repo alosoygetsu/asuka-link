@@ -1,0 +1,14 @@
+--- a/src/fightstg/rolls.c
++++ b/src/fightstg/rolls.c
+@@ -452,6 +452,11 @@
+     BattleStats *def;
+     s32 chance;
+     s32 *active;
++#ifdef NATIVE
++    if (native_coop_pvp() != NULL) {
++        return side == 0; /* the co-op's PvP battle: giving up always works, and the other side doesn't run */
++    }
++#endif
+ 
+     if (side == 0) {
+         FIGHTSTG_computeStats(SIDE_PLAYER, 1, FIGHTSTG_battle.active[0]);

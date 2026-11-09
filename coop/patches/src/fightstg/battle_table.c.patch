@@ -1,0 +1,29 @@
+--- a/src/fightstg/battle_table.c
++++ b/src/fightstg/battle_table.c
+@@ -24,5 +24,26 @@
+     if (i >= 0) {
+         return &table[i];
+     }
++#ifdef NATIVE
++    if (native_coop_pvp() != NULL) {
++        /* the PvP battle's enemies are the other player's partners, which the table hasn't: an entry of their own,
++           the table's first with their id and nothing to leave (their stats come from their partners, stats.c) */
++        static BattleTableEntry pvp[4];
++        s32 k;
++
++        for (k = 0; k < 3 && pvp[k].id != id && pvp[k].id != 0; k++) {
++        }
++        if (pvp[k].id != id) {
++            pvp[k] = table[0];
++            pvp[k].id = id;
++            pvp[k].item = 0;
++            pvp[k].itemChance = 0;
++            pvp[k].family = GET_DIGIMON(id)->family;
++            pvp[k].nameId = GET_DIGIMON(id)->nameId; /* its name, not the copied entry's */
++            native_log("coop: PvP: Digimon %X has no battle table entry: one made", id);
++        }
++        return &pvp[k];
++    }
++#endif
+     return NULL;
+ }

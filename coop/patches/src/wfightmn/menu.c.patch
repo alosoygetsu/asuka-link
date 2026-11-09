@@ -1,0 +1,28 @@
+--- a/src/wfightmn/menu.c
++++ b/src/wfightmn/menu.c
+@@ -552,6 +552,25 @@
+         break;
+     case 2:
+         WFIGHTMN_cancelBlast();
++#ifdef NATIVE
++        if (native_coop_pvp() != NULL) {
++            /* the co-op's PvP battle (fieldstg/field.c): won, lost or given up, the save as it was before, where the
++               field was left; no report, no game over */
++            s32 fieldMode = GAME.fieldMode;
++            Vec2 fieldPos = GAME.fieldPos;
++            s32 fieldDir = GAME.fieldDir;
++
++            memcpy(&GAME, native_coop_pvp()->save, COOP_PVP_SAVE);
++            GAME.fieldMode = fieldMode;
++            GAME.fieldPos = fieldPos;
++            GAME.fieldDir = fieldDir;
++            native_coop_note("PvP battle with player %d: %s", native_coop_pvp()->peer + 2,
++                             FIGHTSTG_events.funcs.result == BATTLE_WON ? "won" : FIGHTSTG_events.funcs.result == BATTLE_LOST ? "lost" : "given up");
++            native_coop_pvp_end();
++            GAME.funcs.requestMode(GAME.fieldMode, 0);
++            break;
++        }
++#endif
+         switch (FIGHTSTG_events.funcs.result) {
+         case BATTLE_FLED:
+         default:

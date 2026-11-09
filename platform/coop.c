@@ -434,3 +434,35 @@ int native_coop_test_cards(void) {
     done = 1;
     return SDL_atoi(env);
 }
+
+/* --- the PvP battle's state, kept from the field to the battle and back --- */
+
+static NativeCoopPvp s_pvp;
+
+NativeCoopPvp *native_coop_pvp(void) {
+    return s_pvp.on ? &s_pvp : NULL;
+}
+
+void native_coop_pvp_begin(int peer, const void *team, int size, const void *save) {
+    SDL_memset(s_pvp.team, 0, sizeof s_pvp.team);
+    SDL_memcpy(s_pvp.team, team, SDL_min(size, (int)sizeof s_pvp.team));
+    SDL_memcpy(s_pvp.save, save, sizeof s_pvp.save);
+    s_pvp.peer = peer;
+    s_pvp.on = 1;
+}
+
+void native_coop_pvp_end(void) {
+    s_pvp.on = 0;
+}
+
+/* DW3_COOP_AUTO=trade or battle (tests): a field waits at a Guardromon for that by itself, once; -1 none */
+int native_coop_auto(void) {
+    static int done;
+    const char *env = SDL_getenv("DW3_COOP_AUTO");
+
+    if (done || env == NULL) {
+        return -1;
+    }
+    done = 1;
+    return SDL_strcmp(env, "battle") == 0;
+}

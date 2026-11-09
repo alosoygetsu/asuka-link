@@ -50,7 +50,25 @@ typedef struct NativeCoopTrade {
 } NativeCoopTrade;
 void native_coop_tags_block(int on); /* no name tags while on */
 int native_coop_test_cards(void); /* DW3_COOP_CARDS (tests) */
+int native_coop_auto(void); /* DW3_COOP_AUTO (tests): 0 trade, 1 battle, -1 none */
 int native_coop_guard_key(void); /* the character whose talk offers the trade: Guardromon */
+/* Blobs bigger than a packet, to one player, in pieces: id (not 0) names it; sent tells it's all there */
+#define COOP_BLOB_MAX 4096
+#define COOP_BLOB_PIECE 256
+void native_coop_blob_send(int peer, const void *data, int size, int id);
+int native_coop_blob_sent(int peer, int id);
+int native_coop_blob_recv(int peer, int id, void *out, int max); /* its size when it's whole, else 0 */
+/* The PvP battle (fieldstg/field.c starts it, FIGHTSTG and WFIGHTMN read it): the other player's team, and the save
+   as it was before, put back after */
+#define COOP_PVP_SAVE 0x26C4 /* GAME_SAVE_SIZE (EU) */
+typedef struct NativeCoopPvp {
+    int on, peer;
+    unsigned char team[COOP_BLOB_MAX]; /* fieldstg/field.c's CoopTeam */
+    unsigned char save[COOP_PVP_SAVE];
+} NativeCoopPvp;
+NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one */
+void native_coop_pvp_begin(int peer, const void *team, int size, const void *save);
+void native_coop_pvp_end(void);
 void native_coop_trade_out(int peer, const NativeCoopTrade *t); /* what goes to peer from now on */
 int native_coop_trade_in(int peer, NativeCoopTrade *t); /* peer's side as it last came: 0 when it's gone */
 /* the name tags over the other players: where ghost n's head was drawn this frame (screen, 320x240) */
@@ -94,6 +112,6 @@ const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a 
 #define COOP_TEXT_LOOK_TITLE 11
 #define COOP_TEXT_LOOK_HELP 12
 #define COOP_TEXT_LOOK_NAME 13 /* 13-15: Junior, the boy, the girl */
-#define COOP_TEXT_TRADE 16 /* 16-39: the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
+#define COOP_TEXT_TRADE 16 /* 16-41 (40-41 the PvP battle's): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
 
 #endif /* NATIVE_COOP_H */
