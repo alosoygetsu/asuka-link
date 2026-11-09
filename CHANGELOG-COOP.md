@@ -3,7 +3,7 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
-## Próxima versión
+## v0.18.908
 Sobre el port v0.18.9.
 
 - **Combates entre jugadores en los Guardromon.** Al hablar con un Guardromon sale "Hablar / Intercambiar cartas /
