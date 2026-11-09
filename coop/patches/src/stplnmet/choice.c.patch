@@ -1,0 +1,338 @@
+--- a/src/stplnmet/choice.c
++++ b/src/stplnmet/choice.c
+@@ -11,11 +11,282 @@
+ #define CHOICE_PARTNERS(c) STPLNMET_funcs.choices[c]
+ #endif
+ 
++#ifdef NATIVE
++/* The free team (platform/team.c), in place of the packs, laid out as:
++       the player's name                       (the confirmation's name panel)
++       the three picks, each with its name     (the confirmation's team panel)   [Accept]
++       the eight partners in a row
++       the description of the one under the cursor, or how to pick
++   The cursor goes along the row (left/right) or along the picks and Accept (up). Cross picks or drops the partner
++   under it, drops a pick, or accepts; Start accepts too, with three picks: task->choice is then the team's
++   GAME.partySet (a game pack's own number when the team is one). The windows of the packs' page stand in: name the
++   player's name, labels the picks' names, text the description, partners[0].name Accept */
++#define TEAM_PARTNERS 8
++#define TEAM_ROW_X(i) (0x1C + (i) * 0x23) /* the row's cells: their partner's place */
++#define TEAM_ROW_Y 0xA4
++#define TEAM_PICK_X(i) (0x57 + (i) * 0x38) /* the picks, where the confirmation shows the team */
++#define TEAM_PICK_Y 0x6C /* on the team panel's platforms, as the confirmation draws them */
++#define TEAM_ACCEPT_X 0x10C
++#define TEAM_ACCEPT_Y 0x6E
++static s32 STPLNMET_teamCursor; /* 0-7 a partner of the row, 8-10 a pick, 11 Accept */
++static s32 STPLNMET_teamPicks[3]; /* in the order picked */
++static s32 STPLNMET_teamCount;
++static s32 STPLNMET_teamFrames[TEAM_PARTNERS];
++
++static void STPLNMET_resetTeam(void) {
++    STPLNMET_teamCursor = 0;
++    STPLNMET_teamCount = 0;
++}
++
++/* partner's place in the team, 0 when it isn't in it */
++static s32 STPLNMET_teamPlace(s32 partner) {
++    s32 i;
++
++    for (i = 0; i < STPLNMET_teamCount; i++) {
++        if (STPLNMET_teamPicks[i] == partner) {
++            return i + 1;
++        }
++    }
++    return 0;
++}
++
++static void STPLNMET_createTeamWindows(PartnerChoice *task, PartnerChoiceWindows *windows) {
++    s32 i;
++
++    windows->title = createTextWindow(task->layer, 1, 0x20, 0x1A);
++    windows->title->setPalette(windows->title, PALETTE_GREEN);
++    windows->name = createTextWindow(task->layer, 1, 0x61, 0x42);
++    windows->name->setPalette(windows->name, PALETTE_BLUE);
++    for (i = 0; i < 3; i++) {
++        windows->labels[i] = createTextWindow(task->layer, 1, TEAM_PICK_X(i) - 4, 0x63); /* on the panel's bar */
++        windows->labels[i]->setPalette(windows->labels[i], PALETTE_BLUE);
++    }
++    windows->text = createTextWindow(task->layer, 1, 0x1C, 0xCA);
++    windows->text->setLines(windows->text, 3);
++    windows->text->setPalette(windows->text, PALETTE_BLUE);
++    for (i = 0; i < 3; i++) {
++        windows->partners[i].name = createTextWindow(task->layer, 1, TEAM_ACCEPT_X, TEAM_ACCEPT_Y);
++        windows->partners[i].name->setPalette(windows->partners[i].name, PALETTE_GREEN);
++        windows->partners[i].text = createTextWindow(task->layer, 1, TEAM_ACCEPT_X, TEAM_ACCEPT_Y);
++        windows->partners[i].text->setPalette(windows->partners[i].text, PALETTE_BLUE);
++    }
++}
++
++static void STPLNMET_showTeam(PartnerChoice *task, PartnerChoiceWindows *windows) {
++    const void *coop = native_coop_text(LANGUAGE);
++    PlayerNameScreenChildren *screen = task->screen->children;
++    u16 *name = screen->name->name;
++    s32 partner;
++    s32 i;
++
++    windows->title->setString(windows->title, (void *)coop, COOP_TEXT_TITLE);
++    for (i = 0; name[i] == SJIS_SPACE; i++) {
++    }
++    windows->name->setText(windows->name, &name[i]);
++    for (i = 0; i < 3; i++) {
++        if (i < STPLNMET_teamCount) {
++            windows->labels[i]->setString(windows->labels[i], FILE_CACHE.load(TEXT_FILE(TEXT_DIGIMON_NAMES)), STPLNMET_teamPicks[i] + 1);
++        } else {
++            windows->labels[i]->setString(windows->labels[i], (void *)coop, 0);
++        }
++    }
++    windows->partners[0].name->setString(windows->partners[0].name, (void *)coop, COOP_TEXT_ACCEPT);
++    for (i = 0; i < 3; i++) {
++        windows->partners[i].text->setVisible(windows->partners[i].text, 0);
++        if (i > 0) {
++            windows->partners[i].name->setVisible(windows->partners[i].name, 0);
++        }
++    }
++    /* the description of the partner under the cursor (a pick's too), else how to pick */
++    partner = STPLNMET_teamCursor < TEAM_PARTNERS ? STPLNMET_teamCursor
++            : STPLNMET_teamCursor < TEAM_PARTNERS + 3 && STPLNMET_teamCursor - TEAM_PARTNERS < STPLNMET_teamCount
++                ? STPLNMET_teamPicks[STPLNMET_teamCursor - TEAM_PARTNERS] : -1;
++    if (partner == 4) { /* Veemon's text in the game is a placeholder: the port's own */
++        windows->text->setString(windows->text, OWN_TEXTS(), 10);
++    } else if (partner >= 0) {
++        windows->text->setString(windows->text, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), partner + 13);
++    } else {
++        windows->text->setString(windows->text, (void *)coop, COOP_TEXT_HELP);
++    }
++}
++
++static void STPLNMET_hideTeam(PartnerChoiceWindows *windows) {
++    (void)windows; /* the page's own drawing stops with the task */
++}
++
++/* A rectangle of colour: at the page's depth after its sprites, behind them; 2 nearer, in front of everything */
++static void STPLNMET_teamRect(PartnerChoice *task, s32 front, s32 x, s32 y, s32 w, s32 h, s32 r, s32 g, s32 b) {
++    Layer *layer = GFX.funcs.getLayer(task->layer);
++    u_long *ot = (u_long *)layer->getOtEntry(layer, task->depth - front);
++    POLY_F4 *poly = GFX.funcs.getPrim();
++
++    setPolyF4(poly);
++    setRGB0(poly, r, g, b);
++    setXY4(poly, x, y, x + w, y, x, y + h, x + w, y + h);
++    addPrim(ot, poly);
++    GFX.funcs.setPrim(poly + 1);
++}
++
++/* The cursor's gold frame around a box */
++static void STPLNMET_teamFrame(PartnerChoice *task, s32 x, s32 y, s32 w, s32 h) {
++    STPLNMET_teamRect(task, 2, x, y, w, 2, 0xF0, 0xB0, 0x20);
++    STPLNMET_teamRect(task, 2, x, y + h - 2, w, 2, 0xF0, 0xB0, 0x20);
++    STPLNMET_teamRect(task, 2, x, y, 2, h, 0xF0, 0xB0, 0x20);
++    STPLNMET_teamRect(task, 2, x + w - 2, y, 2, h, 0xF0, 0xB0, 0x20);
++}
++
++static void STPLNMET_drawTeam(PartnerChoice *task) {
++    static CVECTOR NORMAL = {0x80, 0x80, 0x80, 0};
++    static CVECTOR TAKEN = {0x38, 0x38, 0x48, 0};
++    SpriteDrawer sprite;
++    PartnerAnim *anim;
++    s32 i;
++
++    initSpriteDrawer(&sprite);
++    if (GFX.funcs.getTime() - task->frameTime > 12) {
++        task->frameTime = GFX.funcs.getTime();
++        for (i = 0; i < TEAM_PARTNERS; i++) {
++            anim = &STPLNMET_funcs.anims[i];
++            STPLNMET_teamFrames[i]++;
++            if (STPLNMET_teamFrames[i] >= 8 || anim->frames[STPLNMET_teamFrames[i]] == -1) {
++                STPLNMET_teamFrames[i] = 0;
++            }
++        }
++    }
++    /* the picks, before the team's panel as the confirmation draws them: in front of it */
++    sprite.setLayerId(task->layer, task->depth);
++    sprite.setTexture(0x140, 0x100);
++    for (i = 0; i < STPLNMET_teamCount; i++) {
++        anim = &STPLNMET_funcs.anims[STPLNMET_teamPicks[i]];
++        sprite.draw(FILE_CACHE.getEntry(PLNMET_BANK), anim->frames[STPLNMET_teamFrames[STPLNMET_teamPicks[i]]], TEAM_PICK_X(i), TEAM_PICK_Y);
++    }
++    /* the name's panel and the team's, as the confirmation has them */
++    sprite.setTexture(0x280, 0x100);
++    sprite.setLayerId(task->layer, task->depth);
++    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 6, 0x37, 0x2F);
++    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 2, 0x37, 0x2F);
++    sprite.setLayerId(task->layer, task->depth - 1);
++    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 10, 0x37, 0x59);
++    sprite.setLayerId(task->layer, task->depth);
++    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 9, 0x37, 0x59);
++    /* the row: smaller, the ones picked darker, each on a cell (lit under the cursor) */
++    sprite.setTexture(0x140, 0x100);
++    for (i = 0; i < TEAM_PARTNERS; i++) {
++        anim = &STPLNMET_funcs.anims[i];
++        sprite.setScale(ONE * 5 / 8, ONE * 5 / 8, ONE);
++        sprite.setPivot(TEAM_ROW_X(i), TEAM_ROW_Y);
++        sprite.setColor(STPLNMET_teamPlace(i) ? &TAKEN : &NORMAL);
++        sprite.draw(FILE_CACHE.getEntry(PLNMET_BANK), anim->frames[STPLNMET_teamFrames[i]], TEAM_ROW_X(i), TEAM_ROW_Y);
++        if (i == STPLNMET_teamCursor) {
++            STPLNMET_teamRect(task, 0, TEAM_ROW_X(i) - 7, TEAM_ROW_Y - 3, 0x22, 0x1E, 0x28, 0x38, 0x80);
++        } else {
++            STPLNMET_teamRect(task, 0, TEAM_ROW_X(i) - 7, TEAM_ROW_Y - 3, 0x22, 0x1E, 0x08, 0x10, 0x30);
++        }
++    }
++    sprite.setColor(&NORMAL);
++    sprite.setScale(ONE, ONE, ONE);
++    /* the description's box */
++    STPLNMET_teamRect(task, 0, 0x10, 0xC6, 0x120, 0x24, 0x08, 0x10, 0x30);
++    /* the cursor's frame */
++    if (STPLNMET_teamCursor < TEAM_PARTNERS) {
++        STPLNMET_teamFrame(task, TEAM_ROW_X(STPLNMET_teamCursor) - 7, TEAM_ROW_Y - 3, 0x22, 0x1E);
++    } else if (STPLNMET_teamCursor < TEAM_PARTNERS + 3) {
++        STPLNMET_teamFrame(task, TEAM_PICK_X(STPLNMET_teamCursor - TEAM_PARTNERS) - 8, 0x74, 0x34, 0x22);
++    } else {
++        STPLNMET_teamFrame(task, TEAM_ACCEPT_X - 4, TEAM_ACCEPT_Y - 3, 0x34, 0x12);
++    }
++}
++
++static void STPLNMET_teamConfirm(PartnerChoice *task) {
++    s32 i;
++
++    if (STPLNMET_teamCount < 3) {
++        SOUND.playSound(SOUND_MENU_CANCEL);
++        return;
++    }
++    SOUND.playSound(SOUND_MENU_CONFIRM);
++    task->choice = native_team_set(STPLNMET_teamPicks);
++    /* a game pack's team, in any order, is that pack: its own lobby scene */
++    for (i = 0; i < 3; i++) {
++        s32 *pack = STPLNMET_funcs.choices[i];
++
++        if (STPLNMET_teamPlace(pack[0]) && STPLNMET_teamPlace(pack[1]) && STPLNMET_teamPlace(pack[2])) {
++            task->choice = i;
++        }
++    }
++    task->substate = 100;
++}
++
++static void STPLNMET_runTeam(PartnerChoice *task, PartnerChoiceWindows *windows) {
++    s32 old = STPLNMET_teamCursor;
++    s32 *c = &STPLNMET_teamCursor;
++    s32 place;
++    s32 i;
++
++    if (PAD_PRESSED(PAD_LEFT) || PAD_REPEATED(PAD_LEFT)) {
++        if (*c > 0 && *c != TEAM_PARTNERS) {
++            (*c)--;
++        }
++    } else if (PAD_PRESSED(PAD_RIGHT) || PAD_REPEATED(PAD_RIGHT)) {
++        if (*c < TEAM_PARTNERS - 1 || (*c >= TEAM_PARTNERS && *c < TEAM_PARTNERS + 3)) {
++            (*c)++;
++        }
++    } else if (PAD_PRESSED(PAD_UP) && *c < TEAM_PARTNERS) {
++        *c = TEAM_PARTNERS + *c * 4 / TEAM_PARTNERS; /* the pick (or Accept) above */
++    } else if (PAD_PRESSED(PAD_DOWN) && *c >= TEAM_PARTNERS) {
++        *c = (*c - TEAM_PARTNERS) * TEAM_PARTNERS / 4 + 1; /* the partners below */
++    }
++    if (old != *c) {
++        SOUND.playSound(SOUND_MENU_MOVE);
++        STPLNMET_showTeam(task, windows);
++    }
++    if (PAD_PRESSED(PAD_CROSS)) {
++        if (*c == TEAM_PARTNERS + 3) {
++            STPLNMET_teamConfirm(task);
++            return;
++        }
++        place = *c < TEAM_PARTNERS ? STPLNMET_teamPlace(*c) : *c - TEAM_PARTNERS + 1;
++        if (*c >= TEAM_PARTNERS && place > STPLNMET_teamCount) {
++            SOUND.playSound(SOUND_MENU_CANCEL); /* an empty pick */
++        } else if (place != 0) { /* drop it: the ones after it move up */
++            for (i = place - 1; i < STPLNMET_teamCount - 1; i++) {
++                STPLNMET_teamPicks[i] = STPLNMET_teamPicks[i + 1];
++            }
++            STPLNMET_teamCount--;
++            SOUND.playSound(SOUND_MENU_CANCEL);
++        } else if (STPLNMET_teamCount < 3) {
++            STPLNMET_teamPicks[STPLNMET_teamCount++] = *c;
++            SOUND.playSound(SOUND_MENU_CONFIRM);
++            if (STPLNMET_teamCount == 3) {
++                *c = TEAM_PARTNERS + 3; /* on to Accept */
++            }
++        } else {
++            SOUND.playSound(SOUND_MENU_CANCEL); /* three already */
++        }
++        STPLNMET_showTeam(task, windows);
++        return;
++    }
++    if (PAD_PRESSED(PAD_START)) {
++        STPLNMET_teamConfirm(task);
++        return;
++    }
++    if (PAD_PRESSED(PAD_TRIANGLE)) {
++        SOUND.playSound(SOUND_MENU_CANCEL);
++        task->substate = 200;
++        task->choice = 0;
++    }
++}
++#endif
++
+ /* Creates the choice's windows: the title, the three labels, the partners'
+    name and text, and each partner's name and text */
+ void STPLNMET_createChoiceWindows(PartnerChoice *task, PartnerChoiceWindows *windows) {
+     s32 i;
+ 
++#ifdef NATIVE
++    STPLNMET_createTeamWindows(task, windows);
++    return;
++#endif
+     windows->title = createTextWindow(task->layer, 1, 0x20, 0x1A);
+     windows->title->setPalette(windows->title, PALETTE_GREEN);
+     for (i = 0; i < 3; i++) {
+@@ -42,6 +313,10 @@
+     s32 *partners;
+ 
+     if (show != 0) {
++#ifdef NATIVE
++        STPLNMET_showTeam(task, windows); /* the free team in place of the packs */
++        return;
++#endif
+         partners = CHOICE_PARTNERS(task->choice);
+         windows->title->setString(windows->title, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), 6);
+ #ifdef NATIVE
+@@ -73,6 +348,9 @@
+         }
+         return;
+     }
++#ifdef NATIVE
++    STPLNMET_hideTeam(windows);
++#endif
+     windows->title->setVisible(windows->title, 0);
+     for (i = 0; i < 3; i++) {
+         windows->labels[i]->setVisible(windows->labels[i], 0);
+@@ -92,6 +370,10 @@
+     s32 *partners = CHOICE_PARTNERS(task->choice);
+     PartnerAnim *anim;
+     s32 i;
++#ifdef NATIVE
++    STPLNMET_drawTeam(task);
++    return;
++#endif
+ 
+     initSpriteDrawer(&sprite);
+     sprite.setLayerId(task->layer, task->depth);
+@@ -135,6 +417,10 @@
+     s32 old = task->choice;
+     s32 i;
+ 
++#ifdef NATIVE
++    STPLNMET_runTeam(task, windows);
++    return;
++#endif
+     if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP)) {
+         task->choice--;
+         if (task->choice < 0) {
+@@ -209,6 +495,9 @@
+     PartnerChoice *task = createTask(STPLNMET_updateChoice, sizeof(PartnerChoice), sizeof(PartnerChoiceWindows));
+ 
+     task->hide = STPLNMET_hideChoice;
++#ifdef NATIVE
++    STPLNMET_resetTeam();
++#endif
+     task->layer = 0x1001;
+     task->depth = 6;
+     task->screen = screen;

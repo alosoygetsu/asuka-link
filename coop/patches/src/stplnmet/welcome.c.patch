@@ -1,0 +1,70 @@
+--- a/src/stplnmet/welcome.c
++++ b/src/stplnmet/welcome.c
+@@ -39,6 +39,56 @@
+     STPLNMET_introText[1] = STPLNMET_introText[2] = 12;
+     return STPLNMET_introText;
+ }
++/* The welcome's text for the picked team (platform/team.c): the game's, with the page that asks to pick one of the
++   three packs (the one with the packs' word, packs_text 12) in place of the port's sentence (coop_text 4). The
++   text's units are a byte, two when the first is 1 or 2, and three for 02 02 xx, the wait for a button that ends a
++   page; the next one opens with line breaks (02 01), which stay. As a text file of one string; the game's when it
++   hasn't that page */
++static void *STPLNMET_teamIntro(u8 *texts) {
++    const s32 *own = native_packs_text(LANGUAGE);
++    const s32 *coop = native_coop_text(LANGUAGE);
++    const u8 *from = texts + ((s32 *)texts)[2], *word = (const u8 *)own + own[13], *ours = (const u8 *)coop + coop[COOP_TEXT_INTRO + 1];
++    const u8 *page = NULL, *body = NULL, *end = NULL, *p, *w;
++    u8 *to = (u8 *)&STPLNMET_introText[3], *limit = to + 1500;
++
++    (void)STPLNMET_packsIntro; /* the extra packs' version, which the picked team replaces */
++    page = from;
++
++    for (p = from; *p != 0; p += (*p == 1 || *p == 2) ? 2 : 1) {
++        if (p[0] == 2 && p[1] == 2) {
++            if (body != NULL) {
++                end = p; /* the page with the word ends */
++                break;
++            }
++            p++; /* the wait's third byte */
++            page = p + 2;
++            continue;
++        }
++        if (body == NULL && *p == word[0]) {
++            for (w = word; *w != 0 && *w == p[w - word]; w++) {
++            }
++            if (*w == 0) {
++                body = page;
++            }
++        }
++    }
++    if (body == NULL || end == NULL) {
++        return texts;
++    }
++    while (body[0] == 2 && body[1] == 1) {
++        body += 2; /* the page's opening line breaks stay */
++    }
++    for (p = from; p < body && to < limit; *to++ = *p++) {
++    }
++    for (p = ours; *p != 0 && to < limit; *to++ = *p++) {
++    }
++    for (p = end; to < limit && (*to++ = *p++) != 0;) {
++    }
++    *(to < limit ? to : limit - 1) = 0;
++    STPLNMET_introText[0] = 1;
++    STPLNMET_introText[1] = STPLNMET_introText[2] = 12;
++    return STPLNMET_introText;
++}
+ #endif
+ 
+ /* The welcome's task: brings its panel in through the CLUT rows, types the
+@@ -73,8 +123,8 @@
+                     task->setSubstate(task, 2);
+                     task->step = GFX.funcs.getTime();
+ #ifdef NATIVE
+-                    if (g_extra_packs) {
+-                        windows->text->setString(windows->text, STPLNMET_packsIntro(FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE))), 1);
++                    if (1) { /* the free team, whatever extra_packs says */
++                        windows->text->setString(windows->text, STPLNMET_teamIntro(FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE))), 1);
+                     } else
+ #endif
+                     windows->text->setString(windows->text, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), 1);

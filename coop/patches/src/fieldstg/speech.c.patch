@@ -1,0 +1,41 @@
+--- a/src/fieldstg/speech.c
++++ b/src/fieldstg/speech.c
+@@ -70,16 +70,14 @@
+ static s32 FIELDSTG_lobbyLines[1 + 23];
+ 
+ static void *FIELDSTG_lobbyText(s32 key, u8 *text) {
+-    static const u8 GREETINGS[3][3][2] = {{{4, 16}, {5, 16}, {0xFF, 11}},
+-                                          {{3, 15}, {4, 15}, {3, 17}},
+-                                          {{5, 15}, {4, 17}, {0xFF, 11}}};
+     s32 *lines = (s32 *)text;
+-    const u8 *greeting;
++    int sub;
++    int line;
+     s32 *file;
+     s32 n;
+     s32 i;
+ 
+-    if (GAME.partySet < 3 || GAME.partySet >= 6 || (key & 0xFFFF) != 4 || (key >> 16) != TEXT_FILE(0x113) ||
++    if (GAME.partySet < 3 || (key & 0xFFFF) != 4 || (key >> 16) != TEXT_FILE(0x113) ||
+         lines[0] < 18) {
+         return text;
+     }
+@@ -89,13 +87,14 @@
+         FIELDSTG_lobbyLines[i] = (s32)(text + lines[i] - (u8 *)FIELDSTG_lobbyLines);
+     }
+     for (i = 0; i < 3; i++) {
+-        greeting = GREETINGS[GAME.partySet - 3][i];
+-        if (greeting[0] == 0xFF) {
++        /* each partner's greeting, of any team (platform/team.c) */
++        native_team_greeting(native_team_partner(GAME.partySet, i), &sub, &line);
++        if (sub == 0xFF) {
+             file = (s32 *)native_packs_text(LANGUAGE);
+         } else {
+-            file = (s32 *)FILE_CACHE.getEntry((key & 0xFFFF0000) | greeting[0]);
++            file = (s32 *)FILE_CACHE.getEntry((key & 0xFFFF0000) | sub);
+         }
+-        FIELDSTG_lobbyLines[16 + i] = (s32)((u8 *)file + file[greeting[1] + 1] - (u8 *)FIELDSTG_lobbyLines);
++        FIELDSTG_lobbyLines[16 + i] = (s32)((u8 *)file + file[line + 1] - (u8 *)FIELDSTG_lobbyLines);
+     }
+     return FIELDSTG_lobbyLines;
+ }

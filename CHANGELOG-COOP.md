@@ -3,6 +3,18 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.903
+Sobre el port v0.18.9.
+
+- **Equipo libre al empezar partida:** en vez de elegir un pack, eliges a tus 3 compañeros entre los 8 Digimon, sin
+  repetir. La pantalla muestra tu nombre, los 3 elegidos sobre sus plataformas con su nombre, el botón Aceptar, los 8
+  en fila (los elegidos, oscurecidos) y la descripción del que tengas seleccionado.
+  - Izquierda/derecha recorren la fila; arriba sube a los elegidos y a Aceptar. El botón de confirmar elige o quita;
+    Aceptar (o START) sigue con 3.
+  - La escena de bienvenida del vestíbulo aparece con tus 3 compañeros, sean los que sean.
+  - Si eliges justo los de uno de los packs del juego, se usa la escena original de ese pack.
+- **Quitada la opción de packs extra:** ya no hace falta.
+
 ## v0.18.902
 Sobre el port v0.18.9.
 

@@ -1,0 +1,11 @@
+--- a/src/main/game/party.c
++++ b/src/main/game/party.c
+@@ -53,7 +53,7 @@
+ 
+     for (i = 0; i < PARTY_SIZE; i++) {
+ #ifdef NATIVE
+-        partner = set >= 3 ? NATIVE_EXTRA_PACKS[set - 3][i] : STARTER_PARTIES[set][i]; /* native.h */
++        partner = set >= 3 ? native_team_partner(set, i) : STARTER_PARTIES[set][i]; /* a picked team or an extra pack (platform/team.c) */
+ #else
+         partner = STARTER_PARTIES[set][i];
+ #endif

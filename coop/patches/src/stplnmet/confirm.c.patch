@@ -1,0 +1,31 @@
+--- a/src/stplnmet/confirm.c
++++ b/src/stplnmet/confirm.c
+@@ -38,8 +38,8 @@
+         }
+         windows->name->setText(windows->name, &name[i]);
+ #ifdef NATIVE
+-        if (task->choice >= 3) { /* an extra pack's name (native.h) */
+-            windows->pack->setString(windows->pack, (void *)native_packs_text(LANGUAGE), task->choice - 2);
++        if (task->choice >= 3) { /* a picked team: "Your team" (platform/team.c) */
++            windows->pack->setString(windows->pack, (void *)native_coop_text(LANGUAGE), COOP_TEXT_TEAM);
+         } else
+ #endif
+         windows->pack->setString(windows->pack, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), task->choice + 10);
+@@ -76,7 +76,16 @@
+     s32 j;
+ 
+ #ifdef NATIVE
+-    partners = task->choice < 3 ? STPLNMET_funcs.choices[task->choice] : (s32 *)NATIVE_EXTRA_PACKS[task->choice - 3];
++    s32 team[3];
++
++    if (task->choice < 3) {
++        partners = STPLNMET_funcs.choices[task->choice];
++    } else { /* a picked team (platform/team.c) */
++        for (i = 0; i < 3; i++) {
++            team[i] = native_team_partner(task->choice, i);
++        }
++        partners = team;
++    }
+ #else
+     partners = STPLNMET_funcs.choices[task->choice];
+ #endif

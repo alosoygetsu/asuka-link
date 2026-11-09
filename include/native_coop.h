@@ -39,4 +39,20 @@ void native_coop_vram_copy(int from_x, int from_y, int to_x, int to_y, int w, in
 /* the CLUT at (x, y) recoloured for other player n (0-2) */
 void native_coop_vram_tint(int x, int y, int n);
 
+/* The free team (platform/team.c): GAME.partySet of a picked team, NATIVE_TEAM_BASE + a + b * 8 + c * 64 */
+#define NATIVE_TEAM_BASE 0x40
+int native_team_partner(int set, int i); /* partner i of a set past the game's three packs, else -1 */
+int native_team_set(const int team[3]);
+int native_team_look(int partner); /* the lobby: its look (FIELDSTG_fileEntries) */
+void native_team_greeting(int partner, int *sub, int *line); /* and its greeting: sub 0xFF the port's own text */
+const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a text file of the language */
+#define COOP_TEXT_TITLE 1
+#define COOP_TEXT_HELP 2
+#define COOP_TEXT_TEAM 3
+#define COOP_TEXT_INTRO 4
+#define COOP_TEXT_MARK 5 /* 5-7: "1" "2" "3" */
+#define COOP_TEXT_SEPARATOR 8
+#define COOP_TEXT_NO_TEAM 9
+#define COOP_TEXT_ACCEPT 10
+
 #endif /* NATIVE_COOP_H */

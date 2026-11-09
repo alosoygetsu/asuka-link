@@ -342,8 +342,8 @@ int main(int argc, char **argv) {
         } else if (SDL_strcmp(argv[i], "--at") == 0) {
             SDL_sscanf(argv[++i], "%d,%d", &g_field_at_x, &g_field_at_y);
         } else if (SDL_strcmp(argv[i], "--party") == 0 && i + 1 < argc) {
-            int party = SDL_atoi(argv[++i]); /* SDL_clamp reads its argument more than once */
-            g_field_party = SDL_clamp(party, 0, 2);
+            int party = (int)SDL_strtol(argv[++i], NULL, 0); /* SDL_clamp reads its argument more than once */
+            g_field_party = party >= NATIVE_TEAM_BASE ? party : SDL_clamp(party, 0, 2); /* or a free team (platform/team.c) */
         } else if (SDL_strcmp(argv[i], "--give") == 0) {
             g_give_form = (int)SDL_strtol(argv[++i], NULL, 0);
         } else if (SDL_strcmp(argv[i], "--progress") == 0) {
