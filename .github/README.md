@@ -38,15 +38,17 @@ zip.
 | | |
 |---|---|
 | Cooperativo | Hasta 4 jugadores en red, cada uno con su partida; os veis en el mismo mapa |
+| Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Multiplicador de EXP | x1 a x5 sobre la EXP de combate (compañeros y Digimon) |
 | Multiplicador de dinero | x1 a x5 sobre el dinero de combate |
 | Por defecto | Viaje rápido, Digilog y EXP compartida completa vienen activados |
-| Quitado | "Curar al subir de nivel" y "Guardar en cualquier sitio" |
+| Quitado | "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra (el equipo libre los sustituye) |
 
 Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/alosoygetsu/dw3-native-port/blob/coop/CHANGELOG-COOP.md).
 
 ## Hoja de ruta
 - [x] Verse en el mapa (hasta 4 jugadores, configuración en el launcher)
+- [x] Elegir tu propio equipo inicial de 3 Digimon
 - [ ] Nombre encima de cada jugador, chat y avisos ("X ha entrado en Asuka City")
 - [ ] Intercambio de Digimon y objetos
 - [ ] Duelos de cartas entre jugadores
@@ -70,4 +72,5 @@ A fork of [Feerdus95/dw3-native-port](https://github.com/Feerdus95/dw3-native-po
 *Digimon World 2003*) with **online co-op for up to 4 players**: each plays their own save, and players on the same map
 see each other. You need your own European disc; nothing of the game is here. Get `dw2003-coop-<version>.zip` from the
 [latest release](https://github.com/alosoygetsu/dw3-native-port/releases/latest), set the other players' addresses in the launcher (Settings → Mods → Co-op),
-and meet on a map. It also adds EXP and money multipliers. Updates come through the launcher's Update button.
+and meet on a map. A new game starts with a team you build yourself (any 3 of the 8 partners) instead of a starter
+pack, and there are EXP and money multipliers. Updates come through the launcher's Update button.
