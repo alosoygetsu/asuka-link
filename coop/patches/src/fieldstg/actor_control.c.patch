@@ -1,6 +1,6 @@
 --- a/src/fieldstg/actor_control.c
 +++ b/src/fieldstg/actor_control.c
-@@ -857,6 +857,30 @@
+@@ -857,6 +857,211 @@
  #define SET_FILE_OTHER 0x03CA0064
  #endif
  
@@ -28,10 +28,191 @@
 +}
 +#endif
 +
++#ifdef NATIVE
++/* The sets a model lacks, made of its own drawings: each to Junpei's measure, frame for frame (his times, whether it
++   loops or ends, his rise and fall), so that what waits for an animation's end still gets it. The drawings: the
++   model's standing ones (COOP_SRC_STAND), walking (WALK), walking seen from the back, as climbing a wall shows
++   (BACK), or standing turned to the directions beside, looking around (LOOK) */
++enum { COOP_SRC_STAND, COOP_SRC_WALK, COOP_SRC_BACK, COOP_SRC_LOOK };
++#define COOP_SYNTH_FRAMES 24
++#define COOP_SYNTH_ACTORS 4
++
++typedef struct CoopSynth {
++    Actor *actor; /* whose, NULL free */
++    s32 active; /* the loaded set is made here: frames[dir] in place of setAnims */
++    s32 frames[5][COOP_SYNTH_FRAMES * 4 + 1];
++} CoopSynth;
++
++static CoopSynth coopSynth[COOP_SYNTH_ACTORS];
++
++static s32 coopRecipe(s32 set) {
++    switch (set) {
++    case ACTOR_ANIM_RUN:
++    case ACTOR_ANIM_DROP_OFF:
++    case ACTOR_ANIM_FALL_FAR:
++        return COOP_SRC_WALK;
++    case ACTOR_ANIM_SEARCH:
++        return COOP_SRC_LOOK;
++    case ACTOR_ANIM_CLIMB_UP:
++    case ACTOR_ANIM_CLIMB_DOWN:
++    case ACTOR_ANIM_GET_ON_WALL:
++    case ACTOR_ANIM_CLIMB_OFF_TOP:
++    case ACTOR_ANIM_GET_OVER_EDGE:
++    case ACTOR_ANIM_CLIMB_OFF_BOTTOM:
++    case ACTOR_ANIM_CLIMB:
++        return COOP_SRC_BACK;
++    default:
++        return COOP_SRC_STAND;
++    }
++}
++
++/* set's row (an s16 set, then its five directions' animations) in a character's file, or NULL */
++static s16 *coopFindSet(s32 animFile, s32 set) {
++    s16 *entry;
++
++    for (entry = FILE_CACHE.getEntry(animFile); entry[0] != 0; entry += 6) {
++        if (entry[0] == set) {
++            return entry;
++        }
++    }
++    return NULL;
++}
++
++/* Junpei's file of set, as FIELDSTG_animateActor picks it */
++static s32 coopJunpeiFile(s32 set) {
++    if (set < 8) {
++        return SET_FILE_0;
++    }
++    if (set == 8) {
++        return SET_FILE_8;
++    }
++    if (set < 0x16) {
++        return SET_FILE_OTHER;
++    }
++    if (set < 0x1A) {
++        return SET_FILE_16;
++    }
++    if (set < 0x25) {
++        return SET_FILE_1A;
++    }
++    return SET_FILE_OTHER;
++}
++
++static s32 coopFrameCount(s32 *frames) {
++    s32 n;
++
++    for (n = 0; n < COOP_SYNTH_FRAMES && frames[n * 4] != 0 && frames[n * 4] != -1; n++) {
++    }
++    return n;
++}
++
++/* Makes set for actor (the model's file is actor->animFile) when the model lacks it and Junpei has it: 1 then */
++static s32 coopSynthesize(Actor *actor, s32 set) {
++    s32 model = actor->animFile;
++    s32 modelFile = model & 0xFFFF0000;
++    s16 *junpei;
++    s16 *stand;
++    s16 *walk;
++    s16 *from;
++    s32 jFile;
++    s32 *jf;
++    s32 *jStand;
++    s32 *src;
++    s32 *out;
++    s32 recipe = coopRecipe(set);
++    s32 slot;
++    s32 spare = -1;
++    s32 d;
++    s32 i;
++    s32 n;
++    s32 count;
++    s32 look;
++    s32 baseY;
++
++    for (slot = 0; slot < COOP_SYNTH_ACTORS && coopSynth[slot].actor != actor; slot++) {
++        if (spare < 0 && coopSynth[slot].actor == NULL) {
++            spare = slot;
++        }
++    }
++    if (slot == COOP_SYNTH_ACTORS) {
++        if (spare < 0) {
++            return 0;
++        }
++        slot = spare;
++        coopSynth[slot].actor = actor;
++    }
++    coopSynth[slot].active = 0;
++    jFile = coopJunpeiFile(set);
++    if (coopFindSet(model, set) != NULL || (junpei = coopFindSet(jFile, set)) == NULL) {
++        return 0; /* the model's own, or one Junpei hasn't either */
++    }
++    stand = coopFindSet(model, ACTOR_ANIM_STAND);
++    if (stand == NULL) {
++        stand = FILE_CACHE.getEntry(model);
++    }
++    walk = coopFindSet(model, ACTOR_ANIM_WALK);
++    if (walk == NULL) {
++        walk = stand;
++    }
++    from = recipe == COOP_SRC_WALK || recipe == COOP_SRC_BACK ? walk : stand;
++    for (d = 0; d < 5; d++) {
++        jf = FILE_CACHE.getEntry((jFile & 0xFFFF0000) | (u16)junpei[d + 1]);
++        jStand = FILE_CACHE.getEntry((SET_FILE_0 & 0xFFFF0000) | (u16)coopFindSet(SET_FILE_0, ACTOR_ANIM_STAND)[d + 1]);
++        baseY = jStand[3]; /* Junpei standing: his rise and fall are from there */
++        out = coopSynth[slot].frames[d];
++        n = coopFrameCount(jf);
++        for (i = 0; i < n; i++) {
++            look = d;
++            if (recipe == COOP_SRC_LOOK) { /* turned to the side, back, to the other side, back */
++                look = (i & 1) == 0 ? d : (i & 2) == 0 ? d - 1 : d + 1;
++                look = look < 0 ? 1 : look > 4 ? 3 : look;
++            } else if (recipe == COOP_SRC_BACK) {
++                look = 4; /* north: the back */
++            }
++            src = FILE_CACHE.getEntry(modelFile | (u16)from[look + 1]);
++            count = coopFrameCount(src);
++            if (count == 0) {
++                return 0;
++            }
++            src += (i % count) * 4;
++            out[i * 4] = jf[i * 4];         /* Junpei's time */
++            out[i * 4 + 1] = src[1];        /* the model's drawing */
++            out[i * 4 + 2] = src[2];
++            out[i * 4 + 3] = src[3] + jf[i * 4 + 3] - baseY; /* raised or lowered as Junpei */
++        }
++        out[n * 4] = jf[n * 4]; /* 0 loops, -1 ends, as his */
++    }
++    coopSynth[slot].active = 1;
++    return 1;
++}
++
++/* actor's frames for direction dir: its made set's, or the file's */
++static s32 *coopFrames(Actor *actor, s32 dir) {
++    s32 slot;
++
++    for (slot = 0; slot < COOP_SYNTH_ACTORS; slot++) {
++        if (coopSynth[slot].actor == actor && coopSynth[slot].active) {
++            return coopSynth[slot].frames[dir];
++        }
++    }
++    return FILE_CACHE.getEntry(actor->setAnims[dir]);
++}
++
++/* A field's actors go with it: the slots too */
++void coopSynthReset(void) {
++    s32 slot;
++
++    for (slot = 0; slot < COOP_SYNTH_ACTORS; slot++) {
++        coopSynth[slot].actor = NULL;
++        coopSynth[slot].active = 0;
++    }
++}
++#endif
++
  /*
   * Plays an actor's animation: when its set (animSet) changes, it loads the
   * set's animations for the five directions (character 2 picks the file by
-@@ -882,8 +906,22 @@
+@@ -882,8 +1087,22 @@
      set = actor->animSet;
      file = actor->animFile & 0xFFFF0000;
      if (actor->loadedSet != set) {
@@ -54,7 +235,7 @@
                  if (set < 8) {
                      actor->animFile = SET_FILE_0;
                      break;
-@@ -909,7 +947,11 @@
+@@ -909,7 +1128,11 @@
              file = actor->animFile & 0xFFFF0000;
          }
          for (entry = FILE_CACHE.getEntry(actor->animFile); entry[0] != 0; entry += 6) {
@@ -66,7 +247,33 @@
                  break;
              }
          }
-@@ -958,6 +1000,12 @@
+@@ -919,6 +1142,13 @@
+         for (i = 0; i < 5; i++) {
+             actor->setAnims[i] = entry[i + 1] | file;
+         }
++#ifdef NATIVE
++        /* a model's missing set made of its drawings, or nothing (the nearest it has, as found) */
++        if (native_player_model() != 0 &&
++            (actor->key1 == 2 || actor->key1 == 0x7C02 || actor->key1 == 0x7D02 || actor->key1 == 0x7E02)) {
++            coopSynthesize(actor, set);
++        }
++#endif
+         actor->loadedSet = set;
+         actor->animDone = 0;
+     }
+@@ -927,7 +1157,11 @@
+     } else {
+         dir = 8 - actor->dir;
+     }
++#ifdef NATIVE
++    frames = coopFrames(actor, dir);
++#else
+     frames = FILE_CACHE.getEntry(actor->setAnims[dir]);
++#endif
+     do {
+         if (actor->animTime > 0) {
+             break;
+@@ -958,6 +1192,12 @@
          loader.setImagePos(image->imageX, image->imageY);
          loader.setClutPos(image->clutX, image->clutY);
          loader.load(FILE_CACHE.getEntry(actor->frame[0]));

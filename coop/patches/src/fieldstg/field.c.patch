@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,189 @@
+@@ -362,10 +362,192 @@
      }
  }
  
@@ -40,10 +40,13 @@
 +    native_coop_vram_reserve(slot->clutX, slot->clutY, 16, 1);
 +}
 +
++void coopSynthReset(void); /* actor_control.c: the models' made sets */
++
 +/* As the field starts: no ghosts yet, and no slots kept */
 +static void coopFieldStart(void) {
 +    s32 i;
 +
++    coopSynthReset();
 +    for (i = 0; i < COOP_GHOSTS; i++) {
 +        coopGhost[i] = NULL;
 +    }
@@ -190,7 +193,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +771,9 @@
+@@ -592,6 +774,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -200,7 +203,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +827,9 @@
+@@ -645,6 +830,9 @@
          }
          break;
      case TASK_RUN:
