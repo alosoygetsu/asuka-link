@@ -1,6 +1,6 @@
 --- a/src/fieldstg/actor_control.c
 +++ b/src/fieldstg/actor_control.c
-@@ -857,6 +857,211 @@
+@@ -857,6 +857,223 @@
  #define SET_FILE_OTHER 0x03CA0064
  #endif
  
@@ -106,8 +106,10 @@
 +    return n;
 +}
 +
-+/* Makes set for actor (the model's file is actor->animFile) when the model lacks it and Junpei has it: 1 then */
-+static s32 coopSynthesize(Actor *actor, s32 set) {
++/* Makes set for actor (the model's file is actor->animFile) when the model lacks it and Junpei has it: 1 then.
++   scene: the scenes' Junpei (character 1, his own file), whose poses mostly face the camera whatever the direction
++   (the model's front drawing then) and sit or lie lower (its drawing moved 8 pixels at most, not sunk) */
++static s32 coopSynthesize(Actor *actor, s32 set, s32 scene) {
 +    s32 model = actor->animFile;
 +    s32 modelFile = model & 0xFFFF0000;
 +    s16 *junpei;
@@ -128,6 +130,8 @@
 +    s32 count;
 +    s32 look;
 +    s32 baseY;
++    s32 rise;
++    s32 front;
 +
 +    for (slot = 0; slot < COOP_SYNTH_ACTORS && coopSynth[slot].actor != actor; slot++) {
 +        if (spare < 0 && coopSynth[slot].actor == NULL) {
@@ -142,7 +146,7 @@
 +        coopSynth[slot].actor = actor;
 +    }
 +    coopSynth[slot].active = 0;
-+    jFile = coopJunpeiFile(set);
++    jFile = scene ? FIELDSTG_fileEntries[1] : coopJunpeiFile(set);
 +    if (coopFindSet(model, set) != NULL || (junpei = coopFindSet(jFile, set)) == NULL) {
 +        return 0; /* the model's own, or one Junpei hasn't either */
 +    }
@@ -155,6 +159,8 @@
 +        walk = stand;
 +    }
 +    from = recipe == COOP_SRC_WALK || recipe == COOP_SRC_BACK ? walk : stand;
++    /* the same animation in the five directions: a pose that faces the camera */
++    front = scene && junpei[1] == junpei[2] && junpei[2] == junpei[3] && junpei[3] == junpei[4] && junpei[4] == junpei[5];
 +    for (d = 0; d < 5; d++) {
 +        jf = FILE_CACHE.getEntry((jFile & 0xFFFF0000) | (u16)junpei[d + 1]);
 +        jStand = FILE_CACHE.getEntry((SET_FILE_0 & 0xFFFF0000) | (u16)coopFindSet(SET_FILE_0, ACTOR_ANIM_STAND)[d + 1]);
@@ -168,6 +174,8 @@
 +                look = look < 0 ? 1 : look > 4 ? 3 : look;
 +            } else if (recipe == COOP_SRC_BACK) {
 +                look = 4; /* north: the back */
++            } else if (front) {
++                look = 0; /* south: the front */
 +            }
 +            src = FILE_CACHE.getEntry(modelFile | (u16)from[look + 1]);
 +            count = coopFrameCount(src);
@@ -178,7 +186,11 @@
 +            out[i * 4] = jf[i * 4];         /* Junpei's time */
 +            out[i * 4 + 1] = src[1];        /* the model's drawing */
 +            out[i * 4 + 2] = src[2];
-+            out[i * 4 + 3] = src[3] + jf[i * 4 + 3] - baseY; /* raised or lowered as Junpei */
++            rise = jf[i * 4 + 3] - baseY; /* raised or lowered as Junpei */
++            if (scene) {
++                rise = rise < -8 ? -8 : rise > 8 ? 8 : rise;
++            }
++            out[i * 4 + 3] = src[3] + rise;
 +        }
 +        out[n * 4] = jf[n * 4]; /* 0 loops, -1 ends, as his */
 +    }
@@ -212,7 +224,7 @@
  /*
   * Plays an actor's animation: when its set (animSet) changes, it loads the
   * set's animations for the five directions (character 2 picks the file by
-@@ -882,8 +1087,22 @@
+@@ -882,8 +1099,22 @@
      set = actor->animSet;
      file = actor->animFile & 0xFFFF0000;
      if (actor->loadedSet != set) {
@@ -235,9 +247,17 @@
                  if (set < 8) {
                      actor->animFile = SET_FILE_0;
                      break;
-@@ -909,7 +1128,11 @@
+@@ -908,8 +1139,19 @@
+             } while (0);
              file = actor->animFile & 0xFFFF0000;
          }
++#ifdef NATIVE
++        if (actor->key1 == 1 && native_player_model() != 0) { /* the scenes' Junpei: the player's model */
++            actor->animFile = FIELDSTG_fileEntries[native_player_model()];
++            look = coopModelSet(actor->animFile, set);
++            file = actor->animFile & 0xFFFF0000;
++        }
++#endif
          for (entry = FILE_CACHE.getEntry(actor->animFile); entry[0] != 0; entry += 6) {
 +#ifdef NATIVE
 +            if (entry[0] == look) {
@@ -247,7 +267,7 @@
                  break;
              }
          }
-@@ -919,6 +1142,13 @@
+@@ -919,6 +1161,15 @@
          for (i = 0; i < 5; i++) {
              actor->setAnims[i] = entry[i + 1] | file;
          }
@@ -255,13 +275,15 @@
 +        /* a model's missing set made of its drawings, or nothing (the nearest it has, as found) */
 +        if (native_player_model() != 0 &&
 +            (actor->key1 == 2 || actor->key1 == 0x7C02 || actor->key1 == 0x7D02 || actor->key1 == 0x7E02)) {
-+            coopSynthesize(actor, set);
++            coopSynthesize(actor, set, 0);
++        } else if (native_player_model() != 0 && actor->key1 == 1) {
++            coopSynthesize(actor, set, 1); /* the scenes' Junpei: the model too */
 +        }
 +#endif
          actor->loadedSet = set;
          actor->animDone = 0;
      }
-@@ -927,7 +1157,11 @@
+@@ -927,7 +1178,11 @@
      } else {
          dir = 8 - actor->dir;
      }
@@ -273,7 +295,7 @@
      do {
          if (actor->animTime > 0) {
              break;
-@@ -958,6 +1192,12 @@
+@@ -958,6 +1213,12 @@
          loader.setImagePos(image->imageX, image->imageY);
          loader.setClutPos(image->clutX, image->clutY);
          loader.load(FILE_CACHE.getEntry(actor->frame[0]));
