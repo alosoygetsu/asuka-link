@@ -23,6 +23,7 @@ int g_coop_debug = 0; /* DW3_COOP_DEBUG=1: the ghost's state in the log every 2 
 
 int g_exp_mult = 1;   /* exp_multiplier: the battle report's EXP times this (coop/patches stfgtrep/report.c) */
 int g_money_mult = 1; /* money_multiplier: and its money */
+int g_sure_training = 1; /* sure_training: the gyms without luck: every try works, the bonus one too, the most of each gain and no stat lowered */
 
 /* The player's model (character creator): a character (Actor.key1) whose look the player takes, 0 Junpei's own.
    For now DW3_PLAYER_MODEL=<key1, hex> (tests) */
@@ -68,6 +69,8 @@ int native_coop_ini(const char *key, const char *value) {
         g_exp_mult = SDL_clamp(SDL_atoi(value), 1, 5);
     } else if (SDL_strcasecmp(key, "money_multiplier") == 0) {
         g_money_mult = SDL_clamp(SDL_atoi(value), 1, 5);
+    } else if (SDL_strcasecmp(key, "sure_training") == 0) {
+        g_sure_training = SDL_atoi(value) != 0;
     } else if (SDL_strcasecmp(key, "heal_on_levelup") == 0 || SDL_strcasecmp(key, "save_anywhere") == 0 ||
                SDL_strcasecmp(key, "extra_packs") == 0) { /* extra_packs: the free team took the packs' place */
         /* options this build takes out: taken here, so they stay off whatever the file says */

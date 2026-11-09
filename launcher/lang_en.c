@@ -183,5 +183,6 @@ const Lang LANG_EN = {
         [O_COOP] = {"Co-op", "See the other players on your map, each with their own save. Their addresses go below; all of you need it on."},
         [O_EXP_MULT] = {"EXP multiplier", "The EXP a battle gives, partners' and Digimon's, times this. x1 is the game's own."},
         [O_MONEY_MULT] = {"Money multiplier", "The money a battle gives, times this. x1 is the game's own."},
+        [O_SURE_TRAINING] = {"Training without luck", "At the gyms every try works, the bonus one too, each stat goes up by the most it can, and no other stat goes down."},
     },
 };

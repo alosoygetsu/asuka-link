@@ -3,6 +3,14 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.910
+Sobre el port v0.18.9.
+
+- **Entrenamiento sin azar** (nuevo en Mods, activado por defecto): en los gimnasios todos los intentos salen bien,
+  también el intento extra, cada stat sube lo máximo que da esa intensidad y ningún otro stat baja. Por ejemplo,
+  Puñetazo a TP10 da siempre +68 de Fuerza (3 x 16 y el extra, 20). Se puede desactivar en el launcher o en el
+  menú del juego (Esc → Mods → "Training without luck").
+
 ## v0.18.909
 Sobre el port v0.18.9.
 

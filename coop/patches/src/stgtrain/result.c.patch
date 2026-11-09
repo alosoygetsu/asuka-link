@@ -1,0 +1,38 @@
+--- a/src/stgtrain/result.c
++++ b/src/stgtrain/result.c
+@@ -20,7 +20,7 @@
+     }
+     column += result->bonusWorked * 3 + result->screen->intensity;
+     if (STGTRAIN_statGains[column].range != 0) {
+-        gained = STGTRAIN_statGains[column].base + RANDOM.next() % STGTRAIN_statGains[column].range;
++        gained = STGTRAIN_statGains[column].base + (g_sure_training ? STGTRAIN_statGains[column].range - 1 : RANDOM.next() % STGTRAIN_statGains[column].range); /* sure_training: the most */
+     } else {
+         gained = STGTRAIN_statGains[column].base;
+     }
+@@ -38,7 +38,7 @@
+     s32 lost;
+     s32 column;
+ 
+-    if ((u32)(stat - 1) >= 5 || (RANDOM.next() & 1)) {
++    if ((u32)(stat - 1) >= 5 || g_sure_training || (RANDOM.next() & 1)) { /* sure_training: never */
+         return 0;
+     }
+     value = &stats->stats[stat + 5];
+@@ -92,7 +92,7 @@
+     }
+     column += result->screen->intensity * 3;
+     if (gains[column].range != 0) {
+-        gained = gains[column].base + RANDOM.next() % gains[column].range;
++        gained = gains[column].base + (g_sure_training ? gains[column].range - 1 : RANDOM.next() % gains[column].range); /* sure_training: the most */
+     } else {
+         gained = gains[column].base;
+     }
+@@ -141,7 +141,7 @@
+     }
+     column += result->screen->intensity * 3;
+     if (STGTRAIN_maxHpMpGains[column].range != 0) {
+-        gained = STGTRAIN_maxHpMpGains[column].base + RANDOM.next() % STGTRAIN_maxHpMpGains[column].range;
++        gained = STGTRAIN_maxHpMpGains[column].base + (g_sure_training ? STGTRAIN_maxHpMpGains[column].range - 1 : RANDOM.next() % STGTRAIN_maxHpMpGains[column].range); /* sure_training: the most */
+     } else {
+         gained = STGTRAIN_maxHpMpGains[column].base;
+     }

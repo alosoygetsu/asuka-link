@@ -1,0 +1,11 @@
+--- a/src/stgtrain/actor.c
++++ b/src/stgtrain/actor.c
+@@ -113,7 +113,7 @@
+     }
+     actor->anim++;
+     if (actor->anim >= 2) {
+-        worked = actor->chance >= RANDOM.next() % 100;
++        worked = g_sure_training || actor->chance >= RANDOM.next() % 100; /* sure_training: every try works */
+         if (worked == 1) {
+             if (sprites->sprite != NULL) {
+                 sprites->sprite->setAnim(sprites->sprite, STGTRAIN_state.getAnim(actor->set, 2));

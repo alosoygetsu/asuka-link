@@ -183,5 +183,6 @@ const Lang LANG_FR = {
         [O_COOP] = {"Coop", "Vois les autres joueurs sur ta carte, chacun avec sa sauvegarde. Leurs adresses vont en dessous ; tous doivent l'activer."},
         [O_EXP_MULT] = {"Multiplicateur d'EXP", "L'EXP d'un combat, des partenaires et des Digimon, multipliée par ceci. x1 : celle du jeu."},
         [O_MONEY_MULT] = {"Multiplicateur d'argent", "L'argent d'un combat, multiplié par ceci. x1 : celui du jeu."},
+        [O_SURE_TRAINING] = {"Entraînement sans hasard", "Aux salles d'entraînement, chaque essai réussit, le bonus aussi, chaque stat monte au maximum et aucune autre ne baisse."},
     },
 };

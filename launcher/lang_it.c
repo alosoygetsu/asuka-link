@@ -183,5 +183,6 @@ const Lang LANG_IT = {
         [O_COOP] = {"Cooperativa", "Vedi gli altri giocatori sulla tua mappa, ognuno con il suo salvataggio. I loro indirizzi vanno sotto; tutti devono attivarla."},
         [O_EXP_MULT] = {"Moltiplicatore EXP", "L'EXP di una battaglia, di partner e Digimon, per questo numero. x1 è quella del gioco."},
         [O_MONEY_MULT] = {"Moltiplic. di soldi", "I soldi di una battaglia, per questo numero. x1 sono quelli del gioco."},
+        [O_SURE_TRAINING] = {"Allenamento senza fortuna", "Nelle palestre ogni tentativo riesce, anche quello bonus, ogni statistica sale al massimo e nessun'altra scende."},
     },
 };

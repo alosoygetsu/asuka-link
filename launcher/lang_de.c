@@ -183,5 +183,6 @@ const Lang LANG_DE = {
         [O_COOP] = {"Koop", "Sieh die anderen Spieler auf deiner Karte, jeder mit seinem Spielstand. Ihre Adressen stehen darunter; alle müssen es einschalten."},
         [O_EXP_MULT] = {"EP-Multiplikator", "Die EP eines Kampfes, für Partner und Digimon, mal diesem Wert. x1 ist die des Spiels."},
         [O_MONEY_MULT] = {"Geld-Multiplikator", "Das Geld eines Kampfes, mal diesem Wert. x1 ist das des Spiels."},
+        [O_SURE_TRAINING] = {"Training ohne Zufall", "In den Trainingshallen gelingt jeder Versuch, auch der Bonusversuch, jeder Wert steigt so stark wie möglich und kein anderer sinkt."},
     },
 };

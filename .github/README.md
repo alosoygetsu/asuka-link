@@ -42,9 +42,10 @@ zip.
 | Combates entre jugadores | En cualquier Guardromon: "Combatir" enfrenta vuestros equipos por turnos alternos; es una exhibición, sin game over y sin cambios en la partida |
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Creador de personaje | Al empezar partida eliges ser Junior, Chico o Chica y uno de 8 tonos de color; con todas las animaciones, también en las escenas |
+| Entrenamiento sin azar | En los gimnasios todos los intentos salen bien, cada stat sube lo máximo y ninguno baja |
 | Multiplicador de EXP | x1 a x5 sobre la EXP de combate (compañeros y Digimon) |
 | Multiplicador de dinero | x1 a x5 sobre el dinero de combate |
-| Por defecto | Viaje rápido, Digilog y EXP compartida completa vienen activados |
+| Por defecto | Viaje rápido, Digilog, EXP compartida completa y entrenamiento sin azar vienen activados |
 | Quitado | "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra (el equipo libre los sustituye) |
 
 Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/alosoygetsu/dw3-native-port/blob/coop/CHANGELOG-COOP.md).

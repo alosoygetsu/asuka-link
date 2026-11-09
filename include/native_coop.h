@@ -12,6 +12,7 @@ int native_player_model(void);
 int native_player_tone(void); /* DW3_PLAYER_TONE (tests), -1 none */ /* the player's look: a character (Actor.key1), 0 Junpei's own */
 extern int g_exp_mult;   /* exp_multiplier = 1-5 */
 extern int g_money_mult; /* money_multiplier = 1-5 */
+extern int g_sure_training; /* sure_training = 1: the gyms' tries all work and give their most (coop/patches stgtrain/) */
 /* What the field shows of a player: the field's mode and stage file (the same
    place when both match), the actor's pos and z (1/256 units), direction,
    animation set and depth layer */
