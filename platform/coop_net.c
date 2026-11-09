@@ -19,7 +19,7 @@
 #include "coop_net.h"
 
 #define COOP_MAGIC 0x43335744u /* "DW3C" */
-#define COOP_VERSION 3 /* 3: the look and the name */
+#define COOP_VERSION 4 /* 3: the look and the name; 4: the card trade */
 #define COOP_BUFFER_MS 80 /* the least; more with jitter */
 #define COOP_TIMEOUT_MS 2000
 #define COOP_RX 32 /* states kept, ~0.6 s at 50 Hz */
@@ -41,6 +41,7 @@ typedef struct CoopPacket {
     int16_t model; /* the character creator's look (NativeCoopState) */
     uint8_t tone, hasLook;
     char name[16];
+    NativeCoopTrade trade; /* this copy's side of its trade with the one it goes to */
 } CoopPacket;
 
 typedef struct CoopRx {
@@ -65,6 +66,7 @@ typedef struct CoopPeer {
     uint32_t got, first_seq;       /* packets taken since it came, and its first seq */
     Uint64 report_at;
     int said_version;
+    NativeCoopTrade trade_in, trade_out;
 } CoopPeer;
 
 static SOCKET s_sock = INVALID_SOCKET;
@@ -278,6 +280,7 @@ void coop_net_send(const NativeCoopState *now) {
 
         p.ack_time = peer->ack_time;
         p.ack_age = peer->ack_time != 0 ? (uint32_t)(t - peer->ack_at) : 0;
+        p.trade = peer->trade_out;
         sendto(s_sock, (const char *)&p, sizeof p, 0, (const struct sockaddr *)&peer->addr, sizeof peer->addr);
     }
 }
@@ -337,6 +340,10 @@ static void take(CoopPeer *peer, const CoopPacket *p) {
     r->state.tone = r->state.hasLook ? p->tone : 0;
     SDL_memcpy(r->state.name, p->name, sizeof r->state.name);
     r->state.name[sizeof r->state.name - 1] = 0;
+    peer->trade_in = p->trade;
+    if (peer->trade_in.count > COOP_TRADE_KINDS) {
+        peer->trade_in.count = COOP_TRADE_KINDS;
+    }
     peer->rx_head = (peer->rx_head + 1) % COOP_RX;
     if (peer->rx_count < COOP_RX) {
         peer->rx_count++;
@@ -451,5 +458,19 @@ int coop_net_peer(int i, NativeCoopState *out) {
         after = r;
     }
     *out = peer->rx[(peer->rx_head + COOP_RX - peer->rx_count) % COOP_RX].state; /* all newer than want: the oldest */
+    return 1;
+}
+
+void native_coop_trade_out(int i, const NativeCoopTrade *t) {
+    if (i >= 0 && i < s_peer_count) {
+        s_peers[i].trade_out = *t;
+    }
+}
+
+int native_coop_trade_in(int i, NativeCoopTrade *t) {
+    if (i < 0 || i >= s_peer_count || s_peers[i].rx_count == 0 || SDL_GetTicks() - s_peers[i].last_rx >= COOP_TIMEOUT_MS) {
+        return 0;
+    }
+    *t = s_peers[i].trade_in;
     return 1;
 }

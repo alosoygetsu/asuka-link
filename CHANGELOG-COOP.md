@@ -3,6 +3,22 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.906
+Sobre el port v0.18.9.
+
+- **Intercambio de cartas en los Guardromon.** Al hablar con un Guardromon (el de guardar) sale primero
+  "Hablar / Intercambiar cartas"; Hablar sigue con lo de siempre.
+  - Quien elige intercambiar espera; en cuanto otro jugador hace lo mismo en cualquier Guardromon, a los dos se les
+    abre la ventana de intercambio. No hace falta estar en el mismo mapa.
+  - Solo se ofrecen **cartas sueltas**: las copias que no usa ningún mazo (si un mazo usa una carta 2 veces, esas 2 se
+    quedan). Hasta 5 cartas distintas por oferta, y nada que al otro no le quepa (máximo 9 copias).
+  - Arriba/abajo eligen carta, izquierda/derecha cuántas copias. Las dos ofertas se ven en directo; primero los dos
+    marcan **Listo** y después **Confirmar**. Si alguien cambia algo, el otro vuelve a mirar.
+  - Se aplica a la vez en las dos partidas y una sola vez; si alguien se desconecta antes, se cancela. Se guarda al
+    guardar la partida, como siempre.
+  - Con la letra del juego, en el idioma de cada uno.
+- El paquete de red cambia (versión 4): **todos tenéis que actualizar**.
+
 ## v0.18.905
 Sobre el port v0.18.9.
 

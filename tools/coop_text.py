@@ -8,7 +8,7 @@ characters those texts have. Run from anywhere: python native/tools/coop_text.py
 Index: 0 "", 1 the team choice's title, 2 its help, 3 the confirmation's "Your team", 4 the welcome's sentence
 about the partners (in place of the one about the three packs), 5-7 the picks' marks "1" "2" "3", 8 the team's
 separator ", ", 9 the team line before any pick,
-10 the team page's Accept, 11 the look page's title, 12 its help, 13-15 the models' names.
+10 the team page's Accept, 11 the look page's title, 12 its help, 13-15 the models' names, 16-36 the card trade's.
 """
 import re
 import sys
@@ -67,6 +67,33 @@ def learn():
         if table.setdefault(str(d), want) != want:
             sys.exit("the digits aren't in order")
     return table
+
+
+# 16-39: the card trade's (37-39 the Guardromon's choice and the wait) (native_coop.h COOP_TEXT_TRADE_*)
+TRADE_TEXTS = {
+    "eng": ["Card Trade", "Your offer", "Their offer", "Your spare cards", "You have no spare cards.",
+            " wants to trade cards.", "Accept", "Leave", "Waiting for ", "Ready", "Confirm", "Trade done!",
+            "Trade cancelled.", " doesn't want to trade.", "You can't hold that many copies.", "< >: amount",
+            "Confirmed", "Nothing", "5 different cards at most.", "Change", "Waiting...", "Talk", "Trade cards", "Waiting for another player..."],
+    "fra": ["Échange de cartes", "Ton offre", "Son offre", "Tes cartes en trop", "Tu n'as pas de cartes en trop.",
+            " veut échanger des cartes.", "Accepter", "Quitter", "On attend ", "Prêt", "Confirmer", "Échange fait !",
+            "Échange annulé.", " ne veut pas échanger.", "Tu ne peux pas avoir autant de copies.", "< > : quantité",
+            "Confirmé", "Rien", "5 cartes différentes au plus.", "Modifier", "Attente...", "Parler", "Échanger des cartes", "On attend un autre joueur..."],
+    "ita": ["Scambio di carte", "La tua offerta", "La sua offerta", "Le tue carte in più", "Non hai carte in più.",
+            " vuole scambiare carte.", "Accetta", "Esci", "In attesa di ", "Pronto", "Conferma", "Scambio fatto!",
+            "Scambio annullato.", " non vuole scambiare.", "Non puoi avere tante copie.", "< >: quantità",
+            "Confermato", "Niente", "Al massimo 5 carte diverse.", "Cambia", "In attesa...", "Parla", "Scambia carte", "In attesa di un altro giocatore..."],
+    "ger": ["Kartentausch", "Dein Angebot", "Sein Angebot", "Deine übrigen Karten", "Du hast keine übrigen Karten.",
+            " will Karten tauschen.", "Annehmen", "Gehen", "Warte auf ", "Bereit", "Bestätigen", "Tausch erledigt!",
+            "Tausch abgebrochen.", " will nicht tauschen.", "So viele Kopien passen nicht.", "< >: Anzahl",
+            "Bestätigt", "Nichts", "Höchstens 5 verschiedene Karten.", "Zurück", "Warte...", "Reden", "Karten tauschen", "Warte auf einen anderen Spieler..."],
+    "spn": ["Intercambio de cartas", "Tu oferta", "Su oferta", "Tus cartas sueltas", "No tienes cartas sueltas.",
+            " quiere intercambiar cartas.", "Aceptar", "Salir", "Esperando a ", "Listo", "Confirmar",
+            "¡Intercambio hecho!", "Intercambio cancelado.", " no quiere intercambiar.", "No te caben tantas copias.",
+            "< >: cantidad", "Confirmado", "Nada", "Máximo 5 cartas distintas.", "Cambiar", "Esperando...", "Hablar", "Intercambiar cartas", "Esperando a otro jugador..."],
+}
+for _lang in TEXTS:
+    TEXTS[_lang] = TEXTS[_lang] + TRADE_TEXTS[_lang]
 
 
 def encode(table, s):

@@ -359,8 +359,14 @@ void native_coop_tag(int n, int x, int y) {
     }
 }
 
+static int s_tags_off; /* a card trade's window up (fieldstg/field.c): no tags over it */
+
+void native_coop_tags_block(int on) {
+    s_tags_off = on;
+}
+
 static int tag_fresh(int n) {
-    return s_tags[n].at != 0 && SDL_GetTicks() - s_tags[n].at < 100;
+    return !s_tags_off && s_tags[n].at != 0 && SDL_GetTicks() - s_tags[n].at < 100;
 }
 
 int native_coop_tags_due(void) {
@@ -403,4 +409,28 @@ void native_coop_draw_tags(SDL_Renderer *r) {
         SDL_RenderDebugText(r, plate.x + 3, plate.y + 2, text);
     }
     SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_NONE);
+}
+
+/* The character whose talk offers the card trade: Guardromon (0x15), or DW3_COOP_GUARD's (tests, hex) */
+int native_coop_guard_key(void) {
+    static int key = -1;
+
+    if (key < 0) {
+        const char *env = SDL_getenv("DW3_COOP_GUARD");
+
+        key = env != NULL ? (int)SDL_strtol(env, NULL, 16) : 0x15;
+    }
+    return key;
+}
+
+/* DW3_COOP_CARDS=n (tests): a field gives n copies of the album's first cards once, to have spare ones to trade */
+int native_coop_test_cards(void) {
+    static int done;
+    const char *env = SDL_getenv("DW3_COOP_CARDS");
+
+    if (done || env == NULL) {
+        return 0;
+    }
+    done = 1;
+    return SDL_atoi(env);
 }

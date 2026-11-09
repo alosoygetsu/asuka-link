@@ -38,6 +38,7 @@ zip.
 | | |
 |---|---|
 | Cooperativo | Hasta 4 jugadores en red, cada uno con su partida; os veis en el mismo mapa, cada uno con su personaje y su nombre encima |
+| Intercambio de cartas | En cualquier Guardromon: dos jugadores que eligen "Intercambiar cartas" se cambian cartas sueltas (las que no usa ningún mazo) |
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Creador de personaje | Al empezar partida eliges ser Junior, Chico o Chica y uno de 8 tonos de color; con todas las animaciones, también en las escenas |
 | Multiplicador de EXP | x1 a x5 sobre la EXP de combate (compañeros y Digimon) |
@@ -52,7 +53,7 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 - [x] Elegir tu propio equipo inicial de 3 Digimon
 - [x] Nombre encima de cada jugador y su aspecto visible para los demás
 - [ ] Chat y avisos ("X ha entrado en Asuka City")
-- [ ] Intercambio de Digimon y objetos
+- [x] Intercambio de cartas (en los Guardromon)
 - [ ] Duelos de cartas entre jugadores
 - [ ] Combates entre jugadores
 - [ ] Combates cooperativos contra jefes (raids)
@@ -74,5 +75,5 @@ A fork of [Feerdus95/dw3-native-port](https://github.com/Feerdus95/dw3-native-po
 *Digimon World 2003*) with **online co-op for up to 4 players**: each plays their own save, and players on the same map
 see each other. You need your own European disc; nothing of the game is here. Get `dw2003-coop-<version>.zip` from the
 [latest release](https://github.com/alosoygetsu/dw3-native-port/releases/latest), set the other players' addresses in the launcher (Settings → Mods → Co-op),
-and meet on a map: you see each other with your own look and name. A new game lets you pick your look (Junior, a boy or a girl, in 8 colours) and starts with a team you build yourself (any 3 of the 8 partners) instead of a starter
+and meet on a map: you see each other with your own look and name, and can trade spare cards at any Guardromon. A new game lets you pick your look (Junior, a boy or a girl, in 8 colours) and starts with a team you build yourself (any 3 of the 8 partners) instead of a starter
 pack, and there are EXP and money multipliers. Updates come through the launcher's Update button.

@@ -34,6 +34,25 @@ int native_coop_peer(int i, NativeCoopState *out);
 int native_coop_peer_slots(void);
 /* a line in coop.log (and the console): what a player can send when something is off */
 void native_coop_note(const char *fmt, ...);
+/* The card trade (fieldstg/field.c) rides on the field's packets: each packet to a player carries this copy's side of
+   its trade with that player, whole, every frame, so nothing needs resending. phase: COOP_TRADE_* */
+#define COOP_TRADE_KINDS 5 /* different cards in an offer */
+enum { COOP_TRADE_NONE, COOP_TRADE_ASK, COOP_TRADE_OPEN, COOP_TRADE_READY, COOP_TRADE_CONFIRM, COOP_TRADE_DONE,
+       COOP_TRADE_NO };
+typedef struct NativeCoopTrade {
+    unsigned int session; /* the asker's number for this trade, 0 none */
+    unsigned char phase, count, pad[2];
+    unsigned short card[COOP_TRADE_KINDS];
+    unsigned char copies[COOP_TRADE_KINDS];
+    unsigned char pad2[1];
+    unsigned int offer; /* this side's offer's hash, and the other's as this side sees it */
+    unsigned int seen;
+} NativeCoopTrade;
+void native_coop_tags_block(int on); /* no name tags while on */
+int native_coop_test_cards(void); /* DW3_COOP_CARDS (tests) */
+int native_coop_guard_key(void); /* the character whose talk offers the trade: Guardromon */
+void native_coop_trade_out(int peer, const NativeCoopTrade *t); /* what goes to peer from now on */
+int native_coop_trade_in(int peer, NativeCoopTrade *t); /* peer's side as it last came: 0 when it's gone */
 /* the name tags over the other players: where ghost n's head was drawn this frame (screen, 320x240) */
 void native_coop_tag(int n, int x, int y);
 int native_coop_tags_due(void); /* 1 while a tag was drawn just now: video.c then draws the overlay */
@@ -75,5 +94,6 @@ const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a 
 #define COOP_TEXT_LOOK_TITLE 11
 #define COOP_TEXT_LOOK_HELP 12
 #define COOP_TEXT_LOOK_NAME 13 /* 13-15: Junior, the boy, the girl */
+#define COOP_TEXT_TRADE 16 /* 16-39: the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
 
 #endif /* NATIVE_COOP_H */

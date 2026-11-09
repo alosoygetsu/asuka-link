@@ -1,6 +1,28 @@
 --- a/src/fieldstg/actor_control.c
 +++ b/src/fieldstg/actor_control.c
-@@ -756,6 +756,9 @@
+@@ -161,6 +161,9 @@
+    (FIELDSTG_standIns): it answers (ACTOR_TALK), or, for the objects 0x148,
+    0x15F and 0x160, the player works it (ACTOR_USE). Returns 1 when the
+    player acts */
++#ifdef NATIVE
++s32 coopTradeTalk(Actor *actor, Point *pos, Actor *target); /* field.c */
++#endif
+ s32 FIELDSTG_talkToActorAt(Actor *actor, Point *pos) {
+     Actor *target;
+     s32 i;
+@@ -168,6 +171,11 @@
+ 
+     target = FIELDSTG_findActorAt(pos);
+     result = 0;
++#ifdef NATIVE
++    if (coopTradeTalk(actor, pos, target)) {
++        return 1; /* another player: a card trade (field.c) */
++    }
++#endif
+     if (target != NULL && target->state == TASK_RUN) {
+         if (target->key1 != 0x180) {
+             if (target->key1 != 0x181) {
+@@ -756,6 +764,9 @@
   * mirrored for the directions 5 and up, and, when it has one, its shadow, a
   * sprite with its own texture page. The match depends on the shadow's y offset
   * cast to s16. */
@@ -10,7 +32,7 @@
  void FIELDSTG_drawActor(void *arg, void *arg2) {
      Actor *actor = arg;
      Layer *layer = arg2;
-@@ -809,6 +812,11 @@
+@@ -809,6 +820,11 @@
          prim.ft4->clut = getClut(image->clutX, image->clutY);
          prim.ft4->tpage = getTPage(0, 0, image->x, image->y);
          addPrim(ot, prim.any);
@@ -22,7 +44,7 @@
          pos.y += actor->z >> 8;
          prim.ft4++;
          if (actor->hasShadow != 0) {
-@@ -857,6 +865,291 @@
+@@ -857,6 +873,291 @@
  #define SET_FILE_OTHER 0x03CA0064
  #endif
  
@@ -314,7 +336,7 @@
  /*
   * Plays an actor's animation: when its set (animSet) changes, it loads the
   * set's animations for the five directions (character 2 picks the file by
-@@ -882,8 +1175,22 @@
+@@ -882,8 +1183,22 @@
      set = actor->animSet;
      file = actor->animFile & 0xFFFF0000;
      if (actor->loadedSet != set) {
@@ -337,7 +359,7 @@
                  if (set < 8) {
                      actor->animFile = SET_FILE_0;
                      break;
-@@ -908,8 +1215,19 @@
+@@ -908,8 +1223,19 @@
              } while (0);
              file = actor->animFile & 0xFFFF0000;
          }
@@ -357,7 +379,7 @@
                  break;
              }
          }
-@@ -919,6 +1237,14 @@
+@@ -919,6 +1245,14 @@
          for (i = 0; i < 5; i++) {
              actor->setAnims[i] = entry[i + 1] | file;
          }
@@ -372,7 +394,7 @@
          actor->loadedSet = set;
          actor->animDone = 0;
      }
-@@ -927,7 +1253,11 @@
+@@ -927,7 +1261,11 @@
      } else {
          dir = 8 - actor->dir;
      }
@@ -384,7 +406,7 @@
      do {
          if (actor->animTime > 0) {
              break;
-@@ -958,6 +1288,17 @@
+@@ -958,6 +1296,17 @@
          loader.setImagePos(image->imageX, image->imageY);
          loader.setClutPos(image->clutX, image->clutY);
          loader.load(FILE_CACHE.getEntry(actor->frame[0]));
