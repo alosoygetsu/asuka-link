@@ -1,6 +1,6 @@
 --- a/src/fightstg/player_turn.c
 +++ b/src/fightstg/player_turn.c
-@@ -3,6 +3,41 @@
+@@ -3,6 +3,57 @@
  
  #include "fightstg.h"
  
@@ -16,11 +16,27 @@
 +    s32 tech;
 +    s32 mp;
 +
-+    if (native_coop_pvp() == NULL || !native_coop_auto_battle() || ++coopAutoFrames < 45) {
++    if (native_coop_pvp() == NULL || !native_coop_auto_battle()) {
++        return 0;
++    }
++    native_coop_auto_quiet();
++    if (++coopAutoFrames < 45) {
 +        return 0;
 +    }
 +    coopAutoFrames = 0;
 +    task->action = 0;
++    if (native_coop_pvp()->sent == 0) {
++        s16 slots[4];
++
++        if (GAME.funcs.getPartnerSlots(member, slots) > 0 && slots[0] >= 3) {
++            /* the first command changes form when the partner can: into its first slot's, or back to its own */
++            task->action = 2;
++            task->arg = member;
++            task->digimon = fighter->id == slots[0] ? DIGIMON_DATA[member].id : slots[0];
++            native_coop_note("PvP test: digivolving from %d into %d", fighter->id, task->digimon);
++            return 1;
++        }
++    }
 +    if (native_coop_auto_battle() == 2 && native_coop_pvp()->sent >= 4) {
 +        task->action = 1; /* DW3_COOP_AUTO=giveup: the fifth command gives up */
 +        native_coop_note("PvP test: giving up");
@@ -42,7 +58,7 @@
  /* Opens the command menu with the HUD, the partner view and the shot camera,
     then goes to the menu of the command picked */
  static inline void runCommandMenu(PlayerTurn *task, PlayerTurnChild *children) {
-@@ -24,6 +59,12 @@
+@@ -24,6 +75,12 @@
          task->result = -1;
          task->tickCounter(task);
      case 1:
@@ -55,21 +71,7 @@
          if (task->result != -1) {
              task->command = task->result;
              switch (task->result) {
-@@ -35,6 +76,13 @@
-                 task->setStep(task, 3);
-                 break;
-             case BATTLE_COMMAND_DIGIVOLVE:
-+#ifdef NATIVE
-+                if (native_coop_pvp() != NULL) {
-+                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's PvP battle: not yet */
-+                    task->setSubstate(task, 2);
-+                    break;
-+                }
-+#endif
-                 task->setStep(task, 1);
-                 break;
-             case BATTLE_COMMAND_SWITCH:
-@@ -42,6 +90,13 @@
+@@ -42,6 +99,13 @@
                  task->switchLine = 0;
                  break;
              case BATTLE_COMMAND_ITEM:
@@ -83,7 +85,7 @@
                  task->setStep(task, 2);
                  break;
              case BATTLE_COMMAND_RUN:
-@@ -168,6 +223,11 @@
+@@ -168,6 +232,11 @@
                  task->switchLine = 0;
              } else {
                  task->action = 6;
@@ -95,7 +97,7 @@
                  task->digimon = task->result >> 4;
                  task->setSubstate(task, 0);
                  task->switchLine = 0;
-@@ -226,6 +286,24 @@
+@@ -226,6 +295,24 @@
          }
          task->tickCounter(task);
      case 1:

@@ -11,8 +11,11 @@ Sobre el port v0.18.9.
   la arena, cada uno con sus 3 Digimon contra los del otro.
   - **Turnos alternos:** empieza el Digimon más rápido y después un turno cada uno. Los turnos del rival los decide el
     otro jugador.
-  - Se puede **atacar, usar técnicas, cambiar de Digimon y rendirse** (Huir). Los objetos no se pueden usar, y
-    digievolucionar aún no.
+  - Se puede **atacar, usar técnicas, digievolucionar, cambiar de Digimon y rendirse** (Huir). Los objetos no se
+    pueden usar.
+  - Cada uno ve la animación de digievolución de su propio Digimon; el del rival entra con su nueva forma, como al
+    cambiar. Arriba sale el nombre de cada compañero, sea cual sea su forma.
+  - El primer Digimon empieza con su digievolución de combate (la del laboratorio), igual en los dos lados.
   - **Exhibición:** se empieza con la vida y los MP llenos y, ganes, pierdas o te rindas, vuelves al mapa con la partida
     exactamente como estaba. Sin EXP, sin dinero y **sin game over**.
   - Si el otro se rinde o se desconecta, ganas y vuelves al mapa.

@@ -581,14 +581,38 @@ int native_coop_auto_battle(void) {
     return on;
 }
 
-int native_coop_auto_press(void) {
-    static int frame;
+static int s_press_frame, s_quiet_frame;
 
-    return s_pvp.on && native_coop_auto_battle() && ++frame % 40 < 4;
+int native_coop_auto_press(void) {
+    ++s_press_frame;
+    return s_pvp.on && native_coop_auto_battle() && s_press_frame - s_quiet_frame > 2 && s_press_frame % 40 < 4;
+}
+
+void native_coop_auto_quiet(void) {
+    s_quiet_frame = s_press_frame;
 }
 
 unsigned int native_coop_coin(void) {
     Uint64 t = SDL_GetPerformanceCounter();
 
     return (unsigned int)(t ^ (t >> 32)) * 2654435761u ^ (unsigned int)g_coop_port * 40503u;
+}
+
+void native_coop_test_save(void *game) {
+    const char *env = SDL_getenv("DW3_COOP_SAVE");
+    char path[512];
+    const char *at;
+    FILE *f;
+
+    if (env == NULL || (at = SDL_strchr(env, '@')) == NULL || at - env >= (int)sizeof path) {
+        return;
+    }
+    SDL_memcpy(path, env, at - env);
+    path[at - env] = 0;
+    if ((f = fopen(path, "rb")) != NULL) {
+        if (fseek(f, SDL_strtol(at + 1, NULL, 0), SEEK_SET) == 0 && fread(game, COOP_PVP_SAVE, 1, f) == 1) {
+            native_coop_note("test: the save at %s", env);
+        }
+        fclose(f);
+    }
 }

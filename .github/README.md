@@ -56,7 +56,7 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 - [ ] Chat y avisos ("X ha entrado en Asuka City")
 - [x] Intercambio de cartas (en los Guardromon)
 - [ ] Duelos de cartas entre jugadores
-- [x] Combates entre jugadores (falta digievolucionar)
+- [x] Combates entre jugadores
 - [ ] Combates cooperativos contra jefes (raids)
 - [x] Personalizar el aspecto del personaje (modelo y color)
 

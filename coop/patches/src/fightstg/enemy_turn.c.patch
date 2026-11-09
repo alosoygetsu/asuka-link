@@ -1,6 +1,6 @@
 --- a/src/fightstg/enemy_turn.c
 +++ b/src/fightstg/enemy_turn.c
-@@ -3,6 +3,107 @@
+@@ -3,6 +3,118 @@
  
  #include "fightstg.h"
  
@@ -98,6 +98,17 @@
 +        }
 +        task->substate = 3;
 +        break;
++    case 2:
++        /* a digivolution (or back to an earlier form): the game has its effect for the player's side only; here the
++           enemy comes in again as its new Digimon, with its name, as after a switch */
++        if (c.digimon > 0 && GET_DIGIMON(c.digimon) != NULL) {
++            enemies[FIGHTSTG_battle.active[1]].id = c.digimon;
++            task->switchTo = FIGHTSTG_battle.active[1];
++            task->substate = 5;
++            break;
++        }
++        task->substate = 3;
++        break;
 +    default:
 +        task->substate = 3; /* nothing: asleep, paralysed, confused */
 +        break;
@@ -108,7 +119,7 @@
  /* The enemy that the enemy's turn (FIGHTSTG_updateEnemyTurn) switches to:
     task->target's, or one of the others at random (not the active one), -1
     for none */
-@@ -199,6 +300,12 @@
+@@ -199,6 +311,12 @@
              showRunAway(task, children);
              break;
          case 1:

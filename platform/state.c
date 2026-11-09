@@ -174,6 +174,7 @@ void state_frame(void) {
         if (getMode() >> 8 == MODE_LANGUAGE >> 8) {
             loadFont(); /* as F1: the language select wipes the font */
         }
+        native_coop_test_save(GAME); /* DW3_COOP_SAVE (the co-op's tests) */
         if (g_field_progress >= 0) {
             memcpy(GAME + GAME_PROGRESS, &g_field_progress, 4);
         }

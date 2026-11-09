@@ -52,7 +52,9 @@ void native_coop_tags_block(int on); /* no name tags while on */
 int native_coop_test_cards(void); /* DW3_COOP_CARDS (tests) */
 int native_coop_auto(void); /* DW3_COOP_AUTO (tests): 0 trade, 1 battle, -1 none */
 int native_coop_auto_battle(void); /* DW3_COOP_AUTO=battle: and in the PvP battle, the commands picked by themselves; =giveup (2): the third gives up */
-int native_coop_auto_press(void); /* and cross pressed now and then, for its messages (platform/pad.c) */
+void native_coop_test_save(void *game); /* DW3_COOP_SAVE=card.mcd@0x2300: --field starts with that save (tests) */
+int native_coop_auto_press(void);
+void native_coop_auto_quiet(void); /* no presses now: the test picks the command itself */ /* and cross pressed now and then, for its messages (platform/pad.c) */
 int native_coop_guard_key(void); /* the character whose talk offers the trade: Guardromon */
 /* Blobs bigger than a packet, to one player, in pieces: id (not 0) names it; sent tells it's all there */
 #define COOP_BLOB_MAX 4096

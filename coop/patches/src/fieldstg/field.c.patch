@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1071 @@
+@@ -362,10 +362,1079 @@
      }
  }
  
@@ -735,6 +735,14 @@
 +            member = GAME.party[i];
 +            coopTeamMine.party[i] = member;
 +            coopTeamMine.ids[i] = member >= 0 && member < PARTNER_COUNT ? DIGIMON_DATA[member].id : 0;
++            if (i == 0 && member >= 0 && member < PARTNER_COUNT) {
++                s16 slots[4];
++
++                /* the first starts the battle as its battle digivolution, as on its own side (wfightmn/menu.c) */
++                if (GAME.funcs.getPartnerSlots(member, slots) > 0 && GAME.partners[member].battleDigivolve != 0) {
++                    coopTeamMine.ids[0] = GAME.partners[member].battleDigivolve;
++                }
++            }
 +            if (member >= 0 && member < PARTNER_COUNT) {
 +                coopTeamMine.partners[i] = GAME.partners[member];
 +            }
@@ -1072,7 +1080,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1653,9 @@
+@@ -592,6 +1661,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1082,7 +1090,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1709,9 @@
+@@ -645,6 +1717,9 @@
          }
          break;
      case TASK_RUN:

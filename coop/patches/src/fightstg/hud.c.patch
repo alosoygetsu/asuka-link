@@ -1,0 +1,23 @@
+--- a/src/fightstg/hud.c
++++ b/src/fightstg/hud.c
+@@ -77,6 +77,20 @@
+         if (windows[1] == NULL) {
+             windows[1] = createTextWindow(BATTLE_LAYER_MENUS, 1, 0x11, 0x15);
+         }
++#ifdef NATIVE
++        if (native_coop_pvp() != NULL) {
++            /* the co-op's PvP battle: the other player's partner's own name, as this side's shows its own (whatever
++               its form): fieldstg/field.c's CoopTeam, its partners by party slot */
++            typedef struct CoopTeam {
++                s32 party[3];
++                s32 ids[3];
++                Partner partners[3];
++            } CoopTeam;
++
++            windows[1]->setString(windows[1], ((CoopTeam *)native_coop_pvp()->team)->partners[FIGHTSTG_battle.active[1]].info.name, -1);
++            enemy = NULL;
++        }
++#endif
+         if (enemy != NULL) {
+             windows[1]->setString(windows[1], FILE_CACHE.load(TEXT_FILE(TEXT_DIGIMON_NAMES)), enemy->nameId);
+         }
