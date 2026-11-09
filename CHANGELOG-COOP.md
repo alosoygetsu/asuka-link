@@ -3,6 +3,12 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.907
+Sobre el port v0.18.9.
+
+- **Intercambio de cartas:** al terminar (o cancelar) ya no salta el diálogo de guardar del Guardromon; el intercambio
+  termina ahí.
+
 ## v0.18.906
 Sobre el port v0.18.9.
 

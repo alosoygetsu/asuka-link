@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,931 @@
+@@ -362,10 +362,939 @@
      }
  }
  
@@ -171,6 +171,7 @@
 +    Actor *talker; /* who talked to him, and where: his own talk, if that's the choice */
 +    Point talkAt;
 +    s32 passing; /* his own talk going on: not offered again */
++    s32 quiet; /* frames after a trade shuts: the press that shut it doesn't talk to him again */
 +    NativeCoopTrade last; /* the last word, going out a while after */
 +    s32 linger;
 +    s32 msg, msgPeer, msgFrames; /* a message after the window: T_*, whose name, frames left */
@@ -306,6 +307,7 @@
 +        FIELDSTG_state.busy = 0;
 +        coopTrade.froze = 0;
 +    }
++    coopTrade.quiet = 20;
 +    coopTrade.phase = COOP_TRADE_NONE;
 +    for (c = 0; c < COOP_CARDS; c++) {
 +        coopTrade.offered[c] = 0;
@@ -346,8 +348,11 @@
 +                   target != NULL ? target->key1 : -1);
 +    }
 +    if (!g_coop || coopTrade.passing || target == NULL || target->key1 != native_coop_guard_key() ||
-+        native_coop_peer_slots() == 0 || coopTrade.phase != COOP_TRADE_NONE || coopTrade.linger != 0) {
++        native_coop_peer_slots() == 0) {
 +        return 0;
++    }
++    if (coopTrade.phase != COOP_TRADE_NONE || coopTrade.quiet > 0 || coopTrade.msgFrames > 0) {
++        return 1; /* a trade just shut (its last press, its message): no talk with him yet */
 +    }
 +    coopTradeStart(-1, 0, COOP_TRADE_MENU);
 +    coopTrade.menu = 0;
@@ -671,6 +676,9 @@
 +    in.count = 0;
 +    in.offer = in.seen = 0;
 +    coopTrade.frames++;
++    if (coopTrade.quiet > 0) {
++        coopTrade.quiet--;
++    }
 +    if (coopTrade.msgFrames > 0) {
 +        coopTrade.msgFrames--;
 +    }
@@ -932,7 +940,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1513,9 @@
+@@ -592,6 +1521,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -942,7 +950,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1569,9 @@
+@@ -645,6 +1577,9 @@
          }
          break;
      case TASK_RUN:
