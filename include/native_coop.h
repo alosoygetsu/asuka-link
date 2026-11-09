@@ -29,6 +29,8 @@ void native_coop_publish(const NativeCoopState *now);
 int native_coop_peer(int i, NativeCoopState *out);
 /* how many other players there can be (up to 3): coop_peers', or 1 without it (the ghost of yourself) */
 int native_coop_peer_slots(void);
+/* a line in coop.log (and the console): what a player can send when something is off */
+void native_coop_note(const char *fmt, ...);
 /* VRAM for the field's actors: the slots kept, cleared when the field
    starts, a box kept for one, and a blank box free in a texture page */
 void native_coop_vram_reset(void);

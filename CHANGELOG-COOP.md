@@ -16,6 +16,8 @@ Sobre el port v0.18.9.
   - Se guarda con tu partida, en bytes que el juego no usa: la memory card sigue siendo normal.
   - Los retratos del registro (nombre, equipo y confirmación) muestran a tu personaje en vez de Junior.
   - En el cooperativo, los demás todavía te ven como Junior con tu color de jugador.
+- **`coop.log` más claro:** dice "you see player N on map X" la primera vez que ves a cada jugador en un mapa, y
+  avisa si en un mapa no se le puede mostrar (sin sitio en VRAM, 15 personajes, o eres otro personaje en ese mapa).
 
 ## v0.18.903
 Sobre el port v0.18.9.

@@ -75,7 +75,9 @@ static int s_said_stranger;
 
 static FILE *s_log;
 
-static void coop_log(const char *fmt, ...) {
+#define coop_log native_coop_note
+
+void native_coop_note(const char *fmt, ...) {
     va_list ap;
     char line[400];
 

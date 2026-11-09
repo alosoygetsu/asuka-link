@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,192 @@
+@@ -362,10 +362,198 @@
      }
  }
  
@@ -31,6 +31,7 @@
 +static Actor *coopGhost[COOP_GHOSTS];
 +static ActorImage coopGhostImage[COOP_GHOSTS];
 +static s32 coopWait;
++static s32 coopSeen[COOP_GHOSTS]; /* drawn on this map yet: coop.log says it once */
 +static s32 coopTried;
 +
 +static void coopReserveSlot(s32 image) {
@@ -49,6 +50,7 @@
 +    coopSynthReset();
 +    for (i = 0; i < COOP_GHOSTS; i++) {
 +        coopGhost[i] = NULL;
++        coopSeen[i] = 0;
 +    }
 +    coopWait = 0;
 +    coopTried = 0;
@@ -68,7 +70,7 @@
 +    for (slot = 0; slot < 15 && children->npcs[slot] != NULL; slot++) {
 +    }
 +    if (slot == 15) {
-+        native_log("coop: mode %X: the field has 15 characters already, no player %d", GAME.funcs.getMode(), n + 2);
++        native_coop_note("map %X has 15 characters already: player %d isn't shown here", GAME.funcs.getMode(), n + 2);
 +        return;
 +    }
 +    /* the frames and, under them at a multiple of 16 as a CLUT's x must be, the CLUT: in the player's page, or in
@@ -77,7 +79,7 @@
 +    page.y = mine->y;
 +    if (!native_coop_find_vram(mine->x, mine->y, COOP_SLOT_W * 2, COOP_SLOT_H + 1, &x, &y) &&
 +        !native_coop_find_vram_any(COOP_SLOT_W * 2, COOP_SLOT_H + 1, &x, &y, &page.x, &page.y)) {
-+        native_log("coop: mode %X: no free VRAM for player %d", GAME.funcs.getMode(), n + 2);
++        native_coop_note("map %X has no room in VRAM for player %d: not shown here", GAME.funcs.getMode(), n + 2);
 +        native_coop_vram_dump(mine->x, mine->y);
 +        return;
 +    }
@@ -109,7 +111,7 @@
 +        return;
 +    }
 +    if (player->key1 != FIELD_CHARACTER_PLAYER) {
-+        native_log("coop: mode %X: the player is character %X here, nobody else shown", GAME.funcs.getMode(), player->key1);
++        native_coop_note("map %X: you are character %X here, the others aren't shown", GAME.funcs.getMode(), player->key1);
 +        return;
 +    }
 +    for (i = -2; i < 4; i++) {
@@ -166,6 +168,10 @@
 +            if (ghost->animSet != peer.animSet) {
 +                FIELDSTG_setActorAnim(ghost, peer.animSet);
 +            }
++            if (!coopSeen[i]) {
++                coopSeen[i] = 1;
++                native_coop_note("you see player %d on map %X", i + 2, now.mode);
++            }
 +            if (g_coop_debug && ++coopWait % 100 == 0) {
 +                native_log("coop: player %d state %d/%X at (%d, %d) z %d anim %X/%X frame %dx%d depth %d, you at (%d, %d)",
 +                           i + 2, ghost->state, ghost->substate, ghost->tile.x, ghost->tile.y, ghost->z, ghost->animFile,
@@ -193,7 +199,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +774,9 @@
+@@ -592,6 +780,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -203,7 +209,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +830,9 @@
+@@ -645,6 +836,9 @@
          }
          break;
      case TASK_RUN:
