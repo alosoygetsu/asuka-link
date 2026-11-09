@@ -1,0 +1,14 @@
+--- a/src/menu_common/name_entry/draw_keyboard.inc.c
++++ b/src/menu_common/name_entry/draw_keyboard.inc.c
+@@ -71,6 +71,11 @@
+                 sprite.draw(FILE_CACHE.getEntry(NAME_ENTRY_SPRITES),
+                             OVL_NAME(nameAnims)[task->partner * 7 + task->partnerFrame], 0x22, 0x30);
+             } else {
++#ifdef NAME_ENTRY_LOOK
++                /* the player's name in STPLNMET: the character creator's look, when there's one */
++                if (task->keyboardScale.level != ONE ||
++                    !STPLNMET_lookPortrait(task->layer, task->depth, 0x34, 0x4C, 5, 0, 0, 0, 0, 0))
++#endif
+                 sprite.draw(FILE_CACHE.getEntry(NAME_ENTRY_SPRITES), 0x36, 0x20, 0x2E);
+             }
+             if (GFX.funcs.getTime() - task->clutTime >= 5) {

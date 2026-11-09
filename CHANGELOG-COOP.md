@@ -14,6 +14,8 @@ Sobre el port v0.18.9.
   - Chico y Chica tienen todas las animaciones de Junior: las que no tenían (correr, trepar, caer, gestos de las
     escenas…) se generan con sus propios dibujos y el ritmo de las de Junior.
   - Se guarda con tu partida, en bytes que el juego no usa: la memory card sigue siendo normal.
+  - Los retratos del registro (nombre, equipo y confirmación) muestran a tu personaje en vez de Junior.
+  - En el cooperativo, los demás todavía te ven como Junior con tu color de jugador.
 
 ## v0.18.903
 Sobre el port v0.18.9.

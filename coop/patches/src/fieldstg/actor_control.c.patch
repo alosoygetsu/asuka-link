@@ -1,13 +1,14 @@
 --- a/src/fieldstg/actor_control.c
 +++ b/src/fieldstg/actor_control.c
-@@ -857,6 +857,262 @@
+@@ -857,6 +857,263 @@
  #define SET_FILE_OTHER 0x03CA0064
  #endif
  
 +#ifdef NATIVE
 +/* The character creator (stplnmet/choice.c): the look picked in a new game, kept in the save's GAME.pad5, bytes
 +   nothing reads (a card stays standard): [0] COOP_LOOK_MAGIC, [1] the model (COOP_LOOK_MODELS), [2] the tone.
-+   It shows from GAME.progress 1, past the movie into the Digital World; DW3_PLAYER_MODEL (tests) overrides it */
++   It shows from GAME.progress 2, which the Login Room's talk with the Account Clerk sets (wstag225's
++   endEvent5) before the movie into the Digital World; DW3_PLAYER_MODEL (tests) overrides it */
 +#define COOP_LOOK_MAGIC 0xC0
 +static const s16 COOP_LOOK_MODELS[3] = {0, 0x31, 0x10}; /* Junior (Junpei), the boy, the girl */
 +
@@ -15,7 +16,7 @@
 +    if (native_player_model() != 0) {
 +        return native_player_model();
 +    }
-+    if (GAME.pad5[0] == COOP_LOOK_MAGIC && GAME.progress >= 1 && GAME.pad5[1] < 3) {
++    if (GAME.pad5[0] == COOP_LOOK_MAGIC && GAME.progress >= 2 && GAME.pad5[1] < 3) {
 +        return COOP_LOOK_MODELS[GAME.pad5[1]];
 +    }
 +    return 0;
@@ -25,7 +26,7 @@
 +    if (native_player_tone() >= 0) {
 +        return native_player_tone();
 +    }
-+    return GAME.pad5[0] == COOP_LOOK_MAGIC && GAME.progress >= 1 ? GAME.pad5[2] % NATIVE_TONES : 0;
++    return GAME.pad5[0] == COOP_LOOK_MAGIC && GAME.progress >= 2 ? GAME.pad5[2] % NATIVE_TONES : 0;
 +}
 +
 +/* After a frame of the player's (or the scenes' Junpei) is loaded: its CLUT again, from the frame's TIM, turned to
@@ -263,7 +264,7 @@
  /*
   * Plays an actor's animation: when its set (animSet) changes, it loads the
   * set's animations for the five directions (character 2 picks the file by
-@@ -882,8 +1138,22 @@
+@@ -882,8 +1139,22 @@
      set = actor->animSet;
      file = actor->animFile & 0xFFFF0000;
      if (actor->loadedSet != set) {
@@ -286,7 +287,7 @@
                  if (set < 8) {
                      actor->animFile = SET_FILE_0;
                      break;
-@@ -908,8 +1178,19 @@
+@@ -908,8 +1179,19 @@
              } while (0);
              file = actor->animFile & 0xFFFF0000;
          }
@@ -306,7 +307,7 @@
                  break;
              }
          }
-@@ -919,6 +1200,14 @@
+@@ -919,6 +1201,14 @@
          for (i = 0; i < 5; i++) {
              actor->setAnims[i] = entry[i + 1] | file;
          }
@@ -321,7 +322,7 @@
          actor->loadedSet = set;
          actor->animDone = 0;
      }
-@@ -927,7 +1216,11 @@
+@@ -927,7 +1217,11 @@
      } else {
          dir = 8 - actor->dir;
      }
@@ -333,7 +334,7 @@
      do {
          if (actor->animTime > 0) {
              break;
-@@ -958,6 +1251,15 @@
+@@ -958,6 +1252,15 @@
          loader.setImagePos(image->imageX, image->imageY);
          loader.setClutPos(image->clutX, image->clutY);
          loader.load(FILE_CACHE.getEntry(actor->frame[0]));

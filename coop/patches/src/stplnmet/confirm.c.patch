@@ -1,6 +1,17 @@
 --- a/src/stplnmet/confirm.c
 +++ b/src/stplnmet/confirm.c
-@@ -38,8 +38,8 @@
+@@ -3,6 +3,10 @@
+ 
+ #include "stplnmet.h"
+ 
++#ifdef NATIVE
++s32 STPLNMET_lookPortrait(s32 layer, s32 depth, s32 fx, s32 fy, s32 num, s32 cover, s32 x, s32 y, s32 w, s32 h);
++#endif
++
+ /* Creates the confirmation's windows: the title, the name, the partners'
+    name, the message, yes and no with their cursor, and the progress */
+ void STPLNMET_createConfirmWindows(NameConfirm *task, NameConfirmWindows *windows) {
+@@ -38,8 +42,8 @@
          }
          windows->name->setText(windows->name, &name[i]);
  #ifdef NATIVE
@@ -11,7 +22,7 @@
          } else
  #endif
          windows->pack->setString(windows->pack, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), task->choice + 10);
-@@ -76,7 +76,16 @@
+@@ -76,7 +80,16 @@
      s32 j;
  
  #ifdef NATIVE
@@ -29,3 +40,15 @@
  #else
      partners = STPLNMET_funcs.choices[task->choice];
  #endif
+@@ -99,6 +112,11 @@
+         sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 6, 0x37, 0x2F);
+         sprite.setClutRow(0);
+         sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 2, 0x37, 0x2F);
++#ifdef NATIVE
++        if (task->tweenA.level == ONE) { /* the character creator's look in place of Junior */
++            STPLNMET_lookPortrait(task->layer, task->depth - 1, 0x4A, 0x53, 5, 1, 0x3B, 0x32, 0x1E, 0x25);
++        }
++#endif
+     }
+     if (GFX.funcs.getTime() - task->frameTime > 12) {
+         task->frameTime = GFX.funcs.getTime();

@@ -1,0 +1,13 @@
+--- a/src/stplnmet/name_entry.c
++++ b/src/stplnmet/name_entry.c
+@@ -9,6 +9,10 @@
+ #include "../menu_common/update_fade.inc.c"
+ #include "../menu_common/name_entry/create_name_windows.inc.c"
+ #include "../menu_common/name_entry/show_name_windows.inc.c"
++#ifdef NATIVE
++#define NAME_ENTRY_LOOK /* the portrait: the character creator's look (choice.c) */
++s32 STPLNMET_lookPortrait(s32 layer, s32 depth, s32 fx, s32 fy, s32 num, s32 cover, s32 x, s32 y, s32 w, s32 h);
++#endif
+ #include "../menu_common/name_entry/draw_keyboard.inc.c"
+ #include "../menu_common/name_entry/update_keyboard.inc.c"
+ #include "../menu_common/name_entry/update_name_entry.inc.c"
