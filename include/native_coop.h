@@ -8,6 +8,7 @@ extern char g_coop_peer[256]; /* coop_peers = a, b, c: the other players, host o
 extern int g_coop_port;       /* coop_port: where this copy listens, 27500 */
 /* native.ini's coop, coop_peer and coop_port (main.c's read_ini): 1 when key was one of them */
 int native_coop_ini(const char *key, const char *value);
+int native_player_model(void); /* the player's look: a character (Actor.key1), 0 Junpei's own */
 extern int g_exp_mult;   /* exp_multiplier = 1-5 */
 extern int g_money_mult; /* money_multiplier = 1-5 */
 /* What the field shows of a player: the field's mode and stage file (the same

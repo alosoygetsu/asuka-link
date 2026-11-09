@@ -1,19 +1,72 @@
 --- a/src/fieldstg/actor_control.c
 +++ b/src/fieldstg/actor_control.c
-@@ -882,7 +882,12 @@
+@@ -857,6 +857,30 @@
+ #define SET_FILE_OTHER 0x03CA0064
+ #endif
+ 
++#ifdef NATIVE
++/* The player's model (character creator, platform/coop.c): a character of the field whose file has a set the player
++   wants, or the nearest one it has. Most characters have stand (1) and walk (4) only: what the player does beyond
++   that (running, stopping, searching, the gauge game, falling, climbing) takes one of those */
++static s32 coopModelSet(s32 animFile, s32 set) {
++    s16 *entry;
++    s32 want;
++    s32 pass;
++
++    for (pass = 0; pass < 3; pass++) {
++        want = pass == 0 ? set
++             : pass == 2 ? ACTOR_ANIM_STAND
++             : set == ACTOR_ANIM_RUN || (set >= 0x1A && set < 0x25) ? ACTOR_ANIM_WALK
++             : ACTOR_ANIM_STAND;
++        for (entry = FILE_CACHE.getEntry(animFile); entry[0] != 0; entry += 6) {
++            if (entry[0] == want) {
++                return want;
++            }
++        }
++    }
++    return set; /* not even standing: the file's first set, as the game does */
++}
++#endif
++
+ /*
+  * Plays an actor's animation: when its set (animSet) changes, it loads the
+  * set's animations for the five directions (character 2 picks the file by
+@@ -882,8 +906,22 @@
      set = actor->animSet;
      file = actor->animFile & 0xFFFF0000;
      if (actor->loadedSet != set) {
 +#ifdef NATIVE
++        s32 look = set; /* the set looked for: the model's nearest (coopModelSet) */
++
 +        /* co-op's ghost of the player (fieldstg/field.c) has the player's files under an id of its own */
 +        if (actor->key1 == 2 || actor->key1 == 0x7C02 || actor->key1 == 0x7D02 || actor->key1 == 0x7E02) { /* the co-op's ghosts */
 +#else
          if (actor->key1 == 2) {
 +#endif
              do {
++#ifdef NATIVE
++                if (native_player_model() != 0) { /* another character's look, its own file */
++                    actor->animFile = FIELDSTG_fileEntries[native_player_model()];
++                    look = coopModelSet(actor->animFile, set);
++                    break;
++                }
++#endif
                  if (set < 8) {
                      actor->animFile = SET_FILE_0;
-@@ -958,6 +963,12 @@
+                     break;
+@@ -909,7 +947,11 @@
+             file = actor->animFile & 0xFFFF0000;
+         }
+         for (entry = FILE_CACHE.getEntry(actor->animFile); entry[0] != 0; entry += 6) {
++#ifdef NATIVE
++            if (entry[0] == look) {
++#else
+             if (entry[0] == set) {
++#endif
+                 break;
+             }
+         }
+@@ -958,6 +1000,12 @@
          loader.setImagePos(image->imageX, image->imageY);
          loader.setClutPos(image->clutX, image->clutY);
          loader.load(FILE_CACHE.getEntry(actor->frame[0]));

@@ -24,6 +24,22 @@ int g_coop_debug = 0; /* DW3_COOP_DEBUG=1: the ghost's state in the log every 2 
 int g_exp_mult = 1;   /* exp_multiplier: the battle report's EXP times this (coop/patches stfgtrep/report.c) */
 int g_money_mult = 1; /* money_multiplier: and its money */
 
+/* The player's model (character creator): a character (Actor.key1) whose look the player takes, 0 Junpei's own.
+   For now DW3_PLAYER_MODEL=<key1, hex> (tests) */
+int native_player_model(void) {
+    static int model = -1;
+
+    if (model < 0) {
+        const char *env = SDL_getenv("DW3_PLAYER_MODEL");
+
+        model = env != NULL ? (int)SDL_strtol(env, NULL, 16) : 0;
+        if (model < 0 || model > 0x1FF) {
+            model = 0;
+        }
+    }
+    return model;
+}
+
 int native_coop_ini(const char *key, const char *value) {
     if (SDL_strcasecmp(key, "coop") == 0) {
         g_coop = SDL_atoi(value) != 0;
