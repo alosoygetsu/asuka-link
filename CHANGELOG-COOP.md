@@ -6,8 +6,11 @@ Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 ## v0.18.912
 Sobre el port v0.18.9.
 
-- **Raids: 29 jefes para elegir.** Al escoger "Raid" en el Guardromon sale la lista de jefes; dos jugadores que eligen
-  el mismo entran juntos. Están los jefes de la historia y sus revanchas del final, de Pharaohmon (Nv 12) a Knightmon
+- **Raids de hasta 4 jugadores.** Los que eligen el mismo jefe en cualquier Guardromon se juntan en una sala: en cuanto
+  hay dos, empieza una cuenta atrás de 10 segundos (sale en pantalla: "2 de 4  9") para que entre quien quiera, y con
+  4 se empieza ya. En el combate, cada jugador hace su turno por orden y después el jefe ataca una vez a cada uno; su
+  vida se multiplica por el número de jugadores.
+- **Raids: 29 jefes para elegir.** Al escoger "Raid" en el Guardromon sale la lista de jefes. Están los jefes de la historia y sus revanchas del final, de Pharaohmon (Nv 12) a Knightmon
   (Nv 99). Cada uno ve los que le quedan hasta 5 niveles por encima de su mejor compañero; Kuwagamon, siempre.
 - **Recompensas de raid:** al ganar, la EXP y el dinero del combate se multiplican por 3 (además del multiplicador de
   Mods), y cada jugador se lleva un objeto seguro según el nivel del jefe: potenciadores 1 y Cargas en los jefes de

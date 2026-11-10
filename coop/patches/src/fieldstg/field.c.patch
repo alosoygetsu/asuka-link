@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1237 @@
+@@ -362,10 +362,1496 @@
      }
  }
  
@@ -154,6 +154,7 @@
 +#define COOP_TRADE_MENU 10 /* coopTrade.phase: the Guardromon's choice, talk or trade */
 +#define COOP_TRADE_RAID_PICK 11 /* coopTrade.phase: the raid's boss picked from the list */
 +#define COOP_RAID_ROWS 8
++#define COOP_ROOM_WAIT (60 * 10) /* frames the raid's room waits once two are in */
 +#define COOP_TRADE_WAIT (60 * 60 * 5) /* frames a wait for another player lasts */
 +#define COOP_TRADE_LINGER 90 /* frames the last word (done, no) keeps going out once the window is shut */
 +#define COOP_TRADE_SHOW 120 /* frames a message stays */
@@ -161,7 +162,7 @@
 +enum {
 +    T_TITLE, T_YOURS, T_THEIRS, T_SPARE, T_NO_SPARE, T_WANTS, T_ACCEPT, T_LEAVE, T_WAITING, T_READY, T_CONFIRM,
 +    T_DONE, T_CANCELLED, T_DECLINED, T_NO_ROOM, T_AMOUNT, T_CONFIRMED, T_NOTHING, T_FULL, T_CHANGE, T_WAIT_DOTS,
-+    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING, T_RAID_OPTION, T_EXIT_OPTION, T_LEVEL
++    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING, T_RAID_OPTION, T_EXIT_OPTION, T_LEVEL, T_OF_FOUR
 +};
 +
 +/* The raids: an encounter, the name of its boss (in the Digimon names' text), its level and tier (0 low, 1 middle,
@@ -237,6 +238,11 @@
 +    s32 kind; /* what the wait is for: 0 a card trade, 1 a PvP battle, 2 a raid (NativeCoopTrade.pad[0]) */
 +    s32 raid; /* the raid picked: coopRaidBosses' index (NativeCoopTrade.pad[1]) */
 +    s32 raidCursor, raidTop;
++    u32 room; /* the raid's room: its host's session, 0 while gathering */
++    s32 roomCount; /* its players, this one among them */
++    u32 roomSessions[4]; /* theirs, smallest (the host) first: the seats' order */
++    s32 roomPeers[4]; /* each one's peer, -1 this player */
++    s32 roomFrames; /* the host's: since two were in */
 +    s32 teamSent;
 +    Actor *talker; /* who talked to him, and where: his own talk, if that's the choice */
 +    Point talkAt;
@@ -692,6 +698,26 @@
 +        coopTradeSmall(coopTradeString(T_PREPARING), -1, T_LEAVE);
 +        return;
 +    }
++    if (coopTrade.phase == COOP_TRADE_ASK && coopTrade.kind == 2) {
++        /* the raid's room: "Waiting for another player... 2/4  9" */
++        u8 line[96];
++        u8 num[8];
++        s32 secs = coopTrade.roomCount >= 2 ? (COOP_ROOM_WAIT - coopTrade.roomFrames + 59) / 60 : 0;
++
++        line[0] = 0;
++        coopTradeCat(line, sizeof line, coopTradeString(T_WAIT_OTHER));
++        coopTradeCat(line, sizeof line, (const u8 *)"\x01\x01");
++        coopTradeNumber(num, 0, coopTrade.roomCount);
++        coopTradeCat(line, sizeof line, num);
++        coopTradeCat(line, sizeof line, coopTradeString(T_OF_FOUR));
++        if (secs > 0) {
++            coopTradeCat(line, sizeof line, (const u8 *)"\x01\x01");
++            coopTradeNumber(num, 0, secs > 99 ? 99 : secs);
++            coopTradeCat(line, sizeof line, num);
++        }
++        coopTradeSmall(line, -1, T_LEAVE);
++        return;
++    }
 +    if (coopTrade.phase == COOP_TRADE_ASK) {
 +        coopTradeSmall(coopTradeString(T_WAIT_OTHER), -1, T_LEAVE);
 +        return;
@@ -775,15 +801,12 @@
 +    return (s32)((coopTrade.session & 0x7FFF) | 1);
 +}
 +
-+static s32 coopTradeKindStarted; /* the kind coopPvpStart starts (coopTradeEnd may clear coopTrade's) */
-+
 +static void coopPvpStart(void) {
 +    s32 i;
 +    s32 member;
 +    PartnerStats *st;
 +
 +    /* a tie of speeds: the smaller coin first (a tie of coins too: the party's bytes, both see the same two) */
-+    coopTradeKindStarted = coopTrade.kind;
 +    native_coop_pvp_begin(coopTrade.peer, &coopTeamTheirs, sizeof coopTeamTheirs, &GAME, coopPvpBlob(),
 +                          coopTeamMine.coin != coopTeamTheirs.coin ? coopTeamMine.coin < coopTeamTheirs.coin
 +                                                                   : memcmp(&coopTeamMine, &coopTeamTheirs, sizeof coopTeamMine) < 0);
@@ -800,28 +823,6 @@
 +        }
 +    }
 +    FIELDSTG_startBattle(&coopPvpBattle);
-+    if (coopTradeKindStarted == 2 || native_coop_raid_test() > 0) {
-+        /* a raid: the encounter's enemies (the basic one, or DW3_COOP_RAID's in tests), their HP times the players,
-+           both parties on this side (wfightmn/menu.c) */
-+        s32 enc = native_coop_raid_test() > 0 ? native_coop_raid_test() : coopRaidBosses[coopTrade.raid].encounter;
-+        s32 hp;
-+
-+        native_coop_raid_set(enc, native_coop_raid_test() > 0 ? 0 : coopRaidBosses[coopTrade.raid].tier);
-+        BATTLE_SETUP.battle = enc;
-+        BATTLE_SETUP.ambushChance = 0;
-+        BATTLE_SETUP.encounterKind = FIELDSTG_encounters[enc].kind;
-+        BATTLE_SETUP.hasPrize = 0;
-+        for (i = 0; i < 12; i++) {
-+            BATTLE_SETUP.blocks[i] = FIELDSTG_encounters[enc].blocks[i];
-+        }
-+        for (i = 0; i < 3; i++) {
-+            BATTLE_SETUP.enemies[i] = *FIELDSTG_encounters[enc].enemies[i];
-+            hp = BATTLE_SETUP.enemies[i].hp * 2;
-+            BATTLE_SETUP.enemies[i].hp = hp > 0x7FFF ? 0x7FFF : hp;
-+        }
-+        native_coop_note("Raid with player %d: encounter %d, %d HP", coopTrade.peer + 2, enc, BATTLE_SETUP.enemies[0].hp);
-+        return;
-+    }
 +    BATTLE_SETUP.ambushChance = 0;
 +    BATTLE_SETUP.encounterKind = 1;
 +    BATTLE_SETUP.hasPrize = 0;
@@ -896,6 +897,253 @@
 +    }
 +}
 +
++/* ---- The raid's room: the players who picked the same raid at a Guardromon gather; the one of smallest session hosts
++   it, its list of them (up to 4, by session) going out with its wait. Once two are in, ten seconds more (or four in),
++   the host opens it, and those on its list follow: each sends its party to each other, all ready, all start (seats
++   by the list). A raid packet: session its sender's own, offer the room (0 gathering), count and the list (in card and
++   copies' bytes) the host's, seen its countdown. ---- */
++static void coopRoomList(const NativeCoopTrade *t, u32 *out) {
++    memcpy(out, t->card, 4 * sizeof(u32));
++}
++
++static s32 coopRoomHas(const NativeCoopTrade *t, u32 session) {
++    u32 list[4];
++    s32 i;
++
++    coopRoomList(t, list);
++    for (i = 0; i < t->count && i < 4; i++) {
++        if (list[i] == session) {
++            return 1;
++        }
++    }
++    return 0;
++}
++
++/* the raid packet this player sends */
++static void coopRoomPacket(NativeCoopTrade *t) {
++    memset(t, 0, sizeof *t);
++    t->session = coopTrade.session;
++    t->phase = coopTrade.phase;
++    t->pad[0] = 2;
++    t->pad[1] = coopTrade.raid;
++    t->count = coopTrade.roomCount;
++    memcpy(t->card, coopTrade.roomSessions, 4 * sizeof(u32));
++    t->offer = coopTrade.room;
++    t->seen = coopTrade.roomFrames < COOP_ROOM_WAIT ? (COOP_ROOM_WAIT - coopTrade.roomFrames + 59) / 60 : 0;
++}
++
++/* a peer's raid packet for this raid: 1 */
++static s32 coopRoomPeer(s32 i, NativeCoopTrade *t) {
++    return native_coop_trade_in(i, t) && t->session != 0 && t->pad[0] == 2 && t->pad[1] == coopTrade.raid &&
++           t->phase >= COOP_TRADE_ASK && t->phase <= COOP_TRADE_CONFIRM;
++}
++
++static void coopTeamBuild(CoopTeam *team) {
++    s32 i;
++    s32 member;
++
++    memset(team, 0, sizeof *team);
++    for (i = 0; i < 3; i++) {
++        member = GAME.party[i];
++        team->party[i] = member;
++        team->ids[i] = member >= 0 && member < PARTNER_COUNT ? DIGIMON_DATA[member].id : 0;
++        if (i == 0 && member >= 0 && member < PARTNER_COUNT) {
++            s16 slots[4];
++
++            /* the first starts the battle as its battle digivolution, as on its own side (wfightmn/menu.c) */
++            if (GAME.funcs.getPartnerSlots(member, slots) > 0 && GAME.partners[member].battleDigivolve != 0) {
++                team->ids[0] = GAME.partners[member].battleDigivolve;
++            }
++        }
++        if (member >= 0 && member < PARTNER_COUNT) {
++            team->partners[i] = GAME.partners[member];
++        }
++    }
++}
++
++static u8 coopRoomTeams[4][COOP_TEAM_MAX];
++
++static s32 coopRoomBlob(void) {
++    return (s32)((coopTrade.room & 0x7FFF) | 1);
++}
++
++/* the raid starts: the seats by the room's list, every party whole, the boss's HP times the players */
++static void coopRaidStart(void) {
++    const CoopRaidBoss *boss = &coopRaidBosses[coopTrade.raid];
++    s32 enc = native_coop_raid_test() > 0 ? native_coop_raid_test() : boss->encounter;
++    PartnerStats *st;
++    s32 i;
++    s32 hp;
++    s32 member;
++
++    /* every party whole (the save comes back after a loss anyway) */
++    for (i = 0; i < 3; i++) {
++        member = GAME.party[i];
++        if (member >= 0 && member < PARTNER_COUNT) {
++            st = &GAME.partners[member].info;
++            st->stats[STAT_HP] = st->stats[STAT_MAX_HP];
++            st->stats[STAT_MP] = st->stats[STAT_MAX_MP];
++        }
++    }
++    native_coop_raid_begin(coopTrade.roomPeers, coopTrade.roomCount, coopRoomTeams, &GAME, coopRoomBlob(), enc,
++                           native_coop_raid_test() > 0 ? 0 : boss->tier);
++    native_coop_note("Raid with %d players: encounter %d", coopTrade.roomCount, enc);
++    coopTradeEnd(COOP_TRADE_DONE, -1);
++    coopTrade.quiet = 0;
++    FIELDSTG_startBattle(&coopPvpBattle);
++    BATTLE_SETUP.battle = enc;
++    BATTLE_SETUP.ambushChance = 0;
++    BATTLE_SETUP.encounterKind = FIELDSTG_encounters[enc].kind;
++    BATTLE_SETUP.hasPrize = 0;
++    for (i = 0; i < 12; i++) {
++        BATTLE_SETUP.blocks[i] = FIELDSTG_encounters[enc].blocks[i];
++    }
++    for (i = 0; i < 3; i++) {
++        BATTLE_SETUP.enemies[i] = *FIELDSTG_encounters[enc].enemies[i];
++        hp = BATTLE_SETUP.enemies[i].hp * coopTrade.roomCount;
++        BATTLE_SETUP.enemies[i].hp = hp > 0x7FFF ? 0x7FFF : hp;
++    }
++}
++
++/* every frame of the room, from the wait at the Guardromon to the start */
++static void coopRaidLobby(void) {
++    NativeCoopTrade t;
++    NativeCoopTrade host;
++    u32 list[4];
++    s32 i;
++    s32 k;
++    s32 n;
++    s32 all;
++
++    if (PAD_PRESSED(PAD_CIRCLE)) {
++        SOUND.playSound(SOUND_MENU_CANCEL);
++        coopTradeEnd(coopTrade.phase == COOP_TRADE_ASK ? COOP_TRADE_NONE : COOP_TRADE_NO,
++                     coopTrade.phase == COOP_TRADE_ASK ? -1 : T_CANCELLED);
++        return;
++    }
++    if (coopTrade.phase == COOP_TRADE_ASK) {
++        /* a room opened that has this player: in */
++        for (i = 0; i < native_coop_peer_slots() && i < COOP_GHOSTS; i++) {
++            if (coopRoomPeer(i, &t) && t.phase >= COOP_TRADE_OPEN && t.offer == t.session && coopRoomHas(&t, coopTrade.session)) {
++                coopTrade.room = t.offer;
++                coopTrade.roomCount = t.count;
++                coopRoomList(&t, coopTrade.roomSessions);
++                coopTrade.phase = COOP_TRADE_OPEN;
++                coopTrade.frames = 0;
++                coopTrade.teamSent = 0;
++                SOUND.playSound(SOUND_MENU_OPEN);
++                return;
++            }
++        }
++        /* the ones waiting for the same raid: this player hosts when its session is the smallest */
++        n = 1;
++        list[0] = coopTrade.session;
++        host.session = 0;
++        for (i = 0; i < native_coop_peer_slots() && i < COOP_GHOSTS; i++) {
++            if (coopRoomPeer(i, &t) && t.phase == COOP_TRADE_ASK && t.offer == 0) {
++                if (n < 4) {
++                    list[n++] = t.session;
++                }
++                if (t.session < coopTrade.session && (host.session == 0 || t.session < host.session)) {
++                    host = t;
++                }
++            }
++        }
++        if (host.session != 0) {
++            /* another hosts: its list and countdown, shown */
++            coopTrade.roomCount = host.count;
++            coopTrade.roomFrames = COOP_ROOM_WAIT - host.seen * 60;
++            return;
++        }
++        for (i = 1; i < n; i++) { /* the list by session */
++            for (k = i; k > 0 && list[k] < list[k - 1]; k--) {
++                u32 x = list[k];
++
++                list[k] = list[k - 1];
++                list[k - 1] = x;
++            }
++        }
++        coopTrade.roomCount = n;
++        memset(coopTrade.roomSessions, 0, sizeof coopTrade.roomSessions);
++        memcpy(coopTrade.roomSessions, list, n * sizeof(u32));
++        coopTrade.roomFrames = n >= 2 ? coopTrade.roomFrames + 1 : 0;
++        if (n >= 2 && (coopTrade.roomFrames >= COOP_ROOM_WAIT || n == 4)) {
++            coopTrade.room = coopTrade.session; /* open: the list stays */
++            coopTrade.phase = COOP_TRADE_OPEN;
++            coopTrade.frames = 0;
++            coopTrade.teamSent = 0;
++            SOUND.playSound(SOUND_MENU_OPEN);
++        }
++        return;
++    }
++    /* the room's players' peers, by their sessions */
++    all = 1;
++    for (k = 0; k < coopTrade.roomCount; k++) {
++        if (coopTrade.roomSessions[k] == coopTrade.session) {
++            coopTrade.roomPeers[k] = -1;
++            continue;
++        }
++        coopTrade.roomPeers[k] = -2;
++        for (i = 0; i < native_coop_peer_slots() && i < COOP_GHOSTS; i++) {
++            if (coopRoomPeer(i, &t) && t.session == coopTrade.roomSessions[k]) {
++                coopTrade.roomPeers[k] = i;
++                if (t.phase < COOP_TRADE_OPEN || t.offer != coopTrade.room || t.phase < coopTrade.phase - 1) {
++                    all = 0; /* not in yet, or a step behind */
++                }
++            }
++        }
++        if (coopTrade.roomPeers[k] == -2) {
++            all = 0;
++        }
++    }
++    if (coopTrade.frames > 60 * 15) {
++        native_coop_note("Raid: the room didn't fill (%d players listed)", coopTrade.roomCount);
++        coopTradeEnd(COOP_TRADE_NO, T_CANCELLED);
++        return;
++    }
++    if (coopTrade.phase == COOP_TRADE_OPEN) {
++        /* this player's party to each, theirs in */
++        if (!coopTrade.teamSent && all) {
++            coopTeamBuild(&coopTeamMine);
++            for (k = 0; k < coopTrade.roomCount; k++) {
++                if (coopTrade.roomPeers[k] >= 0) {
++                    native_coop_blob_send(coopTrade.roomPeers[k], &coopTeamMine, sizeof coopTeamMine, coopRoomBlob());
++                }
++            }
++            coopTrade.teamSent = 1;
++        }
++        n = coopTrade.teamSent;
++        for (k = 0; k < coopTrade.roomCount && n; k++) {
++            if (coopTrade.roomPeers[k] == -1) {
++                memset(coopRoomTeams[k], 0, COOP_TEAM_MAX);
++                memcpy(coopRoomTeams[k], &coopTeamMine, sizeof coopTeamMine);
++            } else if (coopTrade.roomPeers[k] < 0 ||
++                       native_coop_blob_recv(coopTrade.roomPeers[k], coopRoomBlob(), coopRoomTeams[k], COOP_TEAM_MAX) != sizeof coopTeamMine ||
++                       !native_coop_blob_sent(coopTrade.roomPeers[k], coopRoomBlob())) {
++                n = 0;
++            }
++        }
++        if (n) {
++            coopTrade.phase = COOP_TRADE_READY;
++        }
++        return;
++    }
++    if (coopTrade.phase == COOP_TRADE_READY) {
++        /* all ready: "go" a few frames, then the battle */
++        for (k = 0; k < coopTrade.roomCount; k++) {
++            if (coopTrade.roomPeers[k] >= 0 && (!coopRoomPeer(coopTrade.roomPeers[k], &t) || t.phase < COOP_TRADE_READY)) {
++                return;
++            }
++        }
++        coopTrade.phase = COOP_TRADE_CONFIRM;
++        coopTrade.frames = 0;
++        return;
++    }
++    if (coopTrade.phase == COOP_TRADE_CONFIRM && coopTrade.frames >= 10) {
++        coopRaidStart();
++    }
++}
++
 +/* Every frame of the field with co-op on */
 +static void coopTradeUpdate(void) {
 +    NativeCoopTrade in;
@@ -928,7 +1176,10 @@
 +        coopTrade.kind = i;
 +        coopTrade.menu = 0;
 +        coopTrade.raid = 0;
-+        coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
++        coopTrade.room = 0;
++        coopTrade.roomCount = 1;
++        coopTrade.roomFrames = 0;
++        coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7) ^ native_coop_coin()) | 1;
 +    }
 +    n = native_coop_test_cards();
 +    for (c = 1; c <= 5 && n > 0; c++) {
@@ -938,6 +1189,9 @@
 +    if (coopTrade.phase != COOP_TRADE_NONE) {
 +        here = coopTrade.peer >= 0 && native_coop_trade_in(coopTrade.peer, &in) && coopTradePeer(coopTrade.peer, &st);
 +        theirs = coopTradeHash(&in);
++        if (coopTrade.kind == 2 && coopTrade.phase >= COOP_TRADE_ASK && coopTrade.phase <= COOP_TRADE_CONFIRM) {
++            coopRaidLobby();
++        } else
 +        switch (coopTrade.phase) {
 +        case COOP_TRADE_MENU:
 +            if (PAD_PRESSED(PAD_UP) || PAD_PRESSED(PAD_DOWN)) {
@@ -961,7 +1215,7 @@
 +                coopTrade.kind = coopTrade.menu - 1; /* 0 trade, 1 battle */
 +                coopTrade.teamSent = 0;
 +                coopTrade.phase = COOP_TRADE_ASK; /* wait for another player at a Guardromon */
-+                coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
++                coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7) ^ native_coop_coin()) | 1;
 +                coopTrade.frames = 0;
 +                SOUND.playSound(SOUND_SELECT);
 +            }
@@ -980,8 +1234,11 @@
 +                coopTrade.kind = 2;
 +                coopTrade.raid = open[coopTrade.raidCursor];
 +                coopTrade.teamSent = 0;
++                coopTrade.room = 0;
++                coopTrade.roomCount = 1;
++                coopTrade.roomFrames = 0;
 +                coopTrade.phase = COOP_TRADE_ASK; /* wait for another player who picked the same raid */
-+                coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
++                coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7) ^ native_coop_coin()) | 1;
 +                coopTrade.frames = 0;
 +                SOUND.playSound(SOUND_SELECT);
 +            }
@@ -1124,7 +1381,9 @@
 +        send.count = 0;
 +        send.offer = send.seen = 0;
 +        send.pad[0] = send.pad[1] = 0;
-+        if (coopTrade.phase == COOP_TRADE_ASK) {
++        if (coopTrade.kind == 2 && coopTrade.phase >= COOP_TRADE_ASK && coopTrade.phase <= COOP_TRADE_CONFIRM) {
++            coopRoomPacket(&send); /* the raid's room: to everyone */
++        } else if (coopTrade.phase == COOP_TRADE_ASK) {
 +            send.session = coopTrade.session; /* waiting: to everyone */
 +            send.phase = COOP_TRADE_ASK;
 +            send.pad[0] = coopTrade.kind;
@@ -1238,7 +1497,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1819,9 @@
+@@ -592,6 +2078,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1248,7 +1507,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1875,9 @@
+@@ -645,6 +2134,9 @@
          }
          break;
      case TASK_RUN:

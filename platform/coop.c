@@ -525,9 +525,65 @@ NativeCoopPvp *native_coop_raid(void) {
     return s_pvp.on && s_pvp.raid ? &s_pvp : NULL;
 }
 
-void native_coop_raid_set(int encounter, int tier) {
+void native_coop_raid_begin(const int *seatPeer, int players, const void *teams, const void *save, int battle,
+                            int encounter, int tier) {
+    int i;
+
+    SDL_memset(&s_pvp, 0, sizeof s_pvp);
+    SDL_memcpy(s_pvp.save, save, sizeof s_pvp.save);
+    s_pvp.players = SDL_clamp(players, 1, COOP_RAID_SEATS);
+    s_pvp.me = 0;
+    for (i = 0; i < s_pvp.players; i++) {
+        s_pvp.seatPeer[i] = seatPeer[i];
+        if (seatPeer[i] < 0) {
+            s_pvp.me = i;
+        } else {
+            s_pvp.peer = seatPeer[i]; /* one of them, for what reads a single peer */
+            native_coop_commands_out(seatPeer[i], s_pvp.out);
+        }
+        SDL_memcpy(s_pvp.teams[i], (const unsigned char *)teams + i * COOP_TEAM_MAX, COOP_TEAM_MAX);
+    }
+    s_pvp.battle = battle & 0xFFFF;
+    s_pvp.first = s_pvp.me == 0;
     s_pvp.raid = encounter;
     s_pvp.raidTier = tier;
+    s_pvp.on = 1;
+}
+
+int native_coop_raid_take(int seat, NativeCoopCommand *c) {
+    NativeCoopCommand in[COOP_COMMANDS];
+    unsigned int now = SDL_GetTicks();
+    int peer;
+    int n;
+    int i;
+
+    if (!s_pvp.on || seat < 0 || seat >= s_pvp.players || (peer = s_pvp.seatPeer[seat]) < 0) {
+        return -1;
+    }
+    if (s_pvp.seatWait[seat] == 0) {
+        s_pvp.seatWait[seat] = now;
+    }
+    n = native_coop_commands_in(peer, in);
+    for (i = 0; i < n; i++) {
+        if (in[i].battle == (unsigned short)s_pvp.battle && in[i].number == s_pvp.seatTaken[seat] + 1) {
+            *c = in[i];
+            s_pvp.seatTaken[seat]++;
+            s_pvp.seatWait[seat] = 0;
+            native_coop_note("Raid: took seat %d's command %d: action %d arg %d digimon %d%s", seat, c->number, c->action,
+                             c->arg, c->digimon, c->knockOut ? " (after a knockout)" : "");
+            return 1;
+        }
+    }
+    if (now - s_pvp.seatWait[seat] > 8000) {
+        NativeCoopTrade t;
+
+        /* silent, or here but not in this battle any more */
+        if (n == 0 || (native_coop_trade_in(peer, &t) && in[0].battle != (unsigned short)s_pvp.battle)) {
+            native_coop_note("Raid: player %d (seat %d) is gone", peer + 2, seat);
+            return -1;
+        }
+    }
+    return 0;
 }
 
 int g_coop_raid_reward;
@@ -557,6 +613,11 @@ void native_coop_pvp_end(void) {
     s_pvp.on = 0;
     SDL_memset(s_pvp.out, 0, sizeof s_pvp.out);
     native_coop_commands_out(s_pvp.peer, s_pvp.out);
+    for (int i = 0; s_pvp.raid && i < s_pvp.players; i++) {
+        if (s_pvp.seatPeer[i] >= 0) {
+            native_coop_commands_out(s_pvp.seatPeer[i], s_pvp.out);
+        }
+    }
 }
 
 void native_coop_pvp_pump(void) {
@@ -574,7 +635,15 @@ void native_coop_pvp_send(NativeCoopCommand *c) {
     c->number = (unsigned short)++s_pvp.sent;
     SDL_memmove(&s_pvp.out[1], &s_pvp.out[0], sizeof s_pvp.out[0] * (COOP_COMMANDS - 1));
     s_pvp.out[0] = *c;
-    native_coop_commands_out(s_pvp.peer, s_pvp.out);
+    if (s_pvp.raid) {
+        for (int i = 0; i < s_pvp.players; i++) {
+            if (s_pvp.seatPeer[i] >= 0) {
+                native_coop_commands_out(s_pvp.seatPeer[i], s_pvp.out);
+            }
+        }
+    } else {
+        native_coop_commands_out(s_pvp.peer, s_pvp.out);
+    }
     if (1) { /* each command in coop.log: what a stuck battle was waiting for */
         native_coop_note("PvP: sent command %d: action %d arg %d digimon %d%s", c->number, c->action, c->arg,
                          c->digimon, c->knockOut ? " (after a knockout)" : "");

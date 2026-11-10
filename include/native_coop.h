@@ -80,14 +80,22 @@ typedef struct NativeCoopCommand {
     short hp[2][3], mp[2][3];
     unsigned char active[2], pad[2];
 } NativeCoopCommand;
+#define COOP_RAID_SEATS 4
+#define COOP_TEAM_MAX 3072 /* a CoopTeam's room */
 typedef struct NativeCoopPvp {
     int on, peer;
     int battle;               /* NativeCoopCommand.battle */
     int first;                /* 1 when this side goes first on a tie of speeds */
     int sent, taken;          /* commands sent, and the other's taken */
     int over;                 /* 1 the other gave up, 2 the other is gone */
-    int raid;                 /* a raid: the encounter both fight side by side (team is the other's party, on this side) */
+    int raid;                 /* a raid: the encounter the players fight side by side, all their parties on this side */
     int raidTier;             /* its boss's tier: 0 low, 1 middle, 2 high (its loot) */
+    /* the raid's seats, in the order of the players' room numbers: each one's peer (-1 this player), its commands
+       taken, the wait for its next, and its party (fieldstg/field.c's CoopTeam) */
+    int players, me;
+    int seatPeer[COOP_RAID_SEATS], seatTaken[COOP_RAID_SEATS];
+    unsigned int seatWait[COOP_RAID_SEATS];
+    unsigned char teams[COOP_RAID_SEATS][COOP_TEAM_MAX];
     unsigned int waitFrom;    /* SDL ms the wait for the other's command began, 0 none */
     NativeCoopCommand out[COOP_COMMANDS]; /* the newest sent first */
     unsigned char team[COOP_BLOB_MAX]; /* fieldstg/field.c's CoopTeam */
@@ -96,7 +104,11 @@ typedef struct NativeCoopPvp {
 NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one (or a raid) */
 /* The raid: the PvP's pairing and commands, both players on this side against a boss, turn about (wfightmn/menu.c) */
 NativeCoopPvp *native_coop_raid(void); /* the raid's, or NULL */
-void native_coop_raid_set(int encounter, int tier);
+/* the raid starts: its seats' peers (-1 this player's seat), their parties (players of COOP_TEAM_MAX bytes) */
+void native_coop_raid_begin(const int *seatPeer, int players, const void *teams, const void *save, int battle,
+                            int encounter, int tier);
+/* the next command of a seat's player: 1 taken, 0 not here yet, -1 the player is gone */
+int native_coop_raid_take(int seat, NativeCoopCommand *c);
 /* a raid won: its report gives COOP_RAID_REWARD times the EXP and money (stfgtrep/report.c, partner.c); 0 again at the
    next battle */
 #define COOP_RAID_REWARD 3
@@ -164,6 +176,6 @@ const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a 
 #define COOP_TEXT_LOOK_TITLE 11
 #define COOP_TEXT_LOOK_HELP 12
 #define COOP_TEXT_LOOK_NAME 13 /* 13-15: Junior, the boy, the girl */
-#define COOP_TEXT_TRADE 16 /* 16-43 (40-41 the PvP battle's, 42 the raid's, 43 the Guardromon's exit, 44 the raid list's level): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
+#define COOP_TEXT_TRADE 16 /* 16-43 (40-41 the PvP battle's, 42 the raid's, 43 the Guardromon's exit, 44 the raid list's level, 45 the room's " of 4"): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
 
 #endif /* NATIVE_COOP_H */
