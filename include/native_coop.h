@@ -90,6 +90,7 @@ typedef struct NativeCoopPvp {
     int over;                 /* 1 the other gave up, 2 the other is gone */
     int raid;                 /* a raid: the encounter the players fight side by side, all their parties on this side */
     int raidTier;             /* its boss's tier: 0 low, 1 middle, 2 high (its loot) */
+    int duel;                 /* a card duel (cardgame/battle.c): the other's deck as the opponent's */
     /* the raid's seats, in the order of the players' room numbers: each one's peer (-1 this player), its commands
        taken, the wait for its next, and its party (fieldstg/field.c's CoopTeam) */
     int players, me;
@@ -105,6 +106,8 @@ typedef struct NativeCoopPvp {
 NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one (or a raid) */
 /* The raid: the PvP's pairing and commands, both players on this side against a boss, turn about (wfightmn/menu.c) */
 NativeCoopPvp *native_coop_raid(void); /* the raid's, or NULL */
+NativeCoopPvp *native_coop_duel(void); /* the card duel's, or NULL */
+void native_coop_duel_set(void);
 /* the raid starts: its seats' peers (-1 this player's seat), their parties (players of COOP_TEAM_MAX bytes) */
 void native_coop_raid_begin(const int *seatPeer, int players, const void *teams, const void *save, int battle,
                             int encounter, int tier);

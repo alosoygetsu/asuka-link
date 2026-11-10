@@ -520,7 +520,15 @@ int native_coop_test_cards(void) {
 static NativeCoopPvp s_pvp;
 
 NativeCoopPvp *native_coop_pvp(void) {
-    return s_pvp.on && !s_pvp.raid ? &s_pvp : NULL;
+    return s_pvp.on && !s_pvp.raid && !s_pvp.duel ? &s_pvp : NULL;
+}
+
+NativeCoopPvp *native_coop_duel(void) {
+    return s_pvp.on && s_pvp.duel ? &s_pvp : NULL;
+}
+
+void native_coop_duel_set(void) {
+    s_pvp.duel = 1;
 }
 
 NativeCoopPvp *native_coop_raid(void) {
@@ -742,7 +750,7 @@ int native_coop_auto(void) {
         return -1;
     }
     done = 1;
-    return SDL_strcmp(env, "menu") == 0 ? 3 : SDL_strcmp(env, "raid") == 0 ? 2 : SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "giveup") == 0 || SDL_strcmp(env, "tech") == 0;
+    return SDL_strcmp(env, "duel") == 0 ? 4 : SDL_strcmp(env, "menu") == 0 ? 3 : SDL_strcmp(env, "raid") == 0 ? 2 : SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "giveup") == 0 || SDL_strcmp(env, "tech") == 0;
 }
 
 int native_coop_auto_battle(void) {
@@ -751,7 +759,7 @@ int native_coop_auto_battle(void) {
     if (on < 0) {
         const char *env = SDL_getenv("DW3_COOP_AUTO");
 
-        on = env == NULL ? 0 : SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "raid") == 0 ? 1 : SDL_strcmp(env, "giveup") == 0 ? 2 : SDL_strcmp(env, "tech") == 0 ? 3 : 0;
+        on = env == NULL ? 0 : SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "raid") == 0 || SDL_strcmp(env, "duel") == 0 ? 1 : SDL_strcmp(env, "giveup") == 0 ? 2 : SDL_strcmp(env, "tech") == 0 ? 3 : 0;
     }
     return on;
 }

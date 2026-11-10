@@ -1,0 +1,58 @@
+--- a/src/cardgame/scene.c
++++ b/src/cardgame/scene.c
+@@ -2,6 +2,10 @@
+ 
+ #include "cardgame.h"
+ 
++#ifdef NATIVE
++static s32 coopDuelLost; /* the co-op's card duel: the battle's playerLost, kept as the battle goes */
++#endif
++
+ /* The mode's task: sets up the display and starts the battle, then returns
+    to the field once it is over (or to MODE_STAGE_SELECT when the mode's low
+    bits are set) */
+@@ -9,6 +13,11 @@
+     TimLoader tim;
+     Layer *layer;
+ 
++#ifdef NATIVE
++    if (native_coop_duel() != NULL) {
++        native_coop_pvp_pump(); /* the co-op's card duel: the packets go on */
++    }
++#endif
+     switch (task->state) {
+     case 0:
+     default:
+@@ -27,6 +36,9 @@
+         break;
+     case 1:
+         if (items[0]->result == 2) {
++#ifdef NATIVE
++            coopDuelLost = items[0]->playerLost;
++#endif
+             task->setState(task, 2);
+             items[0]->setState(items[0], 3);
+         }
+@@ -35,6 +47,22 @@
+         switch (task->substate) {
+         case 0:
+         default:
++#ifdef NATIVE
++            if (native_coop_duel() != NULL) {
++                /* the co-op's card duel, an exhibition: the save as it was (no prize), where the field was left */
++                s32 fieldMode = GAME.fieldMode;
++                Vec2 fieldPos = GAME.fieldPos;
++                s32 fieldDir = GAME.fieldDir;
++
++                memcpy(&GAME, native_coop_duel()->save, COOP_PVP_SAVE);
++                GAME.fieldMode = fieldMode;
++                GAME.fieldPos = fieldPos;
++                GAME.fieldDir = fieldDir;
++                FLAGS_00.pendingFlag10 = 0;
++                native_coop_note("Card duel with player %d: %s", native_coop_duel()->peer + 2, coopDuelLost ? "lost" : "won");
++                native_coop_pvp_end();
++            }
++#endif
+             GAME.funcs.requestMode((GAME.funcs.getMode() & 0xF) ? MODE_STAGE_SELECT : GAME.fieldMode, 0);
+             task->nextSubstate(task);
+             break;

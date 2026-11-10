@@ -1,0 +1,65 @@
+--- a/src/cardgame/battle.c
++++ b/src/cardgame/battle.c
+@@ -3,11 +3,50 @@
+ 
+ #include "cardgame.h"
+ 
++#ifdef NATIVE
++/* The co-op's card duel (fieldstg/field.c): once this player chose its deck, it goes to the other and the other's
++   comes, as the opponent's deck, drawn as a player's (no groups, no reserve); 1 once it's here */
++static s32 coopDuelSent;
++
++static s32 coopDuelDecks(CardBattle *battle) {
++    NativeCoopPvp *duel = native_coop_duel();
++    s16 mine[40];
++    s16 theirs[40];
++    s32 id = (duel->battle & 0x7FFF) | 1;
++    s32 i;
++
++    if (!coopDuelSent) {
++        for (i = 0; i < 40; i++) {
++            mine[i] = GAME.decks[battle->deckChoice].cards[0] != 0 ? GAME.decks[battle->deckChoice].cards[i] - 1
++                                                                   : CARDGAME_defaultDeck[i];
++        }
++        native_coop_blob_send(duel->peer, mine, sizeof mine, id);
++        coopDuelSent = 1;
++    }
++    if (native_coop_blob_recv(duel->peer, id, theirs, sizeof theirs) != sizeof theirs || !native_coop_blob_sent(duel->peer, id)) {
++        return 0;
++    }
++    for (i = 0; i < 40; i++) {
++        battle->opponentDeck[i] = theirs[i];
++        battle->opponentDraws[i].order = i;
++        battle->opponentDraws[i].group = 0;
++        battle->opponentPlans[i].kind = 1;
++        battle->opponentPlans[i].flagged = 0;
++        battle->opponentPlans[i].priority = i + 400;
++    }
++    native_coop_note("Card duel: the decks across");
++    return 1;
++}
++#endif
++
+ /* Loads the opponent's data (FILE_CARDGAME_OPPONENTS, entry arg - 1): its deck and its card order */
+ void CARDGAME_loadOpponent(CardBattle *battle, CardBattleItems *items) {
+     CardOpponent *opponent;
+     s32 i;
+ 
++#ifdef NATIVE
++    coopDuelSent = 0;
++#endif
+     battle->opponents = FILE_CACHE.load(FILE_CARDGAME_OPPONENTS);
+     opponent = &battle->opponents[battle->arg - 1];
+     battle->opponentLevel = opponent->level;
+@@ -910,6 +949,11 @@
+         waitPhaseStep(battle, 6);
+         break;
+     case 21:
++#ifdef NATIVE
++        if (native_coop_duel() != NULL && !coopDuelDecks(battle)) {
++            break; /* the other's deck not here yet */
++        }
++#endif
+         loadChosenDeck(battle, items);
+         done = 1;
+         break;
