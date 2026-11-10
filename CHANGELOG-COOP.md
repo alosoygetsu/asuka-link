@@ -14,6 +14,7 @@ Sobre el port v0.18.9.
   - Si un jugador se queda sin Digimon, el otro sigue solo. Si caéis los dos, volvéis al mapa sin game over y sin
     cambios en la partida. Si ganáis, cada uno recibe la EXP y el dinero del combate.
   - De momento hay una raid básica, abierta para todos: Kuwagamon. No se pueden usar objetos ni huir.
+- **El menú del Guardromon tiene "Salir"**, que lo cierra sin hablar con él.
 
 ## v0.18.910
 Sobre el port v0.18.9.

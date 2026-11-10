@@ -158,6 +158,6 @@ const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a 
 #define COOP_TEXT_LOOK_TITLE 11
 #define COOP_TEXT_LOOK_HELP 12
 #define COOP_TEXT_LOOK_NAME 13 /* 13-15: Junior, the boy, the girl */
-#define COOP_TEXT_TRADE 16 /* 16-42 (40-41 the PvP battle's, 42 the raid's): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
+#define COOP_TEXT_TRADE 16 /* 16-43 (40-41 the PvP battle's, 42 the raid's, 43 the Guardromon's exit): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
 
 #endif /* NATIVE_COOP_H */

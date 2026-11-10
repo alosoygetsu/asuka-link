@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1107 @@
+@@ -362,10 +362,1114 @@
      }
  }
  
@@ -159,7 +159,7 @@
 +enum {
 +    T_TITLE, T_YOURS, T_THEIRS, T_SPARE, T_NO_SPARE, T_WANTS, T_ACCEPT, T_LEAVE, T_WAITING, T_READY, T_CONFIRM,
 +    T_DONE, T_CANCELLED, T_DECLINED, T_NO_ROOM, T_AMOUNT, T_CONFIRMED, T_NOTHING, T_FULL, T_CHANGE, T_WAIT_DOTS,
-+    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING, T_RAID_OPTION
++    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING, T_RAID_OPTION, T_EXIT_OPTION
 +};
 +#define COOP_RAID_BASIC 200 /* the raid open to all: Kuwagamon and its kind (FIELDSTG_encounters) */
 +
@@ -170,7 +170,7 @@
 +    s32 frames; /* in the phase */
 +    s32 froze; /* busy was set here */
 +    u32 readyTheirs; /* their offer's hash when this side got ready */
-+    s32 menu; /* the Guardromon's choice: 0 talk, 1 trade, 2 battle, 3 raid */
++    s32 menu; /* the Guardromon's choice: 0 talk, 1 trade, 2 battle, 3 raid, 4 exit */
 +    s32 kind; /* what the wait is for: 0 a card trade, 1 a PvP battle, 2 a raid (NativeCoopTrade.pad[0]) */
 +    s32 teamSent;
 +    Actor *talker; /* who talked to him, and where: his own talk, if that's the choice */
@@ -588,13 +588,14 @@
 +        return;
 +    }
 +    if (coopTrade.phase == COOP_TRADE_MENU) {
-+        coopTradePanel(0x10, 0x8C, 0x120, 0x50);
-+        for (i = 0; i < 4; i++) {
++        coopTradePanel(0x10, 0x7E, 0x120, 0x5E);
++        for (i = 0; i < 5; i++) {
 +            if (coopTrade.menu == i) {
-+                coopTradeRect(0x16, 0x93 + i * 14, 0x110, 12, 0x20, 0x38, 0x80, 0);
++                coopTradeRect(0x16, 0x85 + i * 14, 0x110, 12, 0x20, 0x38, 0x80, 0);
 +            }
-+            coopTradeText(coopTradeString(i == 0 ? T_TALK : i == 1 ? T_TRADE_OPTION : i == 2 ? T_BATTLE_OPTION : T_RAID_OPTION),
-+                          0x1C, 0x94 + i * 14, coopTrade.menu == i ? PALETTE_YELLOW : PALETTE_WHITE, 0);
++            coopTradeText(coopTradeString(i == 0 ? T_TALK : i == 1 ? T_TRADE_OPTION : i == 2 ? T_BATTLE_OPTION :
++                                          i == 3 ? T_RAID_OPTION : T_EXIT_OPTION),
++                          0x1C, 0x86 + i * 14, coopTrade.menu == i ? PALETTE_YELLOW : PALETTE_WHITE, 0);
 +        }
 +        return;
 +    }
@@ -833,8 +834,10 @@
 +        coopTrade.msgFrames--;
 +    }
 +    if (coopTrade.phase == COOP_TRADE_NONE && coopTrade.frames > 200 && coopTradeFree() && (i = native_coop_auto()) >= 0) {
-+        coopTradeStart(-1, 0, COOP_TRADE_ASK); /* tests: as if a Guardromon's choice had been made */
++        coopTradeStart(-1, 0, i == 3 ? COOP_TRADE_MENU : COOP_TRADE_ASK); /* tests: a Guardromon's choice made, or
++                                                                              its menu (DW3_COOP_AUTO=menu) open */
 +        coopTrade.kind = i;
++        coopTrade.menu = 0;
 +        coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
 +    }
 +    n = native_coop_test_cards();
@@ -848,8 +851,12 @@
 +        switch (coopTrade.phase) {
 +        case COOP_TRADE_MENU:
 +            if (PAD_PRESSED(PAD_UP) || PAD_PRESSED(PAD_DOWN)) {
-+                coopTrade.menu = (coopTrade.menu + (PAD_PRESSED(PAD_UP) ? 3 : 1)) % 4;
++                coopTrade.menu = (coopTrade.menu + (PAD_PRESSED(PAD_UP) ? 4 : 1)) % 5;
 +                SOUND.playSound(SOUND_CURSOR);
++            } else if (PAD_PRESSED(PAD_CROSS) && coopTrade.menu == 4) {
++                /* exit: the menu shut, no talk */
++                SOUND.playSound(SOUND_MENU_CANCEL);
++                coopTradeEnd(COOP_TRADE_NONE, -1);
 +            } else if (PAD_PRESSED(PAD_CIRCLE) || (PAD_PRESSED(PAD_CROSS) && coopTrade.menu == 0)) {
 +                /* his own talk (saving), as if this weren't here */
 +                coopTradeEnd(COOP_TRADE_NONE, -1);
@@ -1108,7 +1115,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1689,9 @@
+@@ -592,6 +1696,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1118,7 +1125,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1745,9 @@
+@@ -645,6 +1752,9 @@
          }
          break;
      case TASK_RUN:

@@ -657,7 +657,7 @@ int native_coop_auto(void) {
         return -1;
     }
     done = 1;
-    return SDL_strcmp(env, "raid") == 0 ? 2 : SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "giveup") == 0 || SDL_strcmp(env, "tech") == 0;
+    return SDL_strcmp(env, "menu") == 0 ? 3 : SDL_strcmp(env, "raid") == 0 ? 2 : SDL_strcmp(env, "battle") == 0 || SDL_strcmp(env, "giveup") == 0 || SDL_strcmp(env, "tech") == 0;
 }
 
 int native_coop_auto_battle(void) {
