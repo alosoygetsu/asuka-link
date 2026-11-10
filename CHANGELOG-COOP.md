@@ -3,6 +3,15 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.918
+Sobre el port v0.18.9.
+
+- **Los duelos de cartas dan premio a los dos:** al acabar, quien gana se lleva un sobre al azar de la serie *b*
+  (Booster 1b-15b). Si su mejor Digimon del equipo es de nivel 30 o más, una de cada cuatro veces es uno *R*
+  (R MBooster 01-05). Quien pierde se lleva uno de la serie *a* (Booster 01a-15a). Cada uno ve su sobre en la
+  pantalla final del duelo y lo abre en la tienda de cartas, como los de los rivales del juego. Fuera del sobre, la
+  partida sigue como estaba antes del duelo.
+
 ## v0.18.917
 Sobre el port v0.18.9.
 

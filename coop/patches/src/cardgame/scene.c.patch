@@ -1,17 +1,19 @@
 --- a/src/cardgame/scene.c
 +++ b/src/cardgame/scene.c
-@@ -2,6 +2,10 @@
+@@ -2,6 +2,12 @@
  
  #include "cardgame.h"
  
 +#ifdef NATIVE
 +static s32 coopDuelLost; /* the co-op's card duel: the battle's playerLost, kept as the battle goes */
++static s32 coopDuelPrize; /* and its prize (battle.c's closeBattleResult), 0 none */
++extern s32 CARDGAME_coopDuelPrizeItem;
 +#endif
 +
  /* The mode's task: sets up the display and starts the battle, then returns
     to the field once it is over (or to MODE_STAGE_SELECT when the mode's low
     bits are set) */
-@@ -9,6 +13,11 @@
+@@ -9,6 +15,11 @@
      TimLoader tim;
      Layer *layer;
  
@@ -23,23 +25,24 @@
      switch (task->state) {
      case 0:
      default:
-@@ -27,6 +36,9 @@
+@@ -27,6 +38,10 @@
          break;
      case 1:
          if (items[0]->result == 2) {
 +#ifdef NATIVE
 +            coopDuelLost = items[0]->playerLost;
++            coopDuelPrize = CARDGAME_coopDuelPrizeItem;
 +#endif
              task->setState(task, 2);
              items[0]->setState(items[0], 3);
          }
-@@ -35,6 +47,22 @@
+@@ -35,6 +50,25 @@
          switch (task->substate) {
          case 0:
          default:
 +#ifdef NATIVE
 +            if (native_coop_duel() != NULL) {
-+                /* the co-op's card duel, an exhibition: the save as it was (no prize), where the field was left */
++                /* the co-op's card duel: the save as it was, where the field was left, plus the duel's booster */
 +                s32 fieldMode = GAME.fieldMode;
 +                Vec2 fieldPos = GAME.fieldPos;
 +                s32 fieldDir = GAME.fieldDir;
@@ -49,7 +52,10 @@
 +                GAME.fieldPos = fieldPos;
 +                GAME.fieldDir = fieldDir;
 +                FLAGS_00.pendingFlag10 = 0;
-+                native_coop_note("Card duel with player %d: %s", native_coop_duel()->peer + 2, coopDuelLost ? "lost" : "won");
++                if (coopDuelPrize > 0 && GAME.items[coopDuelPrize] < 99) {
++                    GAME.items[coopDuelPrize]++;
++                }
++                native_coop_note("Card duel with player %d: %s, prize item %X", native_coop_duel()->peer + 2, coopDuelLost ? "lost" : "won", coopDuelPrize);
 +                native_coop_pvp_end();
 +            }
 +#endif
