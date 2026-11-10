@@ -1,9 +1,14 @@
 --- a/src/fightstg/enemy_turn.c
 +++ b/src/fightstg/enemy_turn.c
-@@ -3,6 +3,121 @@
+@@ -3,6 +3,126 @@
  
  #include "fightstg.h"
  
++#ifdef NATIVE
++/* the co-op's battles: the enemy's picks rolled as the other game rolls them (platform/coop.c) */
++#define RANDOM (*native_coop_random(&RANDOM))
++#endif
++
 +#ifdef NATIVE
 +/* The co-op's PvP battle: the enemy is the other player, whose turns are its commands (platform/coop.c), sent by its
 +   player turn (wfightmn/menu.c's FIGHTSTG_coopPvpSend) and done here as the enemy's */
@@ -122,7 +127,7 @@
  /* The enemy that the enemy's turn (FIGHTSTG_updateEnemyTurn) switches to:
     task->target's, or one of the others at random (not the active one), -1
     for none */
-@@ -199,6 +314,12 @@
+@@ -199,6 +319,12 @@
              showRunAway(task, children);
              break;
          case 1:

@@ -16,7 +16,7 @@
      s32 delay;
  
 +#ifdef NATIVE
-+    if (native_coop_pvp() != NULL && (kind == 0 || kind == 1)) {
++    if ((native_coop_pvp() != NULL || native_coop_raid() != NULL) && (kind == 0 || kind == 1)) {
 +        return FIGHTSTG_eventDelays[kind].div; /* the PvP battle: turns one each, whatever the speeds */
 +    }
 +#endif

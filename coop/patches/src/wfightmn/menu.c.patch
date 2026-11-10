@@ -1,6 +1,6 @@
 --- a/src/wfightmn/menu.c
 +++ b/src/wfightmn/menu.c
-@@ -6,6 +6,15 @@
+@@ -6,6 +6,235 @@
  
  #include "wfightmn.h"
  
@@ -11,17 +11,243 @@
 +/* the PvP battle ended (its save put back): the end's last state runs every frame till the field comes, and has to go
 +   on to the field, not to the report or the title */
 +static s32 coopPvpEnded;
++
++/* ---- The raid (fieldstg/field.c): both players' parties on this side against the boss, turn about: seat 0's turn,
++   seat 1's, the boss's, round again. The side shows one party at a time, the GAME's party and partners swapped for the
++   other's (as fightstg/stats.c does for the PvP's enemy) and the fighters with them; a turn of the party not shown
++   brings it in first (coopRaidHandover). This side's turns are picked in its menu and sent, the other's taken from it.
++   The boss's target is rolled from the battle and the turn, the same in both games. ---- */
++#define COOP_RAID_HANDOVER 40 /* runTurn's substate: the party of coopRaid.target comes in */
++typedef struct CoopRaidTeam { /* fieldstg/field.c's CoopTeam */
++    s32 party[3];
++    s32 ids[3];
++    Partner partners[3];
++} CoopRaidTeam;
++
++static struct {
++    s32 me;      /* this player's seat: 0 goes first */
++    s32 shown;   /* the seat whose party is on the side */
++    s32 turn;    /* the turns given out */
++    s32 actor;   /* this turn's: a seat, or 2 the boss */
++    s32 target;  /* the seat brought in for it */
++    s32 pending; /* the event to run once it's in */
++    s32 ready;   /* the turn is given out: runTurn runs it as it is */
++    s32 out[2];  /* the seat's party is down (or the player left) */
++    s32 hasCommand;
++    NativeCoopCommand command; /* the other's, for its turn */
++    BattleFighter fighters[3]; /* the party not shown */
++    s32 active;
++} coopRaid;
++
++/* this turn is the other player's: its command, not this side's menu */
++static s32 coopRaidRemote(void) {
++    return native_coop_raid() != NULL && coopRaid.shown != coopRaid.me;
++}
++
++static void coopRaidSwapBytes(u8 *a, u8 *b, s32 n) {
++    u8 t;
++
++    while (n-- > 0) {
++        t = *a;
++        *a++ = *b;
++        *b++ = t;
++    }
++}
++
++/* the parties trade places: GAME's party and its partners with the other's, the side's fighters with those kept */
++static void coopRaidSwap(void) {
++    CoopRaidTeam *team = (CoopRaidTeam *)native_coop_raid()->team;
++    s32 i;
++    s32 k;
++
++    if (coopRaid.shown == coopRaid.me) {
++        for (i = 0; i < 3; i++) { /* the other's in: the party first, then its partners */
++            k = GAME.party[i];
++            GAME.party[i] = team->party[i];
++            team->party[i] = k;
++        }
++    }
++    for (i = 0; i < 3; i++) {
++        if (GAME.party[i] >= 0 && GAME.party[i] < PARTNER_COUNT) {
++            coopRaidSwapBytes((u8 *)&GAME.partners[GAME.party[i]], (u8 *)&team->partners[i], sizeof(Partner));
++        }
++    }
++    if (coopRaid.shown != coopRaid.me) {
++        for (i = 0; i < 3; i++) { /* this player's back: its partners first (above), then the party */
++            k = GAME.party[i];
++            GAME.party[i] = team->party[i];
++            team->party[i] = k;
++        }
++    }
++    coopRaidSwapBytes((u8 *)FIGHTSTG_battle.fighters[0], (u8 *)coopRaid.fighters, sizeof coopRaid.fighters);
++    k = FIGHTSTG_battle.active[0];
++    FIGHTSTG_battle.active[0] = coopRaid.active;
++    coopRaid.active = k;
++    coopRaid.shown = 1 - coopRaid.shown;
++}
++
++/* the battle starts: this player's party on the side, the other's whole, seat 0 first */
++static void coopRaidBegin(void) {
++    CoopRaidTeam *team = (CoopRaidTeam *)native_coop_raid()->team;
++    PartnerStats *st;
++    s32 i;
++
++    memset(&coopRaid, 0, sizeof coopRaid);
++    coopRaid.me = native_coop_raid()->first ? 0 : 1;
++    coopRaid.shown = coopRaid.me;
++    for (i = 0; i < 3; i++) {
++        if (team->party[i] < 0 || team->party[i] >= PARTNER_COUNT) {
++            continue;
++        }
++        st = &team->partners[i].info;
++        coopRaid.fighters[i].id = team->ids[i];
++        coopRaid.fighters[i].hp = coopRaid.fighters[i].maxHp = st->stats[STAT_MAX_HP];
++        coopRaid.fighters[i].mp = coopRaid.fighters[i].maxMp = st->stats[STAT_MAX_MP];
++    }
++    native_coop_note("Raid: this player is seat %d", coopRaid.me);
++}
++
++/* a player turn or the boss's came: gives out the next turn (the seats not down, then the boss), the one queued
++   dropped for it, and brings in the party it needs */
++static void coopRaidNextTurn(BattleMenu *task) {
++    s32 i;
++    u32 seed;
++
++    for (i = 0; i < 99; i++) {
++        if (i != FIGHTSTG_events.curIndex &&
++            (FIGHTSTG_events.events[i].type == EVENT_PLAYER_TURN || FIGHTSTG_events.events[i].type == EVENT_ENEMY_TURN)) {
++            FIGHTSTG_events.events[i].type = 0;
++        }
++    }
++    for (i = 0; i < 3; i++) {
++        coopRaid.actor = coopRaid.turn % 3;
++        coopRaid.turn++;
++        if (coopRaid.actor == 2 || !coopRaid.out[coopRaid.actor]) {
++            break;
++        }
++    }
++    if (coopRaid.actor == 2) {
++        /* the boss: its rolls from the battle and the turn, its target one of the seats standing */
++        seed = ((u32)native_coop_raid()->battle * 2654435761u) ^ ((u32)coopRaid.turn * 40503u);
++        native_coop_pvp_seed(seed);
++        coopRaid.target = coopRaid.out[0] ? 1 : coopRaid.out[1] ? 0 : (s32)((seed >> 7) & 1);
++        coopRaid.pending = EVENT_ENEMY_TURN;
++    } else {
++        coopRaid.target = coopRaid.actor;
++        coopRaid.pending = EVENT_PLAYER_TURN;
++    }
++    if (g_coop_debug) {
++        native_coop_note("Raid: turn %d: %s, seat %d on", coopRaid.turn,
++                         coopRaid.actor == 2 ? "the boss" : coopRaid.actor == coopRaid.me ? "this player" : "the other",
++                         coopRaid.target);
++    }
++    if (coopRaid.target != coopRaid.shown) {
++        task->setSubstate(task, COOP_RAID_HANDOVER);
++        return;
++    }
++    coopRaid.ready = 1;
++    task->step = coopRaid.pending;
++}
++
++/* runTurn's COOP_RAID_HANDOVER: the other party in, its active fighter's entrance, then the pending turn */
++static void coopRaidHandover(BattleMenu *task, BattleMenuChildren *children) {
++    BattleFighter *unit;
++    s32 i;
++
++    switch (task->step) {
++    case 0:
++    default:
++        if (children->task.task != NULL) {
++            break;
++        }
++        WFIGHTMN_cancelBlast();
++        coopRaidSwap();
++        unit = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
++        if (unit->hp == 0) { /* its active one fell before: the first standing */
++            for (i = 0; i < 3; i++) {
++                if (FIGHTSTG_battle.fighters[0][i].id != 0 && FIGHTSTG_battle.fighters[0][i].hp != 0) {
++                    FIGHTSTG_battle.active[0] = i;
++                    break;
++                }
++            }
++            unit = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
++        }
++        children->task.entrance = FIGHTSTG_startEntrance(unit->id, 0, WFIGHTMN_setIdleMotion(0, 0));
++        task->step++;
++        break;
++    case 1:
++        if (children->task.entrance->done != 0) {
++            task->step++;
++        }
++        break;
++    case 2:
++        if (children->task.task == NULL) {
++            task->setSubstate(task, 1);
++            coopRaid.ready = 1;
++            task->step = coopRaid.pending;
++        }
++        break;
++    }
++}
++
++/* the other's command for its turn, kept till it's done: 1 here, 0 not yet; the other gone, its seat is down */
++static s32 coopRaidCommand(void) {
++    s32 got;
++
++    if (coopRaid.hasCommand) {
++        return 1;
++    }
++    got = native_coop_pvp_take(&coopRaid.command);
++    if (got < 0) {
++        native_coop_note("Raid: the other player left: seat %d is out", 1 - coopRaid.me);
++        coopRaid.out[1 - coopRaid.me] = 1;
++        memset(&coopRaid.command, 0, sizeof coopRaid.command);
++        coopRaid.command.action = -1;
++        coopRaid.hasCommand = 1;
++        return 1;
++    }
++    if (got > 0) {
++        s32 side;
++        s32 i;
++
++        /* the other's fighters as it had them: the boss, and the party on (its own, as here) */
++        for (side = 0; side < 2; side++) {
++            for (i = 0; i < 3; i++) {
++                if (FIGHTSTG_battle.fighters[side][i].id != 0 && FIGHTSTG_battle.fighters[side][i].hp != coopRaid.command.hp[side][i]) {
++                    native_coop_note("Raid: %s %d is HP %d here, %d there", side ? "enemy" : "partner", i,
++                                     FIGHTSTG_battle.fighters[side][i].hp, coopRaid.command.hp[side][i]);
++                }
++            }
++        }
++        coopRaid.hasCommand = 1;
++    }
++    return got > 0;
++}
++
++/* its rolls from now on, and the command used up */
++static void coopRaidUseCommand(void) {
++    if (coopRaid.command.seed != 0) {
++        native_coop_pvp_seed(coopRaid.command.seed);
++    }
++    coopRaid.hasCommand = 0;
++}
 +#endif
 +
  /* Sets the battle's kind from the mode it came from and the battle: the
     escape, UNK2, no-damage and final battles, or a normal one */
  static inline void setBattleKind(void) {
-@@ -62,6 +71,27 @@
+@@ -62,6 +291,33 @@
      BattleStats *stats;
      s32 chance;
  
 +#ifdef NATIVE
 +    coopPvpEnded = 0;
++    if (native_coop_raid() != NULL) {
++        coopRaidBegin();
++        FIGHTSTG_queuePlayerTurn(0);
++        task->nextState(task);
++        return;
++    }
 +    if (native_coop_pvp() != NULL) {
 +        /* the co-op's PvP battle: the faster first (a tie: NativeCoopPvp.first), then a turn each */
 +        s32 mine = FIGHTSTG_battleFuncs.computeStats(SIDE_PLAYER, 1, FIGHTSTG_battle.active[0])->stats[BATTLE_STAT_SPEED];
@@ -44,43 +270,86 @@
      if (task->counter != 0) {
          FIGHTSTG_queueEnemyTurn(0);
          FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0) / 2);
-@@ -122,6 +152,11 @@
+@@ -122,6 +378,11 @@
     partner is confused and the battle's music again after
     (switchConfusionMusic) */
  void WFIGHTMN_updateMenu(BattleMenu *task, BattleMenuChildren *children) {
 +#ifdef NATIVE
-+    if (native_coop_pvp() != NULL) {
++    if (native_coop_pvp() != NULL || native_coop_raid() != NULL) {
 +        native_coop_pvp_pump();
 +    }
 +#endif
      switch (task->state) {
      case 0:
      default:
-@@ -259,6 +294,11 @@
+@@ -250,6 +511,11 @@
+         task->step++;
+         break;
+     case 1:
++#ifdef NATIVE
++        if (coopRaidRemote() && !coopRaidCommand()) {
++            break; /* the other still picking */
++        }
++#endif
+         if (children->task.task == NULL) {
+             unit = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
+             if ((unit->flags & FIGHTER_PARALYZED) && FIGHTSTG_battleFuncs.testParalysis(0) != 0) {
+@@ -259,8 +525,19 @@
                  children->task.message->show(children->task.message, 2, task->args);
                  FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0));
                  task->setSubstate(task, 2);
 +#ifdef NATIVE
-+                if (native_coop_pvp() != NULL) {
++                if (coopRaidRemote()) {
++                    coopRaidUseCommand();
++                } else if (native_coop_pvp() != NULL || native_coop_raid() != NULL) {
 +                    FIGHTSTG_coopPvpSend(-1, 0, 0, 0);
 +                }
 +#endif
              } else if (unit->flags & FIGHTER_CONFUSED) {
                  task->setSubstate(task, 0x11);
++#ifdef NATIVE
++            } else if (coopRaidRemote()) {
++                task->step = 2; /* the other's turn: no menu here */
++#endif
              } else {
-@@ -269,6 +309,11 @@
+                 FIGHTSTG_setPlayerTurnStep(2);
+                 task->step = 2;
+@@ -268,7 +545,22 @@
+         }
          break;
      case 2:
-         if (FIGHTSTG_isPlayerChoosing() == 0) {
 +#ifdef NATIVE
-+            if (native_coop_pvp() != NULL) {
-+                FIGHTSTG_coopPvpSend(children->commands->action, children->commands->arg, children->commands->digimon, 0);
-+            }
++        if (coopRaidRemote()) {
++            /* the other's command, as its menu picked it */
++            children->commands->action = coopRaid.command.action;
++            children->commands->arg = coopRaid.command.arg;
++            children->commands->digimon = coopRaid.command.digimon;
++            coopRaidUseCommand();
++        } else if (FIGHTSTG_isPlayerChoosing() != 0) {
++            break;
++        } else if (native_coop_pvp() != NULL || native_coop_raid() != NULL) {
++            FIGHTSTG_coopPvpSend(children->commands->action, children->commands->arg, children->commands->digimon, 0);
++        }
++        if (1) {
++#else
+         if (FIGHTSTG_isPlayerChoosing() == 0) {
 +#endif
              switch (children->commands->action) {
              case 1:
                  FIGHTSTG_battle.runAttempts++;
-@@ -552,6 +597,32 @@
+@@ -481,6 +773,11 @@
+             break;
+         }
+ #endif
++#ifdef NATIVE
++        if (native_coop_raid() != NULL && coopRaid.shown != coopRaid.me) {
++            coopRaidSwap(); /* this player's party back, for its HP and the report */
++        }
++#endif
+         if (FIGHTSTG_events.funcs.result != BATTLE_FLED) {
+             count = 0;
+             battle = &FIGHTSTG_battle;
+@@ -552,6 +849,51 @@
          break;
      case 2:
          WFIGHTMN_cancelBlast();
@@ -88,6 +357,25 @@
 +        if (coopPvpEnded) {
 +            GAME.funcs.requestMode(GAME.fieldMode, 0);
 +            break;
++        }
++        if (native_coop_raid() != NULL) {
++            native_coop_note("Raid: %s", FIGHTSTG_events.funcs.result == BATTLE_WON ? "won" : "lost");
++            if (FIGHTSTG_events.funcs.result == BATTLE_WON) {
++                native_coop_pvp_end(); /* the report, as any battle's */
++            } else {
++                s32 fieldMode = GAME.fieldMode;
++                Vec2 fieldPos = GAME.fieldPos;
++                s32 fieldDir = GAME.fieldDir;
++
++                memcpy(&GAME, native_coop_raid()->save, COOP_PVP_SAVE); /* no game over: the save as it was */
++                GAME.fieldMode = fieldMode;
++                GAME.fieldPos = fieldPos;
++                GAME.fieldDir = fieldDir;
++                native_coop_pvp_end();
++                coopPvpEnded = 1;
++                GAME.funcs.requestMode(GAME.fieldMode, 0);
++                break;
++            }
 +        }
 +        if (native_coop_pvp() != NULL) {
 +            /* the co-op's PvP battle (fieldstg/field.c): won, lost or given up, the save as it was before, where the
@@ -113,19 +401,70 @@
          switch (FIGHTSTG_events.funcs.result) {
          case BATTLE_FLED:
          default:
-@@ -830,6 +901,11 @@
+@@ -825,11 +1167,29 @@
+     switch (task->step) {
+     case 0:
+     default:
++#ifdef NATIVE
++        if (coopRaidRemote()) {
++            task->step++; /* the other's: its command, no menu */
++            break;
++        }
++#endif
+         FIGHTSTG_setPlayerTurnStep(3);
+         task->step++;
          break;
      case 1:
-         if (FIGHTSTG_isPlayerChoosing() == 0) {
 +#ifdef NATIVE
-+            if (native_coop_pvp() != NULL) {
-+                FIGHTSTG_coopPvpSend(children->commands->action == 0 ? 0 : -1, 0, 0, 0);
-+            }
++        if (coopRaidRemote()) {
++            children->commands->action = coopRaid.command.action == 0 ? 0 : -1;
++            coopRaidUseCommand();
++        } else if (FIGHTSTG_isPlayerChoosing() != 0) {
++            break;
++        } else if (native_coop_pvp() != NULL || native_coop_raid() != NULL) {
++            FIGHTSTG_coopPvpSend(children->commands->action == 0 ? 0 : -1, 0, 0, 0);
++        }
++        if (1) {
++#else
+         if (FIGHTSTG_isPlayerChoosing() == 0) {
 +#endif
              if (children->commands->action == 0) {
                  children->task.attack = FIGHTSTG_startFirstTech(0);
                  task->setSubstate(task, 2);
-@@ -1110,6 +1186,37 @@
+@@ -1105,11 +1465,70 @@
+                     break;
+                 }
+             }
++#ifdef NATIVE
++            if (native_coop_raid() != NULL && event->args[0] == 0) {
++                if (slot != -1 && coopRaidRemote()) {
++                    /* the other's party: its player picks */
++                    if (!coopRaidCommand()) {
++                        break;
++                    }
++                    if (coopRaid.command.action == 5 && coopRaid.command.arg >= 0 && coopRaid.command.arg < 3 &&
++                        unit[coopRaid.command.arg].id != 0 && unit[coopRaid.command.arg].hp != 0) {
++                        children->commands->arg = coopRaid.command.arg;
++                        children->commands->digimon = coopRaid.command.digimon;
++                        coopRaidUseCommand();
++                        task->setSubstate(task, 5);
++                        task->step = 1;
++                        break;
++                    }
++                    coopRaidUseCommand();
++                    slot = -1; /* it left, or gave no pick: its party is out */
++                }
++                if (slot == -1 && !coopRaid.out[1 - coopRaid.shown]) {
++                    /* this party is down, the other goes on: its next turn brings it in */
++                    coopRaid.out[coopRaid.shown] = 1;
++                    native_coop_note("Raid: seat %d is down", coopRaid.shown);
++                    task->setSubstate(task, 2);
++                    break;
++                }
++            }
++#endif
+             if (slot != -1) {
+                 if (event->args[0] == 0) {
                      FIGHTSTG_setPlayerTurnStep(4);
                      task->step = 2;
                  } else {
@@ -163,15 +502,45 @@
                      unit = FIGHTSTG_battle.fighters[1] + slot;
                      task->step = 3;
                      task->args[0] = slot;
-@@ -1125,6 +1232,11 @@
+@@ -1125,6 +1544,11 @@
          break;
      case 2:
          if (FIGHTSTG_isPlayerChoosing() == 0) {
 +#ifdef NATIVE
-+            if (native_coop_pvp() != NULL) {
++            if (native_coop_pvp() != NULL || native_coop_raid() != NULL) {
 +                FIGHTSTG_coopPvpSend(5, children->commands->arg, children->commands->digimon, 1);
 +            }
 +#endif
              task->setSubstate(task, 5);
              task->step = 1;
          }
+@@ -1375,6 +1799,17 @@
+ #endif
+         break;
+     case 1:
++#ifdef NATIVE
++        if (native_coop_raid() != NULL && (task->step == EVENT_PLAYER_TURN || task->step == EVENT_ENEMY_TURN)) {
++            if (!coopRaid.ready) {
++                coopRaidNextTurn(task);
++                if (task->substate == COOP_RAID_HANDOVER) {
++                    break;
++                }
++            }
++            coopRaid.ready = 0;
++        }
++#endif
+         switch (task->step) {
+         default:
+             task->setSubstate(task, 3);
+@@ -1456,6 +1891,11 @@
+             task->setSubstate(task, 0);
+         }
+         break;
++#ifdef NATIVE
++    case COOP_RAID_HANDOVER:
++        coopRaidHandover(task, task->children);
++        break;
++#endif
+     }
+ }
+ 

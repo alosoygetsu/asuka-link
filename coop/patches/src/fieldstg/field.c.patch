@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1081 @@
+@@ -362,10 +362,1103 @@
      }
  }
  
@@ -706,6 +706,28 @@
 +        }
 +    }
 +    FIELDSTG_startBattle(&coopPvpBattle);
++    if (native_coop_raid_test() > 0) {
++        /* a raid (DW3_COOP_RAID, for now): the encounter's enemies, their HP times the players, both parties on this
++           side (wfightmn/menu.c) */
++        s32 enc = native_coop_raid_test();
++        s32 hp;
++
++        native_coop_raid_set(enc);
++        BATTLE_SETUP.battle = enc;
++        BATTLE_SETUP.ambushChance = 0;
++        BATTLE_SETUP.encounterKind = FIELDSTG_encounters[enc].kind;
++        BATTLE_SETUP.hasPrize = 0;
++        for (i = 0; i < 12; i++) {
++            BATTLE_SETUP.blocks[i] = FIELDSTG_encounters[enc].blocks[i];
++        }
++        for (i = 0; i < 3; i++) {
++            BATTLE_SETUP.enemies[i] = *FIELDSTG_encounters[enc].enemies[i];
++            hp = BATTLE_SETUP.enemies[i].hp * 2;
++            BATTLE_SETUP.enemies[i].hp = hp > 0x7FFF ? 0x7FFF : hp;
++        }
++        native_coop_note("Raid with player %d: encounter %d, %d HP", coopTrade.peer + 2, enc, BATTLE_SETUP.enemies[0].hp);
++        return;
++    }
 +    BATTLE_SETUP.ambushChance = 0;
 +    BATTLE_SETUP.encounterKind = 1;
 +    BATTLE_SETUP.hasPrize = 0;
@@ -1082,7 +1104,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1663,9 @@
+@@ -592,6 +1685,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1092,7 +1114,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1719,9 @@
+@@ -645,6 +1741,9 @@
          }
          break;
      case TASK_RUN:

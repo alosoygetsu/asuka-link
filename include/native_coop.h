@@ -86,12 +86,17 @@ typedef struct NativeCoopPvp {
     int first;                /* 1 when this side goes first on a tie of speeds */
     int sent, taken;          /* commands sent, and the other's taken */
     int over;                 /* 1 the other gave up, 2 the other is gone */
+    int raid;                 /* a raid: the encounter both fight side by side (team is the other's party, on this side) */
     unsigned int waitFrom;    /* SDL ms the wait for the other's command began, 0 none */
     NativeCoopCommand out[COOP_COMMANDS]; /* the newest sent first */
     unsigned char team[COOP_BLOB_MAX]; /* fieldstg/field.c's CoopTeam */
     unsigned char save[COOP_PVP_SAVE];
 } NativeCoopPvp;
-NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one */
+NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one (or a raid) */
+/* The raid: the PvP's pairing and commands, both players on this side against a boss, turn about (wfightmn/menu.c) */
+NativeCoopPvp *native_coop_raid(void); /* the raid's, or NULL */
+void native_coop_raid_set(int encounter);
+int native_coop_raid_test(void); /* DW3_COOP_RAID=<encounter> (tests): the Guardromon's battle is that raid; 0 none */
 void native_coop_pvp_begin(int peer, const void *team, int size, const void *save, int battle, int first);
 void native_coop_pvp_end(void);
 unsigned int native_coop_coin(void); /* a number of this copy's own, for who goes first */

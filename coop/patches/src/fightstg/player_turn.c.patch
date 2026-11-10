@@ -16,7 +16,7 @@
 +    s32 tech;
 +    s32 mp;
 +
-+    if (native_coop_pvp() == NULL || !native_coop_auto_battle()) {
++    if ((native_coop_pvp() == NULL && native_coop_raid() == NULL) || !native_coop_auto_battle()) {
 +        return 0;
 +    }
 +    native_coop_auto_quiet();
@@ -25,7 +25,7 @@
 +    }
 +    coopAutoFrames = 0;
 +    task->action = 0;
-+    if (native_coop_pvp()->sent == 0) {
++    if ((native_coop_pvp() != NULL ? native_coop_pvp() : native_coop_raid())->sent == 0) {
 +        s16 slots[4];
 +
 +        if (GAME.funcs.getPartnerSlots(member, slots) > 0 && slots[0] >= 3) {
@@ -37,7 +37,7 @@
 +            return 1;
 +        }
 +    }
-+    if (native_coop_auto_battle() == 2 && native_coop_pvp()->sent >= 4) {
++    if (native_coop_auto_battle() == 2 && (native_coop_pvp() != NULL ? native_coop_pvp() : native_coop_raid())->sent >= 4) {
 +        task->action = 1; /* DW3_COOP_AUTO=giveup: the fifth command gives up */
 +        native_coop_note("PvP test: giving up");
 +        return 1;
@@ -71,13 +71,13 @@
          if (task->result != -1) {
              task->command = task->result;
              switch (task->result) {
-@@ -42,6 +99,13 @@
+@@ -42,9 +99,23 @@
                  task->switchLine = 0;
                  break;
              case BATTLE_COMMAND_ITEM:
 +#ifdef NATIVE
-+                if (native_coop_pvp() != NULL) {
-+                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's PvP battle: no items */
++                if (native_coop_pvp() != NULL || native_coop_raid() != NULL) {
++                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's PvP battle and raid: no items */
 +                    task->setSubstate(task, 2);
 +                    break;
 +                }
@@ -85,24 +85,34 @@
                  task->setStep(task, 2);
                  break;
              case BATTLE_COMMAND_RUN:
-@@ -168,6 +232,11 @@
++#ifdef NATIVE
++                if (native_coop_raid() != NULL) {
++                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's raid: no running away */
++                    task->setSubstate(task, 2);
++                    break;
++                }
++#endif
+                 task->action = 1;
+                 task->setSubstate(task, 0);
+                 break;
+@@ -168,6 +239,11 @@
                  task->switchLine = 0;
              } else {
                  task->action = 6;
 +#ifdef NATIVE
-+                if (native_coop_pvp() != NULL) {
-+                    task->action = 5; /* the co-op's PvP battle: a plain switch */
++                if (native_coop_pvp() != NULL || native_coop_raid() != NULL) {
++                    task->action = 5; /* the co-op's PvP battle and raid: a plain switch */
 +                }
 +#endif
                  task->digimon = task->result >> 4;
                  task->setSubstate(task, 0);
                  task->switchLine = 0;
-@@ -226,6 +295,24 @@
+@@ -226,6 +302,24 @@
          }
          task->tickCounter(task);
      case 1:
 +#ifdef NATIVE
-+        if (task->result == -1 && native_coop_pvp() != NULL && native_coop_auto_battle() && ++coopAutoFrames > 45) {
++        if (task->result == -1 && (native_coop_pvp() != NULL || native_coop_raid() != NULL) && native_coop_auto_battle() && ++coopAutoFrames > 45) {
 +            s32 i;
 +
 +            coopAutoFrames = 0;

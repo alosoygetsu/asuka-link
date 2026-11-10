@@ -518,7 +518,21 @@ int native_coop_test_cards(void) {
 static NativeCoopPvp s_pvp;
 
 NativeCoopPvp *native_coop_pvp(void) {
-    return s_pvp.on ? &s_pvp : NULL;
+    return s_pvp.on && !s_pvp.raid ? &s_pvp : NULL;
+}
+
+NativeCoopPvp *native_coop_raid(void) {
+    return s_pvp.on && s_pvp.raid ? &s_pvp : NULL;
+}
+
+void native_coop_raid_set(int encounter) {
+    s_pvp.raid = encounter;
+}
+
+int native_coop_raid_test(void) {
+    const char *env = SDL_getenv("DW3_COOP_RAID");
+
+    return env != NULL ? (int)SDL_strtol(env, NULL, 0) : 0;
 }
 
 void native_coop_pvp_begin(int peer, const void *team, int size, const void *save, int battle, int first) {
