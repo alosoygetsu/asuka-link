@@ -527,8 +527,57 @@ NativeCoopPvp *native_coop_duel(void) {
     return s_pvp.on && s_pvp.duel ? &s_pvp : NULL;
 }
 
+/* The card duel's messages (cardgame/): each one numbered, the newest DUEL_MSGS going out as one blob (re-sent whole on
+   each new one), the other's taken in order */
+#define DUEL_MSGS 12
+#define DUEL_DATA 232
+typedef struct DuelMsg {
+    uint16_t seq, kind, size, pad;
+    uint8_t data[DUEL_DATA];
+} DuelMsg;
+
+static DuelMsg s_duelOut[DUEL_MSGS];
+static int s_duelSeq, s_duelTaken, s_duelBlob;
+
 void native_coop_duel_set(void) {
     s_pvp.duel = 1;
+    SDL_memset(s_duelOut, 0, sizeof s_duelOut);
+    s_duelSeq = s_duelTaken = 0;
+    s_duelBlob = 0;
+}
+
+void native_coop_duel_post(int kind, const void *data, int size) {
+    DuelMsg *m;
+
+    SDL_memmove(&s_duelOut[1], &s_duelOut[0], sizeof s_duelOut[0] * (DUEL_MSGS - 1));
+    m = &s_duelOut[0];
+    SDL_memset(m, 0, sizeof *m);
+    m->seq = (uint16_t)++s_duelSeq;
+    m->kind = (uint16_t)kind;
+    m->size = (uint16_t)SDL_min(size, DUEL_DATA);
+    SDL_memcpy(m->data, data, m->size);
+    s_duelBlob = (s_duelBlob % 0x3FFF) + 1;
+    native_coop_blob_send(s_pvp.peer, s_duelOut, sizeof s_duelOut, 0x4000 | s_duelBlob);
+    native_coop_note("Duel: sent message %d (kind %d)", m->seq, kind);
+}
+
+int native_coop_duel_take(int *kind, void *data, int max) {
+    DuelMsg in[DUEL_MSGS];
+    int i;
+
+    if (native_coop_blob_any(s_pvp.peer, in, sizeof in) != (int)sizeof in) {
+        return -1;
+    }
+    for (i = 0; i < DUEL_MSGS; i++) {
+        if (in[i].seq == s_duelTaken + 1) {
+            s_duelTaken++;
+            *kind = in[i].kind;
+            SDL_memcpy(data, in[i].data, SDL_min(max, in[i].size));
+            native_coop_note("Duel: took message %d (kind %d)", in[i].seq, in[i].kind);
+            return in[i].size;
+        }
+    }
+    return -1;
 }
 
 NativeCoopPvp *native_coop_raid(void) {

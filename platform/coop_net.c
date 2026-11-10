@@ -532,6 +532,14 @@ int native_coop_blob_sent(int i, int id) {
     return i >= 0 && i < s_peer_count && s_peers[i].got_id == (uint16_t)id && id != 0;
 }
 
+int native_coop_blob_any(int i, void *out, int max) {
+    if (i < 0 || i >= s_peer_count || !s_peers[i].in_whole || s_peers[i].in_size > max) {
+        return 0;
+    }
+    SDL_memcpy(out, s_peers[i].blob_in, s_peers[i].in_size);
+    return s_peers[i].in_size;
+}
+
 int native_coop_blob_recv(int i, int id, void *out, int max) {
     if (i < 0 || i >= s_peer_count || !s_peers[i].in_whole || s_peers[i].in_id != (uint16_t)id || s_peers[i].in_size > max) {
         return 0;

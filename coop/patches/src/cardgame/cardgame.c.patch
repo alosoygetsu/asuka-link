@@ -1,0 +1,49 @@
+--- a/src/cardgame/cardgame.c
++++ b/src/cardgame/cardgame.c
+@@ -14,6 +14,13 @@
+ 
+ #include "cardgame.h"
+ 
++#ifdef NATIVE
++/* the co-op's card duel (battle.c) */
++void CARDGAME_coopDuelSendPutOut(CardBattle *battle);
++s32 CARDGAME_coopDuelTakePutOut(CardBattle *battle, CardScreen *screen);
++void CARDGAME_coopDuelAutoPutOut(CardBattle *battle, CardScreen *screen);
++#endif
++
+ /* One field of card effect index (CardEffect): 0 its condition, 1 its play
+    condition, 2 its message, 3 its target, 4 its script's step at offset */
+ s32 CARDGAME_getEffectField(s32 index, u32 field, s32 offset) {
+@@ -1143,11 +1150,32 @@
+         answerOnceDone(battle, CARDGAME_stepChooseCards(battle, screen, &battle->sides[battle->record.turnSide].pile));
+         break;
+     case 154:
++#ifdef NATIVE
++        if (native_coop_duel() != NULL && native_coop_auto_battle()) {
++            CARDGAME_coopDuelAutoPutOut(battle, screen); /* tests: what it can */
++            CARDGAME_coopDuelSendPutOut(battle);
++            battle->run = CARD_RUN_PHASE;
++            break;
++        }
++#endif
+         if (CARDGAME_stepChooseCards(battle, screen, &battle->sides[0].pile) != -1) {
++#ifdef NATIVE
++            if (native_coop_duel() != NULL) {
++                CARDGAME_coopDuelSendPutOut(battle); /* the co-op's card duel: to the other */
++            }
++#endif
+             battle->run = CARD_RUN_PHASE;
+         }
+         break;
+     case 157:
++#ifdef NATIVE
++        if (native_coop_duel() != NULL) {
++            if (CARDGAME_coopDuelTakePutOut(battle, screen)) { /* the other's, not the computer's */
++                battle->run = CARD_RUN_PHASE;
++            }
++            break;
++        }
++#endif
+         if (CARDGAME_pickComputerCards(battle, screen)) {
+             battle->run = CARD_RUN_PHASE;
+         }

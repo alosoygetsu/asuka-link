@@ -108,6 +108,10 @@ NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one
 NativeCoopPvp *native_coop_raid(void); /* the raid's, or NULL */
 NativeCoopPvp *native_coop_duel(void); /* the card duel's, or NULL */
 void native_coop_duel_set(void);
+/* the duel's messages (cardgame/): sent in order, the other's taken in order (its size; -1 none yet) */
+void native_coop_duel_post(int kind, const void *data, int size);
+int native_coop_duel_take(int *kind, void *data, int max);
+int native_coop_blob_any(int peer, void *out, int max); /* the other's blob as it is, whole: its size, else 0 */
 /* the raid starts: its seats' peers (-1 this player's seat), their parties (players of COOP_TEAM_MAX bytes) */
 void native_coop_raid_begin(const int *seatPeer, int players, const void *teams, const void *save, int battle,
                             int encounter, int tier);
