@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1496 @@
+@@ -362,10 +362,1515 @@
      }
  }
  
@@ -987,6 +987,25 @@
 +    }
 +    native_coop_raid_begin(coopTrade.roomPeers, coopTrade.roomCount, coopRoomTeams, &GAME, coopRoomBlob(), enc,
 +                           native_coop_raid_test() > 0 ? 0 : boss->tier);
++    for (i = 0; i < coopTrade.roomCount; i++) {
++        /* the players' names, while they're on the field (wfightmn/menu.c's lines) */
++        NativeCoopState st;
++        u8 *name = native_coop_raid()->names[i];
++        s32 k;
++
++        name[0] = 0;
++        if (coopTrade.roomPeers[i] < 0) {
++            for (k = 0; k < 15 && GAME.name[k] != 0; k++) {
++                name[k] = GAME.name[k];
++            }
++            name[k] = 0;
++        } else if (native_coop_peer(coopTrade.roomPeers[i], &st)) {
++            for (k = 0; k < 15 && st.name[k] != 0; k++) {
++                name[k] = st.name[k];
++            }
++            name[k] = 0;
++        }
++    }
 +    native_coop_note("Raid with %d players: encounter %d", coopTrade.roomCount, enc);
 +    coopTradeEnd(COOP_TRADE_DONE, -1);
 +    coopTrade.quiet = 0;
@@ -1497,7 +1516,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +2078,9 @@
+@@ -592,6 +2097,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1507,7 +1526,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +2134,9 @@
+@@ -645,6 +2153,9 @@
          }
          break;
      case TASK_RUN:

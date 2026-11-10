@@ -96,6 +96,7 @@ typedef struct NativeCoopPvp {
     int seatPeer[COOP_RAID_SEATS], seatTaken[COOP_RAID_SEATS];
     unsigned int seatWait[COOP_RAID_SEATS];
     unsigned char teams[COOP_RAID_SEATS][COOP_TEAM_MAX];
+    unsigned char names[COOP_RAID_SEATS][16]; /* the seats' players' names (the game's text), from the field */
     unsigned int waitFrom;    /* SDL ms the wait for the other's command began, 0 none */
     NativeCoopCommand out[COOP_COMMANDS]; /* the newest sent first */
     unsigned char team[COOP_BLOB_MAX]; /* fieldstg/field.c's CoopTeam */
@@ -176,6 +177,6 @@ const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a 
 #define COOP_TEXT_LOOK_TITLE 11
 #define COOP_TEXT_LOOK_HELP 12
 #define COOP_TEXT_LOOK_NAME 13 /* 13-15: Junior, the boy, the girl */
-#define COOP_TEXT_TRADE 16 /* 16-43 (40-41 the PvP battle's, 42 the raid's, 43 the Guardromon's exit, 44 the raid list's level, 45 the room's " of 4"): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
+#define COOP_TEXT_TRADE 16 /* 16-43 (40-41 the PvP battle's, 42 the raid's, 43 the Guardromon's exit, 44 the raid list's level, 45 the room's " of 4", 46-47 the raid's wait and a player gone): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
 
 #endif /* NATIVE_COOP_H */

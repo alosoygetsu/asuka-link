@@ -3,6 +3,13 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.913
+Sobre el port v0.18.9.
+
+- **Raids: se ve a quién se espera.** Cuando le toca a otro jugador, su Digimon no entra hasta que llega su orden, y
+  mientras tanto sale "Esperando a <nombre>...". Si no responde en 8 segundos se le da por desconectado: sale
+  "<nombre> se ha desconectado.", su equipo queda fuera y la raid sigue con los demás.
+
 ## v0.18.912
 Sobre el port v0.18.9.
 
