@@ -115,6 +115,7 @@ int native_coop_raid_take(int seat, NativeCoopCommand *c);
 #define COOP_RAID_REWARD 3
 extern int g_coop_raid_reward;
 int native_coop_reward_mult(void); /* COOP_RAID_REWARD after a raid won, else 1 */
+int native_coop_start_delay(void); /* DW3_COOP_START_DELAY=<frames> (tests): the raid starts that much later here */
 int native_coop_raid_test(void); /* DW3_COOP_RAID=<encounter> (tests): the Guardromon's battle is that raid; 0 none */
 void native_coop_pvp_begin(int peer, const void *team, int size, const void *save, int battle, int first);
 void native_coop_pvp_end(void);

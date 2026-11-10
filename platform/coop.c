@@ -577,10 +577,11 @@ int native_coop_raid_take(int seat, NativeCoopCommand *c) {
         }
     }
     if (now - s_pvp.seatWait[seat] > 8000) {
-        NativeCoopTrade t;
+        NativeCoopState st;
 
-        /* silent, or here but not in this battle any more */
-        if (n == 0 || (native_coop_trade_in(peer, &t) && in[0].battle != (unsigned short)s_pvp.battle)) {
+        /* silent, or here but back on the field (a battle sends mode -1); a player still picking its first command has
+           none of this battle's out yet, and isn't gone for that */
+        if (n == 0 || (native_coop_peer(peer, &st) && st.mode != -1)) {
             native_coop_note("Raid: player %d (seat %d) is gone", peer + 2, seat);
             return -1;
         }
@@ -592,6 +593,12 @@ int g_coop_raid_reward;
 
 int native_coop_reward_mult(void) {
     return g_coop_raid_reward ? COOP_RAID_REWARD : 1;
+}
+
+int native_coop_start_delay(void) {
+    const char *env = SDL_getenv("DW3_COOP_START_DELAY");
+
+    return env != NULL ? SDL_atoi(env) : 0;
 }
 
 int native_coop_raid_test(void) {

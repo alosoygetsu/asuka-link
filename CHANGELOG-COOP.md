@@ -3,6 +3,15 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.916
+Sobre el port v0.18.9.
+
+- **Arreglado: en las raids, un jugador que tardaba más de 8 segundos en su primera orden se daba por desconectado**,
+  y a partir de ahí cada juego seguía su propio combate (en uno se ganaba en el segundo turno y en el otro no). Ahora
+  solo se da por ido a quien deja de mandar datos o vuelve al mapa; pensar lo que haga falta no cuenta.
+- **Raids: arranque más seguro.** La lista de jugadores de la sala ya no se recalcula en el último momento, y quien
+  entra primero en el combate sigue diciendo "listo" a los demás, para que nadie empiece sin saber con quién juega.
+
 ## v0.18.915
 Sobre el port v0.18.9.
 

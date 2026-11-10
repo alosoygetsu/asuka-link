@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1515 @@
+@@ -362,10 +362,1535 @@
      }
  }
  
@@ -49,10 +49,13 @@
 +void coopSynthReset(void); /* actor_control.c: the models' made sets */
 +static void coopTradeReset(void); /* a new field: no trade */
 +
++static s32 coopRaidGo; /* the raid started: coopRaidGoPacket goes out (till the field starts again) */
++
 +/* As the field starts: no ghosts yet, and no slots kept */
 +static void coopFieldStart(void) {
 +    s32 i;
 +
++    coopRaidGo = 0;
 +    coopSynthReset();
 +    for (i = 0; i < COOP_GHOSTS; i++) {
 +        coopGhost[i] = NULL;
@@ -962,6 +965,9 @@
 +}
 +
 +static u8 coopRoomTeams[4][COOP_TEAM_MAX];
++/* the room's last word once this player started: "go" (CONFIRM) to everyone, the field's last packet, which the
++   battle's packets carry on, so that the others still find this player in the room as they start */
++static NativeCoopTrade coopRaidGoPacket;
 +
 +static s32 coopRoomBlob(void) {
 +    return (s32)((coopTrade.room & 0x7FFF) | 1);
@@ -1006,6 +1012,9 @@
 +            name[k] = 0;
 +        }
 +    }
++    coopRoomPacket(&coopRaidGoPacket);
++    coopRaidGoPacket.phase = COOP_TRADE_CONFIRM;
++    coopRaidGo = 1;
 +    native_coop_note("Raid with %d players: encounter %d", coopTrade.roomCount, enc);
 +    coopTradeEnd(COOP_TRADE_DONE, -1);
 +    coopTrade.quiet = 0;
@@ -1095,9 +1104,10 @@
 +        }
 +        return;
 +    }
-+    /* the room's players' peers, by their sessions */
++    /* the room's players' peers, by their sessions: found while the parties go across, then kept (one that starts
++       first may stop saying it's in the room just as the others start) */
 +    all = 1;
-+    for (k = 0; k < coopTrade.roomCount; k++) {
++    for (k = 0; k < coopTrade.roomCount && coopTrade.phase == COOP_TRADE_OPEN; k++) {
 +        if (coopTrade.roomSessions[k] == coopTrade.session) {
 +            coopTrade.roomPeers[k] = -1;
 +            continue;
@@ -1158,7 +1168,15 @@
 +        coopTrade.frames = 0;
 +        return;
 +    }
-+    if (coopTrade.phase == COOP_TRADE_CONFIRM && coopTrade.frames >= 10) {
++    if (coopTrade.phase == COOP_TRADE_CONFIRM && coopTrade.frames >= 10 + native_coop_start_delay()) {
++        for (k = 0, n = 0; k < coopTrade.roomCount; k++) {
++            n += coopTrade.roomPeers[k] == -1 ? 1 : coopTrade.roomPeers[k] < 0 ? 10 : 0;
++        }
++        if (n != 1) { /* this player once, every other one found */
++            native_coop_note("Raid: the room's players weren't all found (%d)", n);
++            coopTradeEnd(COOP_TRADE_NO, T_CANCELLED);
++            return;
++        }
 +        coopRaidStart();
 +    }
 +}
@@ -1400,7 +1418,9 @@
 +        send.count = 0;
 +        send.offer = send.seen = 0;
 +        send.pad[0] = send.pad[1] = 0;
-+        if (coopTrade.kind == 2 && coopTrade.phase >= COOP_TRADE_ASK && coopTrade.phase <= COOP_TRADE_CONFIRM) {
++        if (coopRaidGo) {
++            send = coopRaidGoPacket; /* the raid just started: "go", on through its battle */
++        } else if (coopTrade.kind == 2 && coopTrade.phase >= COOP_TRADE_ASK && coopTrade.phase <= COOP_TRADE_CONFIRM) {
 +            coopRoomPacket(&send); /* the raid's room: to everyone */
 +        } else if (coopTrade.phase == COOP_TRADE_ASK) {
 +            send.session = coopTrade.session; /* waiting: to everyone */
@@ -1516,7 +1536,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +2097,9 @@
+@@ -592,6 +2117,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1526,7 +1546,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +2153,9 @@
+@@ -645,6 +2173,9 @@
          }
          break;
      case TASK_RUN:
