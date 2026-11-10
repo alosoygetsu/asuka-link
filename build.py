@@ -356,7 +356,9 @@ def main():
     for src in sorted((NATIVE / "platform").glob("*.c")):
         obj = OUT / "platform" / src.with_suffix(".o").name
         obj.parent.mkdir(parents=True, exist_ok=True)
-        if clean or not obj.exists() or obj.stat().st_mtime < max(src.stat().st_mtime, *(h.stat().st_mtime for h in (NATIVE / "platform").glob("*.h"))):
+        # its headers: platform/'s and include/'s (native.h, native_coop.h: a struct changed there is read by both sides)
+        headers = [*(NATIVE / "platform").glob("*.h"), *(NATIVE / "include").glob("*.h")]
+        if clean or not obj.exists() or obj.stat().st_mtime < max(src.stat().st_mtime, *(h.stat().st_mtime for h in headers)):
             r = run([CC, *PLATFORM_CFLAGS, src, "-o", obj])
             if r.returncode != 0:
                 sys.exit(f"FAILED {src.name}\n{r.stderr}")

@@ -3,6 +3,17 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.915
+Sobre el port v0.18.9.
+
+- **Arreglado: el juego se cerraba al entrar a un combate entre jugadores (PvP)** en la v0.18.914. Una parte del juego
+  se había quedado compilada con una versión vieja de los datos del cooperativo y leía mal el equipo del rival. La
+  compilación ahora tiene en cuenta esos cambios, para que no vuelva a pasar.
+- **Os veis más a menudo:** después de un tramo de la historia en el que llevas a otro personaje, el hueco de la
+  memoria de vídeo donde se dibuja a los demás se quedaba ocupado ("no room in VRAM" en `coop.log`) y dejabais de
+  veros. Ahora se recupera en cuanto se vuelve a un mapa normal.
+- Mientras llevas a otro personaje de la historia (no al protagonista), los demás siguen sin verse en esos mapas.
+
 ## v0.18.914
 Sobre el port v0.18.9.
 

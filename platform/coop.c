@@ -143,6 +143,7 @@ void native_coop_vram_reserve(int x, int y, int w, int h) {
 int native_coop_find_vram(int page_x, int page_y, int w, int h, int *out_x, int *out_y) {
     int x, y;
 
+
     for (y = page_y + 256 - h; y >= page_y; y -= 4) {
         for (x = page_x + 64 - w; x >= page_x; x -= 2) {
             if (x >= 0 && y >= 0 && x + w <= VRAM_W && y + h <= VRAM_H && !taken(x, y, w, h)) {
@@ -216,7 +217,8 @@ void native_coop_vram_reclaim(void) {
             gl_vram_dirty(x, y, w, h);
             gl_refresh(x, y, w, h);
         }
-        s_mine[k].w = 0; /* blanked, or the map's own now */
+        /* kept either way: a box another map loaded over (another lead's frames, say) is cleared again by the first map
+           after it that leaves it as it was, instead of being lost for good */
     }
 }
 
