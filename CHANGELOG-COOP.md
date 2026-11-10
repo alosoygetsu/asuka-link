@@ -7,7 +7,7 @@ Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 Sobre el port v0.18.9.
 
 - **El launcher, con la cara del cooperativo:** colores nuevos (noche violeta con el turquesa de un Digivice en lugar
-  del azul y dorado), la insignia DW3 a juego, "port nativo + coop" bajo el título y, al pie, "© 2026 Feerdus +
+  del azul y dorado), la insignia DW3 a juego, "port nativo + coop" bajo el título y, al pie, "Co-op fork by
   alosoygetsu".
 - **Créditos:** en Herramientas → Créditos y en `CREDITS.md`, el agradecimiento a Feerdus, cuyo port nativo es la base
   de todo, y a ReGame-Labs por la decompilación, además de los créditos de siempre del port.

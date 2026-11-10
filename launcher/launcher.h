@@ -16,8 +16,8 @@ enum {
     C_MOON = 0xDCE8F2, C_MOON_DARK = 0xB8C8DC, C_HILL_FAR = 0x2E2266, C_HILL_NEAR = 0x1B1444,
 };
 
-/* the port's notice kept (its MIT License), the co-op's after */
-#define CREDIT "\xC2\xA9 2026 Feerdus + alosoygetsu"
+/* the co-op fork's: the port it stands on is credited in CREDITS.md (Tools, Credits) */
+#define CREDIT "Co-op fork by alosoygetsu"
 #define GAME_LINE "Digimon World 2003 (Europe), SLES-03936"
 
 /* draw.c */
