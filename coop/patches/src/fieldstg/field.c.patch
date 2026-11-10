@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1103 @@
+@@ -362,10 +362,1107 @@
      }
  }
  
@@ -159,8 +159,9 @@
 +enum {
 +    T_TITLE, T_YOURS, T_THEIRS, T_SPARE, T_NO_SPARE, T_WANTS, T_ACCEPT, T_LEAVE, T_WAITING, T_READY, T_CONFIRM,
 +    T_DONE, T_CANCELLED, T_DECLINED, T_NO_ROOM, T_AMOUNT, T_CONFIRMED, T_NOTHING, T_FULL, T_CHANGE, T_WAIT_DOTS,
-+    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING
++    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING, T_RAID_OPTION
 +};
++#define COOP_RAID_BASIC 200 /* the raid open to all: Kuwagamon and its kind (FIELDSTG_encounters) */
 +
 +static struct {
 +    s32 phase; /* COOP_TRADE_* (this side), or COOP_TRADE_MENU */
@@ -169,8 +170,8 @@
 +    s32 frames; /* in the phase */
 +    s32 froze; /* busy was set here */
 +    u32 readyTheirs; /* their offer's hash when this side got ready */
-+    s32 menu; /* the Guardromon's choice: 0 talk, 1 trade, 2 battle */
-+    s32 kind; /* what the wait is for: 0 a card trade, 1 a PvP battle (NativeCoopTrade.pad[0]) */
++    s32 menu; /* the Guardromon's choice: 0 talk, 1 trade, 2 battle, 3 raid */
++    s32 kind; /* what the wait is for: 0 a card trade, 1 a PvP battle, 2 a raid (NativeCoopTrade.pad[0]) */
 +    s32 teamSent;
 +    Actor *talker; /* who talked to him, and where: his own talk, if that's the choice */
 +    Point talkAt;
@@ -587,17 +588,17 @@
 +        return;
 +    }
 +    if (coopTrade.phase == COOP_TRADE_MENU) {
-+        coopTradePanel(0x10, 0x9A, 0x120, 0x42);
-+        for (i = 0; i < 3; i++) {
++        coopTradePanel(0x10, 0x8C, 0x120, 0x50);
++        for (i = 0; i < 4; i++) {
 +            if (coopTrade.menu == i) {
-+                coopTradeRect(0x16, 0xA1 + i * 14, 0x110, 12, 0x20, 0x38, 0x80, 0);
++                coopTradeRect(0x16, 0x93 + i * 14, 0x110, 12, 0x20, 0x38, 0x80, 0);
 +            }
-+            coopTradeText(coopTradeString(i == 0 ? T_TALK : i == 1 ? T_TRADE_OPTION : T_BATTLE_OPTION), 0x1C,
-+                          0xA2 + i * 14, coopTrade.menu == i ? PALETTE_YELLOW : PALETTE_WHITE, 0);
++            coopTradeText(coopTradeString(i == 0 ? T_TALK : i == 1 ? T_TRADE_OPTION : i == 2 ? T_BATTLE_OPTION : T_RAID_OPTION),
++                          0x1C, 0x94 + i * 14, coopTrade.menu == i ? PALETTE_YELLOW : PALETTE_WHITE, 0);
 +        }
 +        return;
 +    }
-+    if (coopTrade.kind == 1 && coopTrade.phase >= COOP_TRADE_OPEN) {
++    if (coopTrade.kind >= 1 && coopTrade.phase >= COOP_TRADE_OPEN) {
 +        coopTradeSmall(coopTradeString(T_PREPARING), -1, T_LEAVE);
 +        return;
 +    }
@@ -684,12 +685,15 @@
 +    return (s32)((coopTrade.session & 0x7FFF) | 1);
 +}
 +
++static s32 coopTradeKindStarted; /* the kind coopPvpStart starts (coopTradeEnd may clear coopTrade's) */
++
 +static void coopPvpStart(void) {
 +    s32 i;
 +    s32 member;
 +    PartnerStats *st;
 +
 +    /* a tie of speeds: the smaller coin first (a tie of coins too: the party's bytes, both see the same two) */
++    coopTradeKindStarted = coopTrade.kind;
 +    native_coop_pvp_begin(coopTrade.peer, &coopTeamTheirs, sizeof coopTeamTheirs, &GAME, coopPvpBlob(),
 +                          coopTeamMine.coin != coopTeamTheirs.coin ? coopTeamMine.coin < coopTeamTheirs.coin
 +                                                                   : memcmp(&coopTeamMine, &coopTeamTheirs, sizeof coopTeamMine) < 0);
@@ -706,10 +710,10 @@
 +        }
 +    }
 +    FIELDSTG_startBattle(&coopPvpBattle);
-+    if (native_coop_raid_test() > 0) {
-+        /* a raid (DW3_COOP_RAID, for now): the encounter's enemies, their HP times the players, both parties on this
-+           side (wfightmn/menu.c) */
-+        s32 enc = native_coop_raid_test();
++    if (coopTradeKindStarted == 2 || native_coop_raid_test() > 0) {
++        /* a raid: the encounter's enemies (the basic one, or DW3_COOP_RAID's in tests), their HP times the players,
++           both parties on this side (wfightmn/menu.c) */
++        s32 enc = native_coop_raid_test() > 0 ? native_coop_raid_test() : COOP_RAID_BASIC;
 +        s32 hp;
 +
 +        native_coop_raid_set(enc);
@@ -844,7 +848,7 @@
 +        switch (coopTrade.phase) {
 +        case COOP_TRADE_MENU:
 +            if (PAD_PRESSED(PAD_UP) || PAD_PRESSED(PAD_DOWN)) {
-+                coopTrade.menu = (coopTrade.menu + (PAD_PRESSED(PAD_UP) ? 2 : 1)) % 3;
++                coopTrade.menu = (coopTrade.menu + (PAD_PRESSED(PAD_UP) ? 3 : 1)) % 4;
 +                SOUND.playSound(SOUND_CURSOR);
 +            } else if (PAD_PRESSED(PAD_CIRCLE) || (PAD_PRESSED(PAD_CROSS) && coopTrade.menu == 0)) {
 +                /* his own talk (saving), as if this weren't here */
@@ -853,7 +857,7 @@
 +                FIELDSTG_talkToActorAt(coopTrade.talker, &coopTrade.talkAt);
 +                coopTrade.passing = 0;
 +            } else if (PAD_PRESSED(PAD_CROSS)) {
-+                coopTrade.kind = coopTrade.menu == 2;
++                coopTrade.kind = coopTrade.menu - 1; /* 0 trade, 1 battle, 2 raid */
 +                coopTrade.teamSent = 0;
 +                coopTrade.phase = COOP_TRADE_ASK; /* wait for another player at a Guardromon */
 +                coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
@@ -900,8 +904,8 @@
 +                coopTradeEnd(COOP_TRADE_NO, T_CANCELLED);
 +                break;
 +            }
-+            if (coopTrade.kind == 1) {
-+                coopPvpUpdate(&in);
++            if (coopTrade.kind >= 1) {
++                coopPvpUpdate(&in); /* the battle's and the raid's: the parties across, then both start */
 +                break;
 +            }
 +            if (coopTrade.phase == COOP_TRADE_OPEN) {
@@ -1104,7 +1108,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1685,9 @@
+@@ -592,6 +1689,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1114,7 +1118,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1741,9 @@
+@@ -645,6 +1745,9 @@
          }
          break;
      case TASK_RUN:

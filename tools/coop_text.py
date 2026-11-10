@@ -69,28 +69,28 @@ def learn():
     return table
 
 
-# 16-39: the card trade's (37-39 the Guardromon's choice and the wait) (native_coop.h COOP_TEXT_TRADE_*)
+# 16-42: the card trade's (37-39 the Guardromon's choice and the wait, 40-41 the battle's, 42 the raid's) (native_coop.h COOP_TEXT_TRADE_*)
 TRADE_TEXTS = {
     "eng": ["Card Trade", "Your offer", "Their offer", "Your spare cards", "You have no spare cards.",
             " wants to trade cards.", "Accept", "Leave", "Waiting for ", "Ready", "Confirm", "Trade done!",
             "Trade cancelled.", " doesn't want to trade.", "You can't hold that many copies.", "< >: amount",
-            "Confirmed", "Nothing", "5 different cards at most.", "Change", "Waiting...", "Talk", "Trade cards", "Waiting for another player...", "Battle", "Getting the battle ready..."],
+            "Confirmed", "Nothing", "5 different cards at most.", "Change", "Waiting...", "Talk", "Trade cards", "Waiting for another player...", "Battle", "Getting the battle ready...", "Raid"],
     "fra": ["Échange de cartes", "Ton offre", "Son offre", "Tes cartes en trop", "Tu n'as pas de cartes en trop.",
             " veut échanger des cartes.", "Accepter", "Quitter", "On attend ", "Prêt", "Confirmer", "Échange fait !",
             "Échange annulé.", " ne veut pas échanger.", "Tu ne peux pas avoir autant de copies.", "< > : quantité",
-            "Confirmé", "Rien", "5 cartes différentes au plus.", "Modifier", "Attente...", "Parler", "Échanger des cartes", "On attend un autre joueur...", "Combattre", "On prépare le combat..."],
+            "Confirmé", "Rien", "5 cartes différentes au plus.", "Modifier", "Attente...", "Parler", "Échanger des cartes", "On attend un autre joueur...", "Combattre", "On prépare le combat...", "Raid"],
     "ita": ["Scambio di carte", "La tua offerta", "La sua offerta", "Le tue carte in più", "Non hai carte in più.",
             " vuole scambiare carte.", "Accetta", "Esci", "In attesa di ", "Pronto", "Conferma", "Scambio fatto!",
             "Scambio annullato.", " non vuole scambiare.", "Non puoi avere tante copie.", "< >: quantità",
-            "Confermato", "Niente", "Al massimo 5 carte diverse.", "Cambia", "In attesa...", "Parla", "Scambia carte", "In attesa di un altro giocatore...", "Combatti", "Si prepara la lotta..."],
+            "Confermato", "Niente", "Al massimo 5 carte diverse.", "Cambia", "In attesa...", "Parla", "Scambia carte", "In attesa di un altro giocatore...", "Combatti", "Si prepara la lotta...", "Raid"],
     "ger": ["Kartentausch", "Dein Angebot", "Sein Angebot", "Deine übrigen Karten", "Du hast keine übrigen Karten.",
             " will Karten tauschen.", "Annehmen", "Gehen", "Warte auf ", "Bereit", "Bestätigen", "Tausch erledigt!",
             "Tausch abgebrochen.", " will nicht tauschen.", "So viele Kopien passen nicht.", "< >: Anzahl",
-            "Bestätigt", "Nichts", "Höchstens 5 verschiedene Karten.", "Zurück", "Warte...", "Reden", "Karten tauschen", "Warte auf einen anderen Spieler...", "Kämpfen", "Der Kampf wird vorbereitet..."],
+            "Bestätigt", "Nichts", "Höchstens 5 verschiedene Karten.", "Zurück", "Warte...", "Reden", "Karten tauschen", "Warte auf einen anderen Spieler...", "Kämpfen", "Der Kampf wird vorbereitet...", "Raid"],
     "spn": ["Intercambio de cartas", "Tu oferta", "Su oferta", "Tus cartas sueltas", "No tienes cartas sueltas.",
             " quiere intercambiar cartas.", "Aceptar", "Salir", "Esperando a ", "Listo", "Confirmar",
             "¡Intercambio hecho!", "Intercambio cancelado.", " no quiere intercambiar.", "No te caben tantas copias.",
-            "< >: cantidad", "Confirmado", "Nada", "Máximo 5 cartas distintas.", "Cambiar", "Esperando...", "Hablar", "Intercambiar cartas", "Esperando a otro jugador...", "Combatir", "Preparando el combate..."],
+            "< >: cantidad", "Confirmado", "Nada", "Máximo 5 cartas distintas.", "Cambiar", "Esperando...", "Hablar", "Intercambiar cartas", "Esperando a otro jugador...", "Combatir", "Preparando el combate...", "Raid"],
 }
 for _lang in TEXTS:
     TEXTS[_lang] = TEXTS[_lang] + TRADE_TEXTS[_lang]

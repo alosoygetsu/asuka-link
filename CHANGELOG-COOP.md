@@ -3,6 +3,18 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.911
+Sobre el port v0.18.9.
+
+- **Raids (primera versión, para 2 jugadores):** en cualquier Guardromon hay una cuarta opción, "Raid". Si dos
+  jugadores la eligen, entran juntos en un mismo combate contra un jefe, con sus dos equipos en el mismo lado.
+  - **Turnos por orden:** jugador 1, jugador 2 y después el jefe ataca una vez a cada uno. En cada turno sale en
+    pantalla el Digimon de quien actúa; los turnos del otro los decide el otro jugador.
+  - El jefe tiene su vida multiplicada por el número de jugadores.
+  - Si un jugador se queda sin Digimon, el otro sigue solo. Si caéis los dos, volvéis al mapa sin game over y sin
+    cambios en la partida. Si ganáis, cada uno recibe la EXP y el dinero del combate.
+  - De momento hay una raid básica, abierta para todos: Kuwagamon. No se pueden usar objetos ni huir.
+
 ## v0.18.910
 Sobre el port v0.18.9.
 
