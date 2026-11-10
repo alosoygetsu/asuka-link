@@ -1,6 +1,6 @@
 --- a/src/cardgame/battle.c
 +++ b/src/cardgame/battle.c
-@@ -3,11 +3,256 @@
+@@ -3,11 +3,368 @@
  
  #include "cardgame.h"
  
@@ -10,7 +10,7 @@
 +   and takes the other's as side 1's, so whatever the computer's own rules did to side 1 (its draws, its reserve, its
 +   hand) is the other's real pile again. The other's choices come in messages (in order) where the computer would
 +   choose: the cards it puts out, the card it plays (or its pass), with its targets. ---- */
-+enum { DUEL_DECK = 1, DUEL_SYNC, DUEL_PUT_OUT, DUEL_PLAY };
++enum { DUEL_DECK = 1, DUEL_SYNC, DUEL_PUT_OUT, DUEL_PLAY, DUEL_CHOICE };
 +
 +typedef struct CoopDuelDeck {
 +    s16 deck[40];
@@ -32,8 +32,15 @@
 +    u8 mark;
 +    s8 targetSide; /* the slot played on: its side as the sender sees it, and its index; -1 none */
 +    s8 targetIndex;
-+    u8 pad;
++    s8 targetCard; /* a card of a hand as the target (effect step 151): the sender's (0-79), else -1 */
 +} CoopDuelPlay;
++
++typedef struct CoopDuelChoice {
++    s16 card; /* the card picked (steps 169-173): the sender's (0-79), else -1 */
++    s8 choice; /* the slot picked (step 174): 0-5 the sender's, 6-11 the other's */
++    u8 marked[12];
++    u8 pad;
++} CoopDuelChoice;
 +
 +static s32 coopDuelSent;
 +static u32 coopDuelCoins[2]; /* this player's, the other's */
@@ -223,6 +230,21 @@
 +    }
 +}
 +
++/* 1 if card is in either side's hand */
++static s32 coopDuelInHand(CardBattle *battle, s32 card) {
++    s32 s;
++    s32 i;
++
++    for (s = 0; s < 2; s++) {
++        for (i = 0; i < battle->sides[s].pile.handCount; i++) {
++            if (battle->sides[s].pile.hand[i] == card) {
++                return 1;
++            }
++        }
++    }
++    return 0;
++}
++
 +/* this player's card goes into play (step 0x12) or it passes: to the other */
 +static void coopDuelSendPlay(CardBattle *battle, s32 pass) {
 +    CoopDuelPlay m;
@@ -231,7 +253,7 @@
 +
 +    memset(&m, 0, sizeof m);
 +    m.pass = (s16)pass;
-+    m.targetSide = m.targetIndex = -1;
++    m.targetSide = m.targetIndex = m.targetCard = -1;
 +    if (!pass) {
 +        m.card = play->card;
 +        for (i = 0; i < 15; i++) {
@@ -240,8 +262,98 @@
 +        m.targetKind = play->targetKind;
 +        m.mark = (u8)play->mark;
 +        coopDuelTarget(battle, play->target, &m.targetSide, &m.targetIndex);
++        if (m.targetSide < 0 && coopDuelInHand(battle, play->target)) {
++            m.targetCard = (s8)play->target;
++        }
 +    }
 +    native_coop_duel_post(DUEL_PLAY, &m, sizeof m);
++}
++
++/* a card as the other sees it: its side 0's are 40-79 here, and the other way */
++static s32 coopDuelMirror(s32 card) {
++    return card < 40 ? card + 40 : card - 40;
++}
++
++/* the card at effectStep.choice of the pile that effectStep.vars[4] picks (CARDGAME_setupCardChoice); -1 none */
++static s32 coopDuelPileCard(CardBattle *battle, s32 index) {
++    CardPile *pile;
++
++    if (index < 0 || index >= 40) {
++        return -1;
++    }
++    switch (battle->effectStep.vars[4]) {
++    case 5:
++        return index < battle->sides[0].pile.handCount ? battle->sides[0].pile.hand[index] : -1;
++    case 11:
++        return index < battle->sides[1].pile.handCount ? battle->sides[1].pile.hand[index] : -1;
++    case 7:
++    case 13:
++        pile = &battle->sides[battle->effectStep.vars[4] == 13].pile;
++        return index >= pile->deckTop ? pile->deck[index] : -1;
++    case 9:
++        return index < battle->sides[0].pile.discardCount ? battle->sides[0].pile.discards[index] : -1;
++    case 15:
++        return index < battle->sides[1].pile.discardCount ? battle->sides[1].pile.discards[index] : -1;
++    }
++    return -1;
++}
++
++/* this player's card's choice (effect steps 169-174, once made): to the other */
++void CARDGAME_coopDuelSendChoice(CardBattle *battle, s32 step) {
++    CoopDuelChoice m;
++    s32 i;
++
++    memset(&m, 0, sizeof m);
++    m.card = -1;
++    m.choice = -1;
++    if (step == 174) {
++        m.choice = (s8)battle->effectStep.choice;
++        for (i = 0; i < 12; i++) {
++            m.marked[i] = battle->effectStep.marked[i] != 0;
++        }
++    } else {
++        m.card = (s16)coopDuelPileCard(battle, battle->effectStep.choice);
++    }
++    native_coop_duel_post(DUEL_CHOICE, &m, sizeof m);
++}
++
++static CoopDuelChoice coopDuelChoice;
++
++/* the other's card's choice: 1 once here (kept for CARDGAME_coopDuelApplyChoice), 0 not yet */
++s32 CARDGAME_coopDuelTakeChoice(CardBattle *battle) {
++    return coopDuelTake(DUEL_CHOICE, &coopDuelChoice, sizeof coopDuelChoice);
++}
++
++/* the other's choice over the one the computer just made (the step's own): the same card found in the same pile
++   here, or the same slot from this side */
++void CARDGAME_coopDuelApplyChoice(CardBattle *battle, s32 step) {
++    CoopDuelChoice *m = &coopDuelChoice;
++    s32 i;
++
++    if (step == 174) {
++        if (m->choice >= 0 && m->choice < 12) {
++            battle->effectStep.choice = m->choice < 6 ? m->choice + 6 : m->choice - 6;
++        }
++        for (i = 0; i < 12; i++) {
++            battle->effectStep.marked[i] = m->marked[i < 6 ? i + 6 : i - 6];
++        }
++        return;
++    }
++    if (m->card < 0) {
++        native_coop_note("Duel: out of step: no card picked by the other at step %d", step);
++        return;
++    }
++    for (i = 0; i < 40; i++) {
++        if (coopDuelPileCard(battle, i) == coopDuelMirror(m->card)) {
++            if (battle->effectStep.vars[4] == 13) {
++                battle->effectStep.marked[battle->effectStep.choice] = 0; /* the computer's, as pickComputerDeckCard marks */
++                battle->effectStep.marked[i] = 1;
++            }
++            battle->effectStep.choice = i;
++            return;
++        }
++    }
++    native_coop_note("Duel: out of step: card %d (step %d) isn't in that pile here", coopDuelMirror(m->card), step);
 +}
 +#endif
 +
@@ -257,7 +369,7 @@
      battle->opponents = FILE_CACHE.load(FILE_CARDGAME_OPPONENTS);
      opponent = &battle->opponents[battle->arg - 1];
      battle->opponentLevel = opponent->level;
-@@ -910,6 +1155,11 @@
+@@ -910,6 +1267,11 @@
          waitPhaseStep(battle, 6);
          break;
      case 21:
@@ -269,7 +381,7 @@
          loadChosenDeck(battle, items);
          done = 1;
          break;
-@@ -932,6 +1182,11 @@
+@@ -932,6 +1294,11 @@
          } else {
              battle->firstStarter = 1;
          }
@@ -281,7 +393,7 @@
          done = 1;
      }
      return done;
-@@ -1160,9 +1415,73 @@
+@@ -1160,9 +1527,75 @@
      }
  }
  
@@ -329,6 +441,8 @@
 +    play->mark = m.mark;
 +    if (m.targetSide >= 0 && m.targetIndex < battle->players[m.targetSide ^ 1].slotCount) {
 +        play->target = battle->players[m.targetSide ^ 1].slots[m.targetIndex].order; /* its side is the other here */
++    } else if (m.targetCard >= 0) {
++        play->target = m.targetCard < 40 ? m.targetCard + 40 : m.targetCard - 40; /* a card of a hand */
 +    }
 +    for (i = 0; i < 15; i++) { /* its slots 0-5 are 6-11 here, and the other way */
 +        battle->effectStep.marked[i] = m.marked[i < 6 ? i + 6 : i < 12 ? i - 6 : i];
@@ -355,7 +469,7 @@
      if (battle->record.answer == -1) {
          battle->run = CARD_RUN_STEP;
          battle->effectStep.next = 0x98;
-@@ -1250,9 +1569,20 @@
+@@ -1250,9 +1683,20 @@
          }
          break;
      case 1:
@@ -376,7 +490,7 @@
          playComputerTurn(battle, items);
          break;
      case 2:
-@@ -1284,6 +1614,11 @@
+@@ -1284,6 +1728,11 @@
          battle->record.turnState = 10;
          break;
      case 8:
@@ -388,7 +502,81 @@
          battle->effectStep.next = 0x12;
          battle->run = CARD_RUN_STEP;
          battle->record.turnState = 10;
-@@ -1936,6 +2271,11 @@
+@@ -1609,11 +2058,25 @@
+     }
+ }
+ 
++/* 1 if side 0 takes the round: the higher total; even totals go to side 1 (the computer), but in the co-op's card
++   duel side 1 is the other player, so each game would give it to the other: there the one who started has it */
++static s32 coopDuelRoundMine(CardBattle *battle) {
++    if (battle->sides[0].pile.hpTotal != battle->sides[1].pile.hpTotal) {
++        return battle->sides[0].pile.hpTotal > battle->sides[1].pile.hpTotal;
++    }
++#ifdef NATIVE
++    if (native_coop_duel() != NULL) {
++        return coopDuelCoins[0] < coopDuelCoins[1];
++    }
++#endif
++    return 0;
++}
++
+ /* When a side has no slots left, the round ends at once, the higher total
+    winning; else the round's result window opens */
+ static inline void checkEmptyRows(CardBattle *battle, CardScreen *screen) {
+     if (battle->players[0].slotCount == 0 || battle->players[1].slotCount == 0) {
+-        if (battle->sides[0].pile.hpTotal > battle->sides[1].pile.hpTotal) {
++        if (coopDuelRoundMine(battle)) {
+             battle->roundWinner = 0;
+         } else {
+             battle->roundWinner = 1;
+@@ -1632,7 +2095,7 @@
+ /* Gives the round to the side with the higher total (pile.hpTotal) and runs
+    its win's effect step (0x18 the player's, 0x17 the opponent's) */
+ static inline void pickRoundWinner(CardBattle *battle) {
+-    if (battle->sides[0].pile.hpTotal > battle->sides[1].pile.hpTotal) {
++    if (coopDuelRoundMine(battle)) {
+         battle->effectStep.next = 0x18;
+         battle->roundWinner = 0;
+     } else {
+@@ -1678,12 +2141,18 @@
+     }
+ }
+ 
++/* countRoundWin's result is in window 5, unless the round went to side 1 on even totals (the draw message); the
++   co-op's card duel can give even totals to side 0 */
++static inline s32 roundShownInWindow(CardBattle *battle) {
++    return battle->roundWinner == 0 || battle->sides[0].pile.hpTotal != battle->sides[1].pile.hpTotal;
++}
++
+ /* Waits for the round's result: its window, or the draw message when the
+    totals are equal */
+ static inline void waitRoundResultShown(CardBattle *battle, CardScreen *screen) {
+     s32 done;
+ 
+-    if (battle->sides[0].pile.hpTotal != battle->sides[1].pile.hpTotal) {
++    if (roundShownInWindow(battle)) {
+         done = screen->windows[5].state == 2;
+     } else {
+         done = screen->message.state == 2;
+@@ -1696,7 +2165,7 @@
+ /* Cross or Triangle closes the round's result window or message */
+ static inline void closeRoundResult(CardBattle *battle, CardScreen *screen) {
+     if (PAD_PRESSED(PAD_CROSS) || PAD_PRESSED(PAD_TRIANGLE)) {
+-        if (battle->sides[0].pile.hpTotal != battle->sides[1].pile.hpTotal) {
++        if (roundShownInWindow(battle)) {
+             screen->closeWindow(screen, 5);
+         } else {
+             screen->closeMessage(screen);
+@@ -1709,7 +2178,7 @@
+ static inline void waitRoundResultClosed(CardBattle *battle, CardScreen *screen) {
+     s32 done;
+ 
+-    if (battle->sides[0].pile.hpTotal != battle->sides[1].pile.hpTotal) {
++    if (roundShownInWindow(battle)) {
+         done = screen->windows[5].state == 0;
+     } else {
+         done = screen->message.state == 0;
+@@ -1936,6 +2405,11 @@
  s32 CARDGAME_runPhase(CardBattle *battle, CardBattleItems *items) {
      s32 done = 0;
  

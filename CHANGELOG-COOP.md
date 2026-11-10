@@ -3,6 +3,19 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.917
+Sobre el port v0.18.9.
+
+- **Duelos de cartas entre jugadores (en pruebas):** en cualquier Guardromon, "Duelo". Cada uno elige uno de sus mazos
+  con la pantalla de siempre y jugáis una partida del juego de cartas el uno contra el otro, sin máquina de por medio:
+  las cartas que sacáis a la mesa, las que jugáis (o el pasar) y lo que eligen sus efectos van por la red. Empieza
+  quien saque la moneda menor, y un empate de puntos de vida da la ronda a quien empezó la partida. Es una
+  exhibición: no hay premio y la partida guardada no cambia.
+- Si los dos juegos llegan a ver distinta la mano o el mazo del rival, `coop.log` lo apunta ("Duel: ...") y se sigue
+  con lo que diga el dueño de esas cartas.
+- Raids, combates e intercambios: emparejar a dos jugadores ya no falla la mitad de las veces cuando los dos eligen
+  la opción casi a la vez.
+
 ## v0.18.916
 Sobre el port v0.18.9.
 

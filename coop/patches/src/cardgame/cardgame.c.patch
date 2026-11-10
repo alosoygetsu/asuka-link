@@ -1,6 +1,6 @@
 --- a/src/cardgame/cardgame.c
 +++ b/src/cardgame/cardgame.c
-@@ -14,6 +14,13 @@
+@@ -14,6 +14,16 @@
  
  #include "cardgame.h"
  
@@ -9,12 +9,41 @@
 +void CARDGAME_coopDuelSendPutOut(CardBattle *battle);
 +s32 CARDGAME_coopDuelTakePutOut(CardBattle *battle, CardScreen *screen);
 +void CARDGAME_coopDuelAutoPutOut(CardBattle *battle, CardScreen *screen);
++void CARDGAME_coopDuelSendChoice(CardBattle *battle, s32 step);
++s32 CARDGAME_coopDuelTakeChoice(CardBattle *battle);
++void CARDGAME_coopDuelApplyChoice(CardBattle *battle, s32 step);
 +#endif
 +
  /* One field of card effect index (CardEffect): 0 its condition, 1 its play
     condition, 2 its message, 3 its target, 4 its script's step at offset */
  s32 CARDGAME_getEffectField(s32 index, u32 field, s32 offset) {
-@@ -1143,11 +1150,32 @@
+@@ -678,12 +688,25 @@
+     s32 nextSide = battle->record.plays[battle->record.playCount].side;
+     s32 other = side ^ 1;
+     s32 result;
++#ifdef NATIVE
++    s32 coopStep;
++    s32 coopRun;
++#endif
+ 
+     if (battle->effectStep.next != 0) {
+         startEffectStep(battle, screen, side, nextSide, other);
+         battle->effectStep.id = battle->effectStep.next;
+         battle->effectStep.next = 0;
+     }
++#ifdef NATIVE
++    /* the co-op's card duel: a card's choice of a card or a slot (steps 169-174) is its player's; the other's comes
++       in a message where the computer would choose */
++    coopStep = battle->effectStep.id;
++    coopRun = battle->run;
++    if (native_coop_duel() != NULL && coopStep >= 169 && coopStep <= 174 && side != 0 && !CARDGAME_coopDuelTakeChoice(battle)) {
++        return; /* not here yet */
++    }
++#endif
+ 
+     switch (battle->effectStep.id) {
+     case 0:
+@@ -1143,11 +1166,32 @@
          answerOnceDone(battle, CARDGAME_stepChooseCards(battle, screen, &battle->sides[battle->record.turnSide].pile));
          break;
      case 154:
@@ -47,3 +76,19 @@
          if (CARDGAME_pickComputerCards(battle, screen)) {
              battle->run = CARD_RUN_PHASE;
          }
+@@ -1263,6 +1307,15 @@
+         answerHandCardPick(battle, screen, nextSide);
+         break;
+     }
++#ifdef NATIVE
++    if (native_coop_duel() != NULL && coopStep >= 169 && coopStep <= 174 && battle->run != coopRun) {
++        if (side == 0) {
++            CARDGAME_coopDuelSendChoice(battle, coopStep); /* this player's, to the other */
++        } else {
++            CARDGAME_coopDuelApplyChoice(battle, coopStep); /* the other's, over the computer's */
++        }
++    }
++#endif
+ }
+ 
+ /* The data: the cards' effects, this object's one table */

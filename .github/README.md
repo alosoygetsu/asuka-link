@@ -41,6 +41,7 @@ zip.
 | Intercambio de cartas | En cualquier Guardromon: dos jugadores que eligen "Intercambiar cartas" se cambian cartas sueltas (las que no usa ningún mazo) |
 | Raids | En cualquier Guardromon: "Raid" junta de 2 a 4 jugadores contra un jefe (29 para elegir) en un mismo combate por turnos; al ganar, EXP y dinero x3 y un objeto seguro |
 | Combates entre jugadores | En cualquier Guardromon: "Combatir" enfrenta vuestros equipos por turnos alternos; es una exhibición, sin game over y sin cambios en la partida |
+| Duelos de cartas | En cualquier Guardromon: "Duelo" os enfrenta en el juego de cartas, cada uno con uno de sus mazos; es una exhibición, sin premio y sin cambios en la partida (en pruebas) |
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Creador de personaje | Al empezar partida eliges ser Junior, Chico o Chica y uno de 8 tonos de color; con todas las animaciones, también en las escenas |
 | Entrenamiento sin azar | En los gimnasios todos los intentos salen bien, cada stat sube lo máximo y ninguno baja |
@@ -57,9 +58,9 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 - [x] Nombre encima de cada jugador y su aspecto visible para los demás
 - [ ] Chat y avisos ("X ha entrado en Asuka City")
 - [x] Intercambio de cartas (en los Guardromon)
-- [ ] Duelos de cartas entre jugadores
+- [x] Duelos de cartas entre jugadores (en pruebas)
 - [x] Combates entre jugadores
-- [ ] Combates cooperativos contra jefes (raids)
+- [x] Combates cooperativos contra jefes (raids)
 - [x] Personalizar el aspecto del personaje (modelo y color)
 
 ## Créditos
