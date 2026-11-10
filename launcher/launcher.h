@@ -6,16 +6,18 @@
 
 enum { SCREEN_W = 480, SCREEN_H = 270, LANGS = 5, LINE_H = 12, ROW_H_PIXELS = 13 };
 
-/* the old first-run screen's palette: every colour on screen comes from here */
+/* every colour on screen comes from here: the co-op fork's, a violet night with a Digivice teal for the accent (the
+   port's own was blue and gold) */
 enum {
-    C_BG = 0x0B1220, C_GLOW = 0x2A4A8A, C_PANEL = 0x1C2A44, C_EDGE = 0x4F6AA0, C_RULE = 0x3A4E78, C_SELECT = 0x2A4A8A,
-    C_TEXT = 0xE8ECF4, C_SOFT = 0x8FA3C8, C_DIM = 0x6C7FA6, C_FAINT = 0x4A5A7A, C_GOLD = 0xF5A623, C_GOLD_HI = 0xFFB940,
+    C_BG = 0x120B22, C_GLOW = 0x4A2A8A, C_PANEL = 0x261A44, C_EDGE = 0x6A55A8, C_RULE = 0x4A3A7E, C_SELECT = 0x40297A,
+    C_TEXT = 0xEEEAF6, C_SOFT = 0xA99BCF, C_DIM = 0x8576AE, C_FAINT = 0x5C4E82, C_GOLD = 0x2CD4BC, C_GOLD_HI = 0x6AF0DC,
     C_RED = 0xFF6B6B,
     /* the home scene */
-    C_MOON = 0xE8D9A8, C_MOON_DARK = 0xCDBF8F, C_HILL_FAR = 0x22386A, C_HILL_NEAR = 0x142348,
+    C_MOON = 0xDCE8F2, C_MOON_DARK = 0xB8C8DC, C_HILL_FAR = 0x2E2266, C_HILL_NEAR = 0x1B1444,
 };
 
-#define CREDIT "\xC2\xA9 2026 Feerdus  -  MIT License"
+/* the port's notice kept (its MIT License), the co-op's after */
+#define CREDIT "\xC2\xA9 2026 Feerdus + alosoygetsu"
 #define GAME_LINE "Digimon World 2003 (Europe), SLES-03936"
 
 /* draw.c */

@@ -1,5 +1,5 @@
-/* The bar's badge and the language flags, drawn from numbers: no image files. The badge is "DW3" slanted, yellow to orange with a
-   navy edge, on the blue of the Digimon logo with its gold line under it. */
+/* The bar's badge and the language flags, drawn from numbers: no image files. The badge is "DW3" slanted, in the co-op fork's
+   colours: teal letters with a dark violet edge, on violet, with the accent's line under it. */
 #include "launcher.h"
 
 enum { ICON_W = 32, ICON_H = 22 };
@@ -13,7 +13,7 @@ static const char *const GLYPH[3][7] = {
 /* the badge: w x h pixels, letters 5x7 cells drawn 2 wide (bold) and ry tall, pitch apart, slanted to the right going up */
 static void badge(int x, int y, int w, int h, int ry, int pitch)
 {
-    static const Uint32 NAVY = 0x0A2A6A, BLUE = 0x1F5BC4, BLUE_HI = 0x3B7FE0, WHITE = 0xFFFFFF;
+    static const Uint32 NAVY = 0x241052, BLUE = 0x5530A8, BLUE_HI = 0x7650D0, WHITE = 0xFFFFFF; /* the co-op fork's violet */
     bool m[ICON_H][ICON_W] = {{false}};
     const int top = (h - 7 * ry) / 2 - 1, rows = 7 * ry;
     for (int g = 0; g < 3; g++) {
@@ -47,9 +47,9 @@ static void badge(int x, int y, int w, int h, int ry, int pitch)
     }
     for (int j = 0; j < h; j++) {
         for (int i = 0; i < w; i++) {
-            if (m[j][i]) { /* yellow to orange, top to bottom */
+            if (m[j][i]) { /* the co-op fork's: light teal to teal, top to bottom */
                 const int t = (j - top) * 256 / rows;
-                fill(x + i, y + j, 1, 1, 0xFF0000 | ((0xE6 - t * (0xE6 - 0x84) / 256) << 8) | (0x40 - t * 0x30 / 256));
+                fill(x + i, y + j, 1, 1, ((0x80 - t * 0x68 / 256) << 16) | ((0xF4 - t * 0x48 / 256) << 8) | (0xE0 - t * 0x40 / 256));
             }
         }
     }

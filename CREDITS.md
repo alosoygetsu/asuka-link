@@ -1,5 +1,20 @@
 # Credits
 
+## The co-op fork
+
+This is **alosoygetsu**'s co-op fork ([alosoygetsu/dw3-native-port](https://github.com/alosoygetsu/dw3-native-port),
+branch `coop`): playing together online, card trades, battles between players and boss raids, the free team and the
+character creator, on top of the native port. None of it would exist without:
+
+- **Feerdus**, whose [native port of Digimon World 2003](https://github.com/Feerdus95/dw3-native-port) (MIT License,
+  © 2026 Feerdus) is the game this fork runs: the PC platform layer, the launcher, the options and every mod. The fork
+  keeps its patches as they are and adds its own in `native/coop/`, so that the port's updates keep coming in.
+- **ReGame-Labs and juandav**, for [dw3_decomp](https://github.com/ReGame-Labs/dw3_decomp), the decompiled game both
+  the port and the co-op are built from.
+- Everyone credited below, whose work the port stands on.
+
+## The native port
+
 The native port of Digimon World 2003 builds on the work of others:
 
 - **[dw3_decomp](https://github.com/ReGame-Labs/dw3_decomp)** (MIT License, Copyright (c) 2026 juandav, ReGame-Labs). It is the
