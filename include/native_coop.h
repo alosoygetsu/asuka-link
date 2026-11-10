@@ -87,6 +87,7 @@ typedef struct NativeCoopPvp {
     int sent, taken;          /* commands sent, and the other's taken */
     int over;                 /* 1 the other gave up, 2 the other is gone */
     int raid;                 /* a raid: the encounter both fight side by side (team is the other's party, on this side) */
+    int raidTier;             /* its boss's tier: 0 low, 1 middle, 2 high (its loot) */
     unsigned int waitFrom;    /* SDL ms the wait for the other's command began, 0 none */
     NativeCoopCommand out[COOP_COMMANDS]; /* the newest sent first */
     unsigned char team[COOP_BLOB_MAX]; /* fieldstg/field.c's CoopTeam */
@@ -95,7 +96,12 @@ typedef struct NativeCoopPvp {
 NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one (or a raid) */
 /* The raid: the PvP's pairing and commands, both players on this side against a boss, turn about (wfightmn/menu.c) */
 NativeCoopPvp *native_coop_raid(void); /* the raid's, or NULL */
-void native_coop_raid_set(int encounter);
+void native_coop_raid_set(int encounter, int tier);
+/* a raid won: its report gives COOP_RAID_REWARD times the EXP and money (stfgtrep/report.c, partner.c); 0 again at the
+   next battle */
+#define COOP_RAID_REWARD 3
+extern int g_coop_raid_reward;
+int native_coop_reward_mult(void); /* COOP_RAID_REWARD after a raid won, else 1 */
 int native_coop_raid_test(void); /* DW3_COOP_RAID=<encounter> (tests): the Guardromon's battle is that raid; 0 none */
 void native_coop_pvp_begin(int peer, const void *team, int size, const void *save, int battle, int first);
 void native_coop_pvp_end(void);
@@ -158,6 +164,6 @@ const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a 
 #define COOP_TEXT_LOOK_TITLE 11
 #define COOP_TEXT_LOOK_HELP 12
 #define COOP_TEXT_LOOK_NAME 13 /* 13-15: Junior, the boy, the girl */
-#define COOP_TEXT_TRADE 16 /* 16-43 (40-41 the PvP battle's, 42 the raid's, 43 the Guardromon's exit): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
+#define COOP_TEXT_TRADE 16 /* 16-43 (40-41 the PvP battle's, 42 the raid's, 43 the Guardromon's exit, 44 the raid list's level): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
 
 #endif /* NATIVE_COOP_H */

@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1114 @@
+@@ -362,10 +362,1237 @@
      }
  }
  
@@ -152,6 +152,8 @@
 +#define COOP_CARDS 0x13D /* GAME.cards'; the album's are from 1 */
 +#define COOP_TRADE_ROWS 5
 +#define COOP_TRADE_MENU 10 /* coopTrade.phase: the Guardromon's choice, talk or trade */
++#define COOP_TRADE_RAID_PICK 11 /* coopTrade.phase: the raid's boss picked from the list */
++#define COOP_RAID_ROWS 8
 +#define COOP_TRADE_WAIT (60 * 60 * 5) /* frames a wait for another player lasts */
 +#define COOP_TRADE_LINGER 90 /* frames the last word (done, no) keeps going out once the window is shut */
 +#define COOP_TRADE_SHOW 120 /* frames a message stays */
@@ -159,9 +161,70 @@
 +enum {
 +    T_TITLE, T_YOURS, T_THEIRS, T_SPARE, T_NO_SPARE, T_WANTS, T_ACCEPT, T_LEAVE, T_WAITING, T_READY, T_CONFIRM,
 +    T_DONE, T_CANCELLED, T_DECLINED, T_NO_ROOM, T_AMOUNT, T_CONFIRMED, T_NOTHING, T_FULL, T_CHANGE, T_WAIT_DOTS,
-+    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING, T_RAID_OPTION, T_EXIT_OPTION
++    T_TALK, T_TRADE_OPTION, T_WAIT_OTHER, T_BATTLE_OPTION, T_PREPARING, T_RAID_OPTION, T_EXIT_OPTION, T_LEVEL
 +};
-+#define COOP_RAID_BASIC 200 /* the raid open to all: Kuwagamon and its kind (FIELDSTG_encounters) */
++
++/* The raids: an encounter, the name of its boss (in the Digimon names' text), its level and tier (0 low, 1 middle,
++   2 high: its loot, wfightmn/menu.c). A player sees those up to five levels over its best partner's; the first, open
++   to all. Two players pick the same one to fight it together. */
++typedef struct CoopRaidBoss {
++    s16 encounter;
++    s16 nameId;
++    s16 level;
++    s16 tier;
++} CoopRaidBoss;
++
++static const CoopRaidBoss coopRaidBosses[] = {
++    {200, 65, 1, 0},   /* Kuwagamon */
++    {1, 212, 12, 0},   /* Pharaohmon */
++    {2, 213, 14, 0},   /* MasterTyrannomon */
++    {323, 219, 15, 0}, /* Bulbmon */
++    {264, 232, 17, 0}, /* MetalGreymon */
++    {7, 215, 32, 0},   /* HiAndromon */
++    {8, 216, 32, 0},   /* WaruMonzaemon */
++    {9, 217, 34, 0},   /* Datamon */
++    {11, 214, 40, 1},  /* Zanbamon */
++    {13, 228, 45, 1},  /* BlackMegaGargomon */
++    {15, 229, 46, 1},  /* BlackImperialdramon */
++    {17, 227, 47, 1},  /* BlackSeraphimon */
++    {31, 226, 53, 1},  /* BlackWarGreymon */
++    {23, 230, 55, 1},  /* BlackWarGrowlmon */
++    {24, 231, 57, 1},  /* BlackKingNumemon */
++    {33, 222, 57, 1},  /* Fujinmon, Suijinmon and Raijinmon */
++    {301, 232, 60, 2}, /* MetalGreymon */
++    {302, 234, 60, 2}, /* WarGrowlmon */
++    {309, 235, 60, 2}, /* MagnaAngemon */
++    {303, 233, 65, 2}, /* Paildramon */
++    {316, 228, 65, 2}, /* BlackMegaGargomon */
++    {317, 229, 65, 2}, /* BlackImperialdramon */
++    {310, 237, 70, 2}, /* Kyukimon */
++    {318, 227, 70, 2}, /* BlackSeraphimon */
++    {319, 230, 70, 2}, /* BlackWarGrowlmon */
++    {320, 231, 75, 2}, /* BlackKingNumemon */
++    {321, 226, 75, 2}, /* BlackWarGreymon */
++    {305, 145, 80, 2}, /* Pharaohmon, MasterTyrannomon and Kimeramon */
++    {30, 218, 99, 2},  /* Knightmon */
++};
++#define COOP_RAID_BOSSES ((s32)(sizeof coopRaidBosses / sizeof coopRaidBosses[0]))
++
++/* the raids this player sees, by their index in coopRaidBosses: how many */
++static s32 coopRaidOpen(s32 *list) {
++    s32 best = 1;
++    s32 n = 0;
++    s32 i;
++
++    for (i = 0; i < 3; i++) {
++        if (GAME.party[i] >= 0 && GAME.party[i] < PARTNER_COUNT && GAME.partners[GAME.party[i]].info.stats[STAT_LEVEL] > best) {
++            best = GAME.partners[GAME.party[i]].info.stats[STAT_LEVEL];
++        }
++    }
++    for (i = 0; i < COOP_RAID_BOSSES; i++) {
++        if (i == 0 || coopRaidBosses[i].level <= best + 5) {
++            list[n++] = i;
++        }
++    }
++    return n;
++}
 +
 +static struct {
 +    s32 phase; /* COOP_TRADE_* (this side), or COOP_TRADE_MENU */
@@ -172,6 +235,8 @@
 +    u32 readyTheirs; /* their offer's hash when this side got ready */
 +    s32 menu; /* the Guardromon's choice: 0 talk, 1 trade, 2 battle, 3 raid, 4 exit */
 +    s32 kind; /* what the wait is for: 0 a card trade, 1 a PvP battle, 2 a raid (NativeCoopTrade.pad[0]) */
++    s32 raid; /* the raid picked: coopRaidBosses' index (NativeCoopTrade.pad[1]) */
++    s32 raidCursor, raidTop;
 +    s32 teamSent;
 +    Actor *talker; /* who talked to him, and where: his own talk, if that's the choice */
 +    Point talkAt;
@@ -599,6 +664,30 @@
 +        }
 +        return;
 +    }
++    if (coopTrade.phase == COOP_TRADE_RAID_PICK) {
++        s32 open[COOP_RAID_BOSSES];
++        s32 count = coopRaidOpen(open);
++        u8 num[8];
++
++        coopTradePanel(0x10, 0x2C, 0x120, 0x2A + (count < COOP_RAID_ROWS ? count : COOP_RAID_ROWS) * 14);
++        coopTradeText(coopTradeString(T_RAID_OPTION), 0x18, 0x32, PALETTE_YELLOW, 0);
++        coopTradeRect(0x18, 0x42, 0x110, 1, 0x60, 0x50, 0x20, 0);
++        for (i = 0; i < COOP_RAID_ROWS && coopTrade.raidTop + i < count; i++) {
++            const CoopRaidBoss *boss = &coopRaidBosses[open[coopTrade.raidTop + i]];
++            s32 y = 0x48 + i * 14;
++            s32 on = coopTrade.raidTop + i == coopTrade.raidCursor;
++
++            if (on) {
++                coopTradeRect(0x16, y - 1, 0x110, 12, 0x20, 0x38, 0x80, 0);
++            }
++            coopTradeText((const u8 *)getString(FILE_CACHE.load(TEXT_FILE(TEXT_DIGIMON_NAMES)), boss->nameId), 0x1C, y,
++                          on ? PALETTE_YELLOW : PALETTE_WHITE, 0xB8);
++            coopTradeText(coopTradeString(T_LEVEL), 0xE0, y, PALETTE_GREY, 0);
++            coopTradeNumber(num, 0, boss->level);
++            coopTradeText(num, 0xF8, y, on ? PALETTE_YELLOW : PALETTE_WHITE, 0);
++        }
++        return;
++    }
 +    if (coopTrade.kind >= 1 && coopTrade.phase >= COOP_TRADE_OPEN) {
 +        coopTradeSmall(coopTradeString(T_PREPARING), -1, T_LEAVE);
 +        return;
@@ -714,10 +803,10 @@
 +    if (coopTradeKindStarted == 2 || native_coop_raid_test() > 0) {
 +        /* a raid: the encounter's enemies (the basic one, or DW3_COOP_RAID's in tests), their HP times the players,
 +           both parties on this side (wfightmn/menu.c) */
-+        s32 enc = native_coop_raid_test() > 0 ? native_coop_raid_test() : COOP_RAID_BASIC;
++        s32 enc = native_coop_raid_test() > 0 ? native_coop_raid_test() : coopRaidBosses[coopTrade.raid].encounter;
 +        s32 hp;
 +
-+        native_coop_raid_set(enc);
++        native_coop_raid_set(enc, native_coop_raid_test() > 0 ? 0 : coopRaidBosses[coopTrade.raid].tier);
 +        BATTLE_SETUP.battle = enc;
 +        BATTLE_SETUP.ambushChance = 0;
 +        BATTLE_SETUP.encounterKind = FIELDSTG_encounters[enc].kind;
@@ -838,6 +927,7 @@
 +                                                                              its menu (DW3_COOP_AUTO=menu) open */
 +        coopTrade.kind = i;
 +        coopTrade.menu = 0;
++        coopTrade.raid = 0;
 +        coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
 +    }
 +    n = native_coop_test_cards();
@@ -863,8 +953,12 @@
 +                coopTrade.passing = 1;
 +                FIELDSTG_talkToActorAt(coopTrade.talker, &coopTrade.talkAt);
 +                coopTrade.passing = 0;
++            } else if (PAD_PRESSED(PAD_CROSS) && coopTrade.menu == 3) {
++                coopTrade.phase = COOP_TRADE_RAID_PICK; /* the raid's boss first */
++                coopTrade.raidCursor = coopTrade.raidTop = 0;
++                SOUND.playSound(SOUND_SELECT);
 +            } else if (PAD_PRESSED(PAD_CROSS)) {
-+                coopTrade.kind = coopTrade.menu - 1; /* 0 trade, 1 battle, 2 raid */
++                coopTrade.kind = coopTrade.menu - 1; /* 0 trade, 1 battle */
 +                coopTrade.teamSent = 0;
 +                coopTrade.phase = COOP_TRADE_ASK; /* wait for another player at a Guardromon */
 +                coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
@@ -872,6 +966,33 @@
 +                SOUND.playSound(SOUND_SELECT);
 +            }
 +            break;
++        case COOP_TRADE_RAID_PICK: {
++            s32 open[COOP_RAID_BOSSES];
++            s32 count = coopRaidOpen(open);
++
++            if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP) || PAD_PRESSED(PAD_DOWN) || PAD_REPEATED(PAD_DOWN)) {
++                coopTrade.raidCursor = (coopTrade.raidCursor + (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP) ? count - 1 : 1)) % count;
++                SOUND.playSound(SOUND_CURSOR);
++            } else if (PAD_PRESSED(PAD_CIRCLE)) {
++                coopTrade.phase = COOP_TRADE_MENU; /* back to the Guardromon's choice */
++                SOUND.playSound(SOUND_MENU_CANCEL);
++            } else if (PAD_PRESSED(PAD_CROSS)) {
++                coopTrade.kind = 2;
++                coopTrade.raid = open[coopTrade.raidCursor];
++                coopTrade.teamSent = 0;
++                coopTrade.phase = COOP_TRADE_ASK; /* wait for another player who picked the same raid */
++                coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7)) | 1;
++                coopTrade.frames = 0;
++                SOUND.playSound(SOUND_SELECT);
++            }
++            if (coopTrade.raidCursor < coopTrade.raidTop) {
++                coopTrade.raidTop = coopTrade.raidCursor;
++            }
++            if (coopTrade.raidCursor >= coopTrade.raidTop + COOP_RAID_ROWS) {
++                coopTrade.raidTop = coopTrade.raidCursor - COOP_RAID_ROWS + 1;
++            }
++            break;
++        }
 +        case COOP_TRADE_ASK:
 +            /* another player waiting too: the one of smallest session, and that session for both */
 +            n = -1;
@@ -879,7 +1000,8 @@
 +                NativeCoopTrade other;
 +
 +                if (native_coop_trade_in(i, &other) && other.session != 0 &&
-+                    other.pad[0] == coopTrade.kind && (other.phase == COOP_TRADE_ASK ||
++                    other.pad[0] == coopTrade.kind && (coopTrade.kind != 2 || other.pad[1] == coopTrade.raid) &&
++                    (other.phase == COOP_TRADE_ASK ||
 +                     (other.phase == COOP_TRADE_OPEN && other.session == coopTrade.session)) &&
 +                    (n < 0 || other.session < in.session)) {
 +                    n = i;
@@ -1006,6 +1128,7 @@
 +            send.session = coopTrade.session; /* waiting: to everyone */
 +            send.phase = COOP_TRADE_ASK;
 +            send.pad[0] = coopTrade.kind;
++            send.pad[1] = coopTrade.kind == 2 ? coopTrade.raid : 0;
 +            send.offer = coopTradeHash(&send);
 +        } else if (coopTrade.phase >= COOP_TRADE_OPEN && coopTrade.phase <= COOP_TRADE_DONE && n == coopTrade.peer) {
 +            coopTradeOffer(&send);
@@ -1115,7 +1238,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +1696,9 @@
+@@ -592,6 +1819,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1125,7 +1248,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +1752,9 @@
+@@ -645,6 +1875,9 @@
          }
          break;
      case TASK_RUN:

@@ -1,6 +1,47 @@
 --- a/src/fightstg/hud.c
 +++ b/src/fightstg/hud.c
-@@ -77,6 +77,20 @@
+@@ -2,6 +2,14 @@
+ 
+ #include "fightstg.h"
+ 
++#ifdef NATIVE
++/* the co-op's raid (wfightmn/menu.c): the seat whose party is on the side, -1 none; a new one, the name and HP
++   shown anew though the active slot is the same */
++s32 WFIGHTMN_coopRaidShown(void);
++static s32 coopTweenSeat = -1;
++static s32 coopNameSeat = -1;
++#endif
++
+ /* Every frame: the hp tween of a side whose active fighter changed jumps to
+  * that fighter's hp; every interval, a side's tween starts easing (30 frames)
+  * to its fighter's hp, clamped to 0 and the max hp, when that changed. The
+@@ -13,6 +21,12 @@
+     BattleFighter *row;
+ 
+     task->timer += GFX.funcs.getFrameTime();
++#ifdef NATIVE
++    if (WFIGHTMN_coopRaidShown() != coopTweenSeat) {
++        coopTweenSeat = WFIGHTMN_coopRaidShown();
++        task->hp[0].fighter = -1;
++    }
++#endif
+     for (i = 0; i < 2; i++) {
+         row = FIGHTSTG_battle.fighters[i];
+         if (task->hp[i].fighter != FIGHTSTG_battle.active[i]) {
+@@ -66,6 +80,12 @@
+     BattleTableEntry *enemy;
+     s32 i;
+ 
++#ifdef NATIVE
++    if (WFIGHTMN_coopRaidShown() != coopNameSeat) {
++        coopNameSeat = WFIGHTMN_coopRaidShown();
++        task->shown[0] = -1;
++    }
++#endif
+     if (FIGHTSTG_battle.active[0] != task->shown[0]) {
+         if (windows[0] == NULL) {
+             windows[0] = createTextWindow(BATTLE_LAYER_MENUS, 1, 0xAE, 0x15);
+@@ -77,6 +97,20 @@
          if (windows[1] == NULL) {
              windows[1] = createTextWindow(BATTLE_LAYER_MENUS, 1, 0x11, 0x15);
          }

@@ -5,7 +5,7 @@
              STFGTREP_funcs.getDigimonExp(member, partner->slots[partner->slot],
  #ifdef NATIVE
 -                                         STFGTREP_rewards[BATTLE_RESULT.battle].digimonExp, g_full_exp_report ? 1 : partner->report->used));
-+                                         STFGTREP_rewards[BATTLE_RESULT.battle].digimonExp * g_exp_mult, g_full_exp_report ? 1 : partner->report->used));
++                                         STFGTREP_rewards[BATTLE_RESULT.battle].digimonExp * g_exp_mult * native_coop_reward_mult(), g_full_exp_report ? 1 : partner->report->used));
  #else
                                           STFGTREP_rewards[BATTLE_RESULT.battle].digimonExp, partner->report->used));
  #endif

@@ -1,6 +1,6 @@
 --- a/src/wfightmn/menu.c
 +++ b/src/wfightmn/menu.c
-@@ -6,6 +6,242 @@
+@@ -6,6 +6,320 @@
  
  #include "wfightmn.h"
  
@@ -37,7 +37,60 @@
 +    NativeCoopCommand command; /* the other's, for its turn */
 +    BattleFighter fighters[3]; /* the party not shown */
 +    s32 active;
++    QueuedEvent stash[2][16]; /* each seat's events (statuses, boosts...) while its party isn't shown */
++    u8 result[sizeof(BATTLE_RESULT.partners)]; /* the party not shown's BATTLE_RESULT.partners (who fought) */
 +} coopRaid;
++
++/* the events of a party's fighters (by their slot): kept apart while the party is off the side */
++static s32 coopRaidPartyEvent(QueuedEvent *e) {
++    switch (e->type) {
++    case EVENT_AUTO_RECOVER_END:
++    case EVENT_RECOVERY:
++    case EVENT_PARTNER_TECH:
++    case EVENT_STATUS_DAMAGE:
++    case EVENT_STATUS_END:
++    case EVENT_STATUS_END + 1:
++    case EVENT_STATUS_END + 2:
++    case EVENT_BOOST_END:
++    case EVENT_BOOST_END + 1:
++    case EVENT_BOOST_END + 2:
++    case EVENT_RESTRICTION_END:
++    case EVENT_RESTRICTION_END + 1:
++    case EVENT_BLAST_END:
++    case EVENT_SPECIAL_END:
++    case EVENT_DIGIDEVOLVE:
++        return e->args[0] == 0;
++    default:
++        return 0;
++    }
++}
++
++/* the side's party's events to its stash, and the incoming one's back to the queue */
++static void coopRaidSwapEvents(s32 from, s32 to) {
++    QueuedEvent *stash;
++    s32 i;
++    s32 k = 0;
++
++    stash = coopRaid.stash[from];
++    memset(stash, 0, sizeof coopRaid.stash[from]);
++    for (i = 0; i < 99; i++) {
++        if (coopRaidPartyEvent(&FIGHTSTG_events.events[i]) && k < 16) {
++            stash[k++] = FIGHTSTG_events.events[i];
++            FIGHTSTG_events.events[i].type = 0;
++        }
++    }
++    stash = coopRaid.stash[to];
++    for (k = 0, i = 0; k < 16 && stash[k].type != 0; k++) {
++        while (i < 99 && FIGHTSTG_events.events[i].type != 0) {
++            i++;
++        }
++        if (i == 99) {
++            break;
++        }
++        FIGHTSTG_events.events[i] = stash[k];
++    }
++    memset(stash, 0, sizeof coopRaid.stash[to]);
++}
 +
 +/* this turn is the other player's: its command, not this side's menu */
 +static s32 coopRaidRemote(void) {
@@ -80,6 +133,8 @@
 +        }
 +    }
 +    coopRaidSwapBytes((u8 *)FIGHTSTG_battle.fighters[0], (u8 *)coopRaid.fighters, sizeof coopRaid.fighters);
++    coopRaidSwapBytes((u8 *)BATTLE_RESULT.partners, coopRaid.result, sizeof coopRaid.result);
++    coopRaidSwapEvents(coopRaid.shown, 1 - coopRaid.shown);
 +    k = FIGHTSTG_battle.active[0];
 +    FIGHTSTG_battle.active[0] = coopRaid.active;
 +    coopRaid.active = k;
@@ -231,6 +286,29 @@
 +    return got > 0;
 +}
 +
++/* the seat whose party is on the side, for the HUD (fightstg/hud.c): -1 when no raid */
++s32 WFIGHTMN_coopRaidShown(void) {
++    return native_coop_raid() != NULL ? coopRaid.shown : -1;
++}
++
++/* A raid won: an item sure, of the boss's tier (the rare ones the enemies leave, or carry) */
++static s32 coopRaidLoot(s32 tier) {
++    static const s16 LOW[] = {0x2B, 0x2C, 0x153, 0x156, 0x159, 0x15C, 0x15F, 0x162, 0x165, 0x13C, 0x140, 0x143, 0x145};
++    static const s16 MIDDLE[] = {0x2D, 0x154, 0x157, 0x15A, 0x15D, 0x160, 0x163, 0x166, 0x2F, 0x30, 0x31, 0x32, 0x33,
++                                 0x34, 0x35, 0x151, 0x14B, 0x14D, 0x14F, 0x147, 0x149};
++    static const s16 HIGH[] = {0x2E, 0x155, 0x158, 0x15B, 0x15E, 0x161, 0x164, 0x167, 0x37, 0x38, 0x39, 0x3A, 0x3B,
++                               0x3C, 0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x152, 0x14E, 0x150, 0x14C, 0x148, 0x14A, 0x144,
++                               0x146, 0x55};
++
++    if (tier >= 2) {
++        return HIGH[RANDOM.next() % (sizeof HIGH / sizeof HIGH[0])];
++    }
++    if (tier == 1) {
++        return MIDDLE[RANDOM.next() % (sizeof MIDDLE / sizeof MIDDLE[0])];
++    }
++    return LOW[RANDOM.next() % (sizeof LOW / sizeof LOW[0])];
++}
++
 +/* its rolls from now on, and the command used up */
 +static void coopRaidUseCommand(void) {
 +    if (coopRaid.command.seed != 0) {
@@ -243,12 +321,13 @@
  /* Sets the battle's kind from the mode it came from and the battle: the
     escape, UNK2, no-damage and final battles, or a normal one */
  static inline void setBattleKind(void) {
-@@ -62,6 +298,33 @@
+@@ -62,6 +376,34 @@
      BattleStats *stats;
      s32 chance;
  
 +#ifdef NATIVE
 +    coopPvpEnded = 0;
++    g_coop_raid_reward = 0; /* a raid's reward was the last report's */
 +    if (native_coop_raid() != NULL) {
 +        coopRaidBegin();
 +        FIGHTSTG_queuePlayerTurn(0);
@@ -277,7 +356,7 @@
      if (task->counter != 0) {
          FIGHTSTG_queueEnemyTurn(0);
          FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0) / 2);
-@@ -122,6 +385,11 @@
+@@ -122,6 +464,11 @@
     partner is confused and the battle's music again after
     (switchConfusionMusic) */
  void WFIGHTMN_updateMenu(BattleMenu *task, BattleMenuChildren *children) {
@@ -289,7 +368,7 @@
      switch (task->state) {
      case 0:
      default:
-@@ -250,6 +518,11 @@
+@@ -250,6 +597,11 @@
          task->step++;
          break;
      case 1:
@@ -301,7 +380,7 @@
          if (children->task.task == NULL) {
              unit = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
              if ((unit->flags & FIGHTER_PARALYZED) && FIGHTSTG_battleFuncs.testParalysis(0) != 0) {
-@@ -259,8 +532,19 @@
+@@ -259,8 +611,19 @@
                  children->task.message->show(children->task.message, 2, task->args);
                  FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0));
                  task->setSubstate(task, 2);
@@ -321,7 +400,7 @@
              } else {
                  FIGHTSTG_setPlayerTurnStep(2);
                  task->step = 2;
-@@ -268,7 +552,22 @@
+@@ -268,7 +631,22 @@
          }
          break;
      case 2:
@@ -344,7 +423,7 @@
              switch (children->commands->action) {
              case 1:
                  FIGHTSTG_battle.runAttempts++;
-@@ -481,6 +780,11 @@
+@@ -481,6 +859,11 @@
              break;
          }
  #endif
@@ -356,7 +435,22 @@
          if (FIGHTSTG_events.funcs.result != BATTLE_FLED) {
              count = 0;
              battle = &FIGHTSTG_battle;
-@@ -552,6 +856,51 @@
+@@ -514,6 +897,14 @@
+             if (BATTLE_SETUP.hasPrize == 1) {
+                 BATTLE_RESULT.item = BATTLE_SETUP.prize;
+             }
++#ifdef NATIVE
++            if (native_coop_raid() != NULL && FIGHTSTG_events.funcs.result == BATTLE_WON) {
++                /* a raid won: an item sure, and the report's EXP and money times COOP_RAID_REWARD */
++                BATTLE_RESULT.item = coopRaidLoot(native_coop_raid()->raidTier);
++                g_coop_raid_reward = 1;
++                native_coop_note("Raid: the loot is item %X", BATTLE_RESULT.item);
++            }
++#endif
+         }
+         for (member = 0; member < 3; member++) {
+             partner = GAME.funcs.getPartyMember(member);
+@@ -552,6 +943,51 @@
          break;
      case 2:
          WFIGHTMN_cancelBlast();
@@ -408,7 +502,7 @@
          switch (FIGHTSTG_events.funcs.result) {
          case BATTLE_FLED:
          default:
-@@ -825,11 +1174,29 @@
+@@ -825,11 +1261,29 @@
      switch (task->step) {
      case 0:
      default:
@@ -438,7 +532,7 @@
              if (children->commands->action == 0) {
                  children->task.attack = FIGHTSTG_startFirstTech(0);
                  task->setSubstate(task, 2);
-@@ -1105,11 +1472,70 @@
+@@ -1105,11 +1559,70 @@
                      break;
                  }
              }
@@ -509,7 +603,7 @@
                      unit = FIGHTSTG_battle.fighters[1] + slot;
                      task->step = 3;
                      task->args[0] = slot;
-@@ -1125,6 +1551,11 @@
+@@ -1125,6 +1638,11 @@
          break;
      case 2:
          if (FIGHTSTG_isPlayerChoosing() == 0) {
@@ -521,7 +615,7 @@
              task->setSubstate(task, 5);
              task->step = 1;
          }
-@@ -1375,6 +1806,17 @@
+@@ -1375,6 +1893,17 @@
  #endif
          break;
      case 1:
@@ -539,7 +633,7 @@
          switch (task->step) {
          default:
              task->setSubstate(task, 3);
-@@ -1456,6 +1898,11 @@
+@@ -1456,6 +1985,11 @@
              task->setSubstate(task, 0);
          }
          break;

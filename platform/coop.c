@@ -525,8 +525,15 @@ NativeCoopPvp *native_coop_raid(void) {
     return s_pvp.on && s_pvp.raid ? &s_pvp : NULL;
 }
 
-void native_coop_raid_set(int encounter) {
+void native_coop_raid_set(int encounter, int tier) {
     s_pvp.raid = encounter;
+    s_pvp.raidTier = tier;
+}
+
+int g_coop_raid_reward;
+
+int native_coop_reward_mult(void) {
+    return g_coop_raid_reward ? COOP_RAID_REWARD : 1;
 }
 
 int native_coop_raid_test(void) {

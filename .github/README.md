@@ -39,7 +39,7 @@ zip.
 |---|---|
 | Cooperativo | Hasta 4 jugadores en red, cada uno con su partida; os veis en el mismo mapa, cada uno con su personaje y su nombre encima |
 | Intercambio de cartas | En cualquier Guardromon: dos jugadores que eligen "Intercambiar cartas" se cambian cartas sueltas (las que no usa ningún mazo) |
-| Raids | En cualquier Guardromon: "Raid" junta a 2 jugadores contra un jefe en un mismo combate por turnos; de momento, una raid básica (Kuwagamon) |
+| Raids | En cualquier Guardromon: "Raid" junta a 2 jugadores contra un jefe (29 para elegir) en un mismo combate por turnos; al ganar, EXP y dinero x3 y un objeto seguro |
 | Combates entre jugadores | En cualquier Guardromon: "Combatir" enfrenta vuestros equipos por turnos alternos; es una exhibición, sin game over y sin cambios en la partida |
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Creador de personaje | Al empezar partida eliges ser Junior, Chico o Chica y uno de 8 tonos de color; con todas las animaciones, también en las escenas |

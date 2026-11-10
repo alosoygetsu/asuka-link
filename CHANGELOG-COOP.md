@@ -3,6 +3,20 @@
 Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
 Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
 
+## v0.18.912
+Sobre el port v0.18.9.
+
+- **Raids: 29 jefes para elegir.** Al escoger "Raid" en el Guardromon sale la lista de jefes; dos jugadores que eligen
+  el mismo entran juntos. Están los jefes de la historia y sus revanchas del final, de Pharaohmon (Nv 12) a Knightmon
+  (Nv 99). Cada uno ve los que le quedan hasta 5 niveles por encima de su mejor compañero; Kuwagamon, siempre.
+- **Recompensas de raid:** al ganar, la EXP y el dinero del combate se multiplican por 3 (además del multiplicador de
+  Mods), y cada jugador se lleva un objeto seguro según el nivel del jefe: potenciadores 1 y Cargas en los jefes de
+  nivel bajo; potenciadores 2, chips de stats y equipo en los medios; potenciadores S, chips de elemento, chips de
+  entrenamiento, Danza del Ala, Brazal. Poder o Cable Carmesí en los altos.
+- **Raids, arreglos al cambiar de equipo:** arriba sale siempre el nombre y la vida del Digimon que actúa (antes podía
+  quedarse el del otro jugador), los estados y mejoras de cada equipo se quedan en su equipo, y la EXP de cada uno
+  solo cuenta a sus propios Digimon.
+
 ## v0.18.911
 Sobre el port v0.18.9.
 
