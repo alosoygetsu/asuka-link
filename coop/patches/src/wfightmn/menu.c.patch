@@ -1,6 +1,6 @@
 --- a/src/wfightmn/menu.c
 +++ b/src/wfightmn/menu.c
-@@ -6,6 +6,235 @@
+@@ -6,6 +6,242 @@
  
  #include "wfightmn.h"
  
@@ -13,10 +13,10 @@
 +static s32 coopPvpEnded;
 +
 +/* ---- The raid (fieldstg/field.c): both players' parties on this side against the boss, turn about: seat 0's turn,
-+   seat 1's, the boss's, round again. The side shows one party at a time, the GAME's party and partners swapped for the
++   seat 1's, then the boss's at each, round again. The side shows one party at a time, the GAME's party and partners swapped for the
 +   other's (as fightstg/stats.c does for the PvP's enemy) and the fighters with them; a turn of the party not shown
 +   brings it in first (coopRaidHandover). This side's turns are picked in its menu and sent, the other's taken from it.
-+   The boss's target is rolled from the battle and the turn, the same in both games. ---- */
++   The boss's rolls are seeded from the battle and the turn, the same in both games. ---- */
 +#define COOP_RAID_HANDOVER 40 /* runTurn's substate: the party of coopRaid.target comes in */
 +typedef struct CoopRaidTeam { /* fieldstg/field.c's CoopTeam */
 +    s32 party[3];
@@ -111,6 +111,7 @@
 +   dropped for it, and brings in the party it needs */
 +static void coopRaidNextTurn(BattleMenu *task) {
 +    s32 i;
++    s32 k = 0;
 +    u32 seed;
 +
 +    for (i = 0; i < 99; i++) {
@@ -119,24 +120,30 @@
 +            FIGHTSTG_events.events[i].type = 0;
 +        }
 +    }
-+    for (i = 0; i < 3; i++) {
-+        coopRaid.actor = coopRaid.turn % 3;
++    /* a round: seat 0, seat 1, then the boss once at each (slot 2 at seat 0, 3 at seat 1); a seat down is skipped */
++    for (i = 0; i < 4; i++) {
++        k = coopRaid.turn % 4;
 +        coopRaid.turn++;
-+        if (coopRaid.actor == 2 || !coopRaid.out[coopRaid.actor]) {
++        if (!coopRaid.out[k & 1]) {
 +            break;
 +        }
 +    }
++    coopRaid.actor = k < 2 ? k : 2;
++    coopRaid.target = k & 1;
 +    if (coopRaid.actor == 2) {
-+        /* the boss: its rolls from the battle and the turn, its target one of the seats standing */
++        /* the boss: its rolls from the battle and the turn, the same in both games */
 +        seed = ((u32)native_coop_raid()->battle * 2654435761u) ^ ((u32)coopRaid.turn * 40503u);
 +        native_coop_pvp_seed(seed);
-+        coopRaid.target = coopRaid.out[0] ? 1 : coopRaid.out[1] ? 0 : (s32)((seed >> 7) & 1);
 +        coopRaid.pending = EVENT_ENEMY_TURN;
 +    } else {
-+        coopRaid.target = coopRaid.actor;
 +        coopRaid.pending = EVENT_PLAYER_TURN;
 +    }
 +    if (g_coop_debug) {
++        BattleFighter *a = FIGHTSTG_battle.fighters[0];
++        BattleFighter *b = coopRaid.fighters;
++
++        native_coop_note("Raid: HP seat %d %d/%d/%d, seat %d %d/%d/%d, boss %d", coopRaid.shown, a[0].hp, a[1].hp, a[2].hp,
++                         1 - coopRaid.shown, b[0].hp, b[1].hp, b[2].hp, FIGHTSTG_battle.fighters[1][FIGHTSTG_battle.active[1]].hp);
 +        native_coop_note("Raid: turn %d: %s, seat %d on", coopRaid.turn,
 +                         coopRaid.actor == 2 ? "the boss" : coopRaid.actor == coopRaid.me ? "this player" : "the other",
 +                         coopRaid.target);
@@ -236,7 +243,7 @@
  /* Sets the battle's kind from the mode it came from and the battle: the
     escape, UNK2, no-damage and final battles, or a normal one */
  static inline void setBattleKind(void) {
-@@ -62,6 +291,33 @@
+@@ -62,6 +298,33 @@
      BattleStats *stats;
      s32 chance;
  
@@ -270,7 +277,7 @@
      if (task->counter != 0) {
          FIGHTSTG_queueEnemyTurn(0);
          FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0) / 2);
-@@ -122,6 +378,11 @@
+@@ -122,6 +385,11 @@
     partner is confused and the battle's music again after
     (switchConfusionMusic) */
  void WFIGHTMN_updateMenu(BattleMenu *task, BattleMenuChildren *children) {
@@ -282,7 +289,7 @@
      switch (task->state) {
      case 0:
      default:
-@@ -250,6 +511,11 @@
+@@ -250,6 +518,11 @@
          task->step++;
          break;
      case 1:
@@ -294,7 +301,7 @@
          if (children->task.task == NULL) {
              unit = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
              if ((unit->flags & FIGHTER_PARALYZED) && FIGHTSTG_battleFuncs.testParalysis(0) != 0) {
-@@ -259,8 +525,19 @@
+@@ -259,8 +532,19 @@
                  children->task.message->show(children->task.message, 2, task->args);
                  FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0));
                  task->setSubstate(task, 2);
@@ -314,7 +321,7 @@
              } else {
                  FIGHTSTG_setPlayerTurnStep(2);
                  task->step = 2;
-@@ -268,7 +545,22 @@
+@@ -268,7 +552,22 @@
          }
          break;
      case 2:
@@ -337,7 +344,7 @@
              switch (children->commands->action) {
              case 1:
                  FIGHTSTG_battle.runAttempts++;
-@@ -481,6 +773,11 @@
+@@ -481,6 +780,11 @@
              break;
          }
  #endif
@@ -349,7 +356,7 @@
          if (FIGHTSTG_events.funcs.result != BATTLE_FLED) {
              count = 0;
              battle = &FIGHTSTG_battle;
-@@ -552,6 +849,51 @@
+@@ -552,6 +856,51 @@
          break;
      case 2:
          WFIGHTMN_cancelBlast();
@@ -401,7 +408,7 @@
          switch (FIGHTSTG_events.funcs.result) {
          case BATTLE_FLED:
          default:
-@@ -825,11 +1167,29 @@
+@@ -825,11 +1174,29 @@
      switch (task->step) {
      case 0:
      default:
@@ -431,7 +438,7 @@
              if (children->commands->action == 0) {
                  children->task.attack = FIGHTSTG_startFirstTech(0);
                  task->setSubstate(task, 2);
-@@ -1105,11 +1465,70 @@
+@@ -1105,11 +1472,70 @@
                      break;
                  }
              }
@@ -502,7 +509,7 @@
                      unit = FIGHTSTG_battle.fighters[1] + slot;
                      task->step = 3;
                      task->args[0] = slot;
-@@ -1125,6 +1544,11 @@
+@@ -1125,6 +1551,11 @@
          break;
      case 2:
          if (FIGHTSTG_isPlayerChoosing() == 0) {
@@ -514,7 +521,7 @@
              task->setSubstate(task, 5);
              task->step = 1;
          }
-@@ -1375,6 +1799,17 @@
+@@ -1375,6 +1806,17 @@
  #endif
          break;
      case 1:
@@ -532,7 +539,7 @@
          switch (task->step) {
          default:
              task->setSubstate(task, 3);
-@@ -1456,6 +1891,11 @@
+@@ -1456,6 +1898,11 @@
              task->setSubstate(task, 0);
          }
          break;
