@@ -5,6 +5,29 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta. Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
 port `v0.18.9` más la versión 1 del cooperativo.
 
+## v1.1.0
+Basado en el port v0.18.9. Red: versión 7, la misma que la v1.0.0.
+
+- **Asuka Link va por su cuenta:** ya no sigue las versiones del port de Feerdus. Se queda en la v0.18.9 y todo lo
+  demás se mantiene aquí. La [hoja de ruta](docs/HOJA-DE-RUTA.md) repasa cada sistema del juego y cada mod del port,
+  con su estado y las ideas para mejorarlos.
+- **Actualizaciones comprobadas:** el launcher comprueba la huella (SHA-256) de cada actualización antes de
+  instalarla, y no instala una descarga rota o que no es la de la versión.
+- **Herramientas:**
+  - El launcher ya no descarga el visor de modelos ni el editor de mapas.
+  - Solo aparecen si están compilados en tu ordenador, para hacer mods.
+  - El launcher solo descarga Asuka Link.
+- **El avance rápido se apaga solo** al entrar en un combate entre jugadores, una raid o un duelo de cartas, y no se
+  puede encender hasta que acaba: así todos van al mismo ritmo. En el mapa sigue funcionando.
+- **Eliminado del todo** (antes solo estaba oculto): "Curar al subir de nivel", "Guardar en cualquier sitio" y los
+  packs iniciales extra. Las partidas hechas con un pack extra siguen cargando, y las líneas que queden en un
+  `native.ini` viejo se ignoran.
+- **Más seguro en red:** antes de usarlos, se comprueba lo que llega de los demás.
+  - Los equipos de PvP y raids: compañeros, ranuras, formas, equipo y nivel. Un equipo con un Digimon de un mod que
+    tú no tienes se rechaza con un aviso, en vez de meterlo en el combate.
+  - Los mensajes del duelo.
+  - Las cartas de un intercambio.
+
 ## v1.0.0
 Sobre el port v0.18.9. Red: versión 7.
 

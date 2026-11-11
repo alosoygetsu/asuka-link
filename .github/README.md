@@ -52,7 +52,7 @@ zip.
 | Multiplicador de EXP | x1 a x5 sobre la EXP de combate (compañeros y Digimon) |
 | Multiplicador de dinero | x1 a x5 sobre el dinero de combate |
 | Por defecto | Viaje rápido, Digilog, EXP compartida completa y entrenamiento sin azar vienen activados |
-| Quitado | "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra (el equipo libre los sustituye) |
+| Eliminado | "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra, del todo (el equipo libre sustituye a los packs; las partidas hechas con ellos siguen cargando) |
 
 Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/alosoygetsu/asuka-link/blob/coop/CHANGELOG-COOP.md).
 
@@ -86,7 +86,7 @@ v0.18.9)"*, y cuál es su versión de red: todos los que jugáis juntos tenéis 
   cooperativo sobre el port v0.18.9.
 - **Lo único del port que cambia el cooperativo:**
   - viaje rápido, Digilog y EXP compartida completa, activados por defecto;
-  - "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra, quitados;
+  - "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra, eliminados;
   - el aspecto del launcher, y que se actualiza desde este repositorio.
 
   Todo lo demás del port está tal cual.
