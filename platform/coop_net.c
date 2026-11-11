@@ -19,7 +19,7 @@
 #include "coop_net.h"
 
 #define COOP_MAGIC 0x43335744u /* "DW3C" */
-#define COOP_VERSION 6 /* 3: the look and the name; 4: the card trade; 5: blobs (the PvP battle's teams); 6: the PvP battle's commands */
+#define COOP_VERSION 7 /* 3: the look and the name; 4: the card trade; 5: blobs (the PvP battle's teams); 6: the PvP battle's commands; 7: v1.0.0 (raids, card duels) */
 #define COOP_BUFFER_MS 80 /* the least; more with jitter */
 #define COOP_TIMEOUT_MS 2000
 #define COOP_RX 32 /* states kept, ~0.6 s at 50 Hz */

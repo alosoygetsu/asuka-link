@@ -13,6 +13,8 @@ character creator, on top of the native port. None of it would exist without:
   the port and the co-op are built from.
 - Everyone credited below, whose work the port stands on.
 
+The co-op has its own versions from v1.0.0, apart from the port's; each release names the port release it is built on.
+
 ## The native port
 
 The native port of Digimon World 2003 builds on the work of others:

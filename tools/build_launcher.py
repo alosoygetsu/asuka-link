@@ -24,7 +24,10 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     exe = OUT / "dw3launcher.exe"
     sources = [*sorted((NATIVE / "launcher").glob("*.c")), NATIVE / "platform/extract.c"]
-    tag = subprocess.run(["git", "describe", "--tags", "--abbrev=0"], cwd=NATIVE, capture_output=True, text=True).stdout.strip()
+    # the co-op's own version (v1.0.0 on), else its old v0.18.9NN: never the port's, kept as upstream/vX.Y.Z (update.ps1)
+    tag = ""
+    for match in ("v[1-9]*", "v*"):
+        tag = tag or subprocess.run(["git", "describe", "--tags", "--abbrev=0", "--match", match], cwd=NATIVE, capture_output=True, text=True).stdout.strip()
     res = OUT / "launcher_res.o"
     subprocess.run([Path(compiler()).with_name("i686-w64-mingw32-windres.exe"), "-O", "coff", "-i", str(NATIVE / "launcher/launcher.rc"), "-o", str(res)], check=True)
     # -static: the C runtime inside the exe, so that only SDL3.dll sits next to it

@@ -1,7 +1,30 @@
 # Cambios del cooperativo
 
-Las versiones van sobre las del port original: `v0.18.901` es el port `v0.18.9` más la versión 1 del cooperativo.
-Los cambios del port están en su [CHANGELOG.md](CHANGELOG.md).
+Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2…** con cosas nuevas y **1.1.1,
+1.1.2…** con arreglos. Cada versión dice en qué release del port nativo de Feerdus está hecha; los cambios del port
+están en su [CHANGELOG.md](CHANGELOG.md). Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
+port `v0.18.9` más la versión 1 del cooperativo.
+
+## v1.0.0
+Sobre el port v0.18.9. Red: versión 7.
+
+**Primera versión con numeración propia.** El cooperativo ya hace todo lo que se planteó al empezar, y deja de numerarse
+con el port, que ya va por la v0.19 y se cruzaba con los números de aquí (port v0.18.10 frente a cooperativo
+v0.18.910).
+
+- **Lo que trae la 1.0:**
+  - **Online:** hasta 4 jugadores en red, cada uno con su partida, viéndose en el mapa con su personaje y su nombre.
+  - **En cualquier Guardromon:**
+    - intercambio de cartas;
+    - combates entre jugadores;
+    - raids de 2 a 4 contra 29 jefes;
+    - duelos de cartas con premio para los dos.
+  - **En solitario:** equipo libre, creador de personaje, entrenamiento sin azar y multiplicadores de EXP y dinero.
+- **Qué es de quién:** el README tiene una tabla nueva que separa el juego decompilado (ReGame-Labs), el port nativo
+  (Feerdus) y el cooperativo (alosoygetsu), cada uno con sus versiones.
+- **Red, versión 7:** las versiones anteriores ya no se conectan con esta. Actualizad todos a la vez.
+- Las notas de cada release dicen su versión, la del port en la que está hecha y la versión de red.
+
 
 ## v0.18.918
 Sobre el port v0.18.9.
