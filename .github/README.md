@@ -16,7 +16,7 @@ cada uno.
 > del disco europeo (*Digimon World 2003*, SLES-03936).
 
 ## Instalar
-1. Descarga `asuka-link-<versión>.zip` de la [última versión](https://github.com/alosoygetsu/dw3-native-port/releases/latest) y descomprímelo en una carpeta
+1. Descarga `asuka-link-<versión>.zip` de la [última versión](https://github.com/alosoygetsu/asuka-link/releases/latest) y descomprímelo en una carpeta
    tuya (no en "Archivos de programa").
 2. Abre `dw3launcher.exe` y dale tu imagen del disco (`.cue`/`.bin`). La lee una vez.
 3. Juega con **Jugar**.
@@ -54,7 +54,7 @@ zip.
 | Por defecto | Viaje rápido, Digilog, EXP compartida completa y entrenamiento sin azar vienen activados |
 | Quitado | "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra (el equipo libre los sustituye) |
 
-Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/alosoygetsu/dw3-native-port/blob/coop/CHANGELOG-COOP.md).
+Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/alosoygetsu/asuka-link/blob/coop/CHANGELOG-COOP.md).
 
 ## Hoja de ruta
 - [x] Verse en el mapa (hasta 4 jugadores, configuración en el launcher)
@@ -92,7 +92,7 @@ apoya en la decompilación [ReGame-Labs/dw3_decomp](https://github.com/ReGame-La
 cooperativo y los cambios de la tabla. Licencia MIT, como el port. *Digimon* es © Akiyoshi Hongo, Toei Animation; es
 un proyecto de fans sin relación con Bandai Namco.
 
-El [README del port original](https://github.com/alosoygetsu/dw3-native-port/blob/coop/README.md) explica todo lo demás: requisitos, opciones, mods y cómo compilarlo.
+El [README del port original](https://github.com/alosoygetsu/asuka-link/blob/coop/README.md) explica todo lo demás: requisitos, opciones, mods y cómo compilarlo.
 
 ---
 
@@ -101,7 +101,7 @@ El [README del port original](https://github.com/alosoygetsu/dw3-native-port/blo
 A fork of [Feerdus95/dw3-native-port](https://github.com/Feerdus95/dw3-native-port) (the native Windows port of
 *Digimon World 2003*) with **online co-op for up to 4 players**: each plays their own save, and players on the same map
 see each other. You need your own European disc; nothing of the game is here. Get `asuka-link-<version>.zip` from the
-[latest release](https://github.com/alosoygetsu/dw3-native-port/releases/latest), set the other players' addresses in the launcher (Settings → Mods → Co-op),
+[latest release](https://github.com/alosoygetsu/asuka-link/releases/latest), set the other players' addresses in the launcher (Settings → Mods → Co-op),
 and meet on a map: you see each other with your own look and name, and can trade spare cards at any Guardromon. A new game lets you pick your look (Junior, a boy or a girl, in 8 colours) and starts with a team you build yourself (any 3 of the 8 partners) instead of a starter
 pack, and there are EXP and money multipliers. Updates come through the launcher's Update button.
 
