@@ -110,48 +110,120 @@ contenido de después de la historia. En la historia solo está el Tenjinmaru (M
   □ otra vez vuelve a las misiones.
 
 ## La historia: los pasos dentro de cada paso
-El Digilog tiene 46 pasos de historia (`GAME.progress` 0x00-0x2D), cada uno con una sola frase. Dentro de muchos hay
-varias cosas que hacer. Salen de dos sitios:
-- **Las conversaciones** que solo ocurren en ese paso: `tools/story_steps.py`.
-- **Los eventos que lanza cada mapa en ese paso**, en orden, cada uno con su marca de "visto" `F40:xx`:
-  `tools/story_events.py`, más `tools/story_code.py` para saber qué hace cada uno.
+El Digilog tiene 46 pasos de historia (`GAME.progress` 0x00-0x2D), cada uno con una frase. Dentro de muchos hay
+varias cosas que hacer. Salen de las conversaciones que solo ocurren en ese paso (`tools/story_steps.py`), de los
+eventos que lanza cada mapa en ese paso, en orden, cada uno con su marca de "visto" `F40:xx`
+(`tools/story_events.py`, `tools/story_code.py`), y de lo que se dice en ellos (`tools/story_dialogue.py`). Un subpaso
+está hecho cuando su condición se cumple. Abajo, los subpasos de cada paso, con su condición y su mapa.
 
-Un subpaso se da por hecho cuando su marca está puesta, igual que las misiones.
+### 0x04 Líder Seiryu
+1. Habla con Tom el Repetidor, en Ciudad Seiryu: el líder entrena en las Ruinas Protocolo. (`F1c:0f`, 0x230)
+2. Reta al Líder Seiryu en las Ruinas Protocolo: no lucha con débiles. (`F1c:10`, 0x226)
+3. Vence a MasterTyranno en el Valle Tyranno. Te da la Garra Antigua. (`F1c:11`, 0x22B)
+4. Vence al Líder Seiryu en Ciudad Seiryu: Pin Seiryu y Pase de Plata. (`F40:12`, 0x22E)
 
-| Paso | Lo que dice hoy | Subpasos encontrados (mapa, marca) |
-|---|---|---|
-| 0x04 Líder Seiryu | Llega a Ciudad Seiryu y vence al Líder | 1. Tom el Repetidor (0x230) te dice que el líder entrena en las Ruinas Protocolo (`F1c:0f`). 2. El líder (0x226) no lucha con débiles: vence antes a MasterTyranno en el Valle (`F1c:10`). 3. Vencer a MasterTyranno en el Valle Tyranno (0x22B, evento 61, `F1c:11`). 4. Luchar con el líder en Ciudad Seiryu (0x22E, evento 71, `F40:12`). |
-| 0x05 Tarjeta Azul | Registra tu Tarjeta Azul | Evento con Teddy en la Pradera del Viento (0x229, evento 80, `F40:11`). |
-| 0x06 Hacia el sur | Toma el tren al Sector Sur | 1. Keith en el Puente de Asuka (evento 101, `F40:06`). 2. La **Tarjeta Azul**: un Guilmon (0x20C) te manda a su primo (`F1c:44`); otro Guilmon (0x223) dice que la tiene otro (`F1c:45`); Guilmon Astuto (0x22F) te da una **falsa** (Tarjeta 8zul); en la estación (0x22C) no funciona (`F1c:46`); un Guilmon en Seiryu (0x22E) te cuenta el engaño (`F1c:47`); Guilmon Astuto (0x224) te da la verdadera (`+Tarjeta Azul`); la registras en la estación. 3. La Grieta Profunda (0x415, evento 150, combate, `F40:18`). 4. La Estación Sur (evento 152). |
-| 0x07 Zanbamon | Busca a Sepikmon | Zanbamon en la Tumba de la Selva (0x480, evento 171, `F40:00`). |
-| 0x08 La máscara | Encuentra la máscara | 1. Gatomon (0x238) te habla de Sepikmon (`F1c:43`). 2. Sepikmon en la Casa del Chamán (eventos 180, 181, 190, 200). 3. Baronmon (Ruinas Protocolo) te dice que la tenía Sepikmon y que oyó que está en Ciudad Asuka (`F1a:18`). 4. Zanbamon (0x243, evento 54, `F0a:02`). |
-| 0x09 Hierba apestosa | Devuelve la máscara | 1. Etemon en el Vestíbulo (0x201, evento 93, `F1a:1b`). 2. Etemon te da la **Máscara Sepik** en las Alcantarillas (0x21B). 3. Sepikmon (evento 230). |
-| 0x0B Buscar a Teddy | Reúnete con Kail | Eventos 271 y 273 con Kail en el Vestíbulo (`F40:04`); el 272 en el Centro Admin. 1F. |
-| 0x0C Trajes Agumon | Ponte los Trajes Agumon | Kail con el traje (0x20B, evento 45); Travieso Mat en las Alcantarillas (`F1a:14`-`F1a:16`, evento 33). |
-| 0x0D Disfrazado | Sigue buscando a Teddy | Kail (evento 310, `F40:05`); el Guarda DO (evento 340); la Sala Maestra con el Game Master (eventos 350, 351, `F1c:0e`); la Puerta de Batalla (evento 352). |
-| 0x0E Jefe Qing Long | Enfréntate al Jefe Qing Long | Pantano Bios (evento 360, `F40:07`). El **Chip TNT**: alguien pide una bomba (`F1a:2b`), Baronmon necesita una **Bola TNT** (`F1c:4f`) y te hace el chip. Smith Junior en la tienda (`F1c:1e`, con el ID El Dorado). |
-| 0x0F Numemon | Busca un paso subterráneo | La Cúpula Byakko (evento 411, `F40:1e`), el Almacén (412), la Cueva Subterránea (413). |
-| 0x10 HiAndromon | Pregúntale a HiAndromon | Numemon en el Valle de las Balas (evento 422, `F40:a2`); la Sala Espejismo (evento 431, `F40:3e`). |
-| 0x11 Sala de Operac. | Busca a Numemon | Numemon en la Fábrica Dum Dum (evento 440, `F40:3c`, `F1c:1f`); HiAndromon (0x252, evento 94, `F0a:04`); la Sala de Operaciones (evento 511, `F40:a6`). |
-| 0x12 Lisa | Sigue a Lisa | La Fábrica (evento 520, `F40:38`); las Alcantarillas con Lisa, Numemon y Lucky Mouse (evento 531, `F40:39`). |
-| 0x13 Líder Byakko | Encuentra al Líder Byakko | La Sala Secreta (eventos 532, 534, `F40:3b`; 540, `F40:3a`). |
-| 0x14 Pase de Personal | Espera a Nick | Datamon (0x21C) abre los cimientos si tienes un pase (`F1c:1b`); evento 551 con Lisa, Keith, Nick y Kail (`F40:03`). |
-| 0x15 Sala de Control | Usa el Pase de Personal | Datamon con el **Pase de Personal** (evento 36, `F1c:1d`); la Sala Secreta (evento 552, `F40:3d`). |
-| 0x16 Maestro de Juego | Vence al Maestro de Juego; la clave es "MONSTER" | 1. Los soldados del Centro Admin. (0x214-0x21A, combates `F0c:05`-`F0c:18`). 2. Los sensores de la Sala de Control: tocarlos en orden M-O-N-S-T-E-R (`F1c:27`-`F1c:2e`). 3. Centro Admin. 2F (eventos 571, 572, `F40:4a`/`4b`). 4. La Sala Maestra (eventos 660, 661). |
-| 0x17 Vemmon | Vuelve al Salón principal | El Cuartel A.o.A (eventos 680-682, `F40:4e`/`4f`); la Sala Maestra (683) y el Vestíbulo (685, `F40:50`). |
-| 0x1A Bulbmon | Pregunta a Patamon | El Pozo del Laberinto (evento 711, `F40:51`). |
-| 0x1B Servidor Amaterasu | Entra en Qing Long disfrazado | Ciudad Qing Long (eventos 741, `F40:a3`; 743, `F40:a7`). |
-| 0x1C Salón Zhu Que | Encuentra a Bulbmon | Un soldado (0x2A8, evento 74, `F1a:35`); el Salón Zhu Que (evento 751, `F40:52`). |
-| 0x1E Jefe Xuen Wu | Lucha hasta el jefe | La Puerta de Batalla (evento 781, `F40:01`). |
-| 0x20 Mundo Real | 180 segundos en el Mundo Real | La Sala Cámara (eventos 860, 883, 884, 886; `F40:66`, `F40:47`, `F40:62`). |
-| 0x21 Informar | Cuéntaselo a Lisa | La Torre Prisión (eventos 891, 892, `F40:57`/`58`); la Sala Maestra (890, 893, 894, `F40:59`); Lisa (evento 75, `F1a:34`). |
-| 0x22-0x24 | El General, el Maestro del Hielo, el Puente | La Cúpula Bai Hu (evento 901, `F40:5a`); la Puerta de Batalla (911, `F40:5b`); el Puente Amaterasu (921, 922, `F40:ca`). |
-| 0x25 Ciudad Amaterasu | Entra en Amaterasu | Los soldados y atacantes (combates `F0c:23`-`F0c:39`); el Cuartel A.o.A: la Guardia Real (evento 931, `F40:5e`), el Oficial Jefe (932, `F40:67`), 933 y 934 (`F40:5f`, `F40:60`); los Black Kings (WarGreymon, MagnaGargomon, Imperialdramon…); la Sala de Login (evento 935). |
-| 0x26-0x29 | El Cuartel, el satélite | Oinkmon en la Sala Maestra (evento 960, `F40:69`); el Cuartel (961); el satélite (eventos 1060 y 1070, `F40:74`). |
+### 0x05-0x06 La Tarjeta Azul y el tren al sur
+1. Teddy ha visto al Ratón Suerte en la Pradera del Viento. (`F40:11`, 0x229)
+2. Busca la Tarjeta Azul: un Guilmon te manda a su primo. (`F1c:44`, 0x20C)
+3. El primo dice que la tiene otro Guilmon. (`F1c:45`, 0x223)
+4. Un Guilmon Astuto te da una tarjeta… que no funciona en la estación. (`F1c:46`, 0x22C)
+5. En Ciudad Seiryu te cuentan que era una farsa del Guilmon Astuto. (`F1c:47`, 0x22E)
+6. Encuentra al Guilmon Astuto y consigue la Tarjeta Azul verdadera. (`+Tarjeta Azul`, 0x224)
+7. Registra la Tarjeta Azul en la estación. (0x22C)
+8. Gana a Keith en el Puente de Asuka. (`F40:06`, 0x205)
+9. Un terremoto para la góndola en la Grieta Profunda. (`F40:18`, 0x415)
+10. Llega a la Estación Sur. (paso 0x07)
 
-**Lo que falta por concretar** para escribir cada subpaso en el Digilog:
-- **El orden fino:** está tal y como lo lanza cada mapa, que es el orden del juego.
-- **Una frase por subpaso:** casi todos los eventos dicen quién sale; lo que pasa hay que leerlo en sus diálogos
-  (los textos del evento, como en las conversaciones).
-- **Los eventos sin paso conocido** (al principio de la salida de `story_events.py`, "historia -0x1"): son los Black
-  Kings, los jefes de las mazmorras y algún evento suelto; su paso sale de sus condiciones, que van aparte.
+### 0x07-0x09 Zanbamon y la máscara
+1. Zanbamon te corta el paso en la Tumba de la Selva. (`F40:00`, 0x480)
+2. Gatomon dice que Sepikmon, en la Casa del Chamán, sabrá qué hacer. (`F1c:43`, 0x238)
+3. Sepikmon perdió su máscara cuando estaba con Baronmon. (eventos 180/190, Casa del Chamán, 0x475)
+4. Baronmon, en las Ruinas Protocolo: Sepikmon ha estado haciendo bromas en Ciudad Asuka. (`F1a:18`, 0x226)
+5. Encuentra a Etemon en el Vestíbulo de Asuka. (`F1a:1b`, 0x201)
+6. Recupera la Máscara Sepik de Etemon en las Alcantarillas de Asuka. (`+Máscara Sepik`, 0x21B)
+7. Devuélvesela a Sepikmon. (evento 230, paso 0x0A)
+
+### 0x0A Líder Suzaku
+1. Vence al Líder Suzaku en el Salón Suzaku: Pin Suzaku. Para el Sector Oeste hay que llamar a Submarimon. (`F40:02`, 0x240)
+
+### 0x0B-0x0D Buscar a Teddy
+1. Kail quiere buscar a Teddy en el Centro Admin. de Asuka. (`F40:04`, Vestíbulo)
+2. El guarda no deja pasar: separaos y pregunta en la ciudad. (paso 0x0C)
+3. Ponte el Traje Agumon: el guarda deja pasar a los Digimon. (`+Traje Agumon`, 0x20B)
+4. Kail, disfrazada, sigue buscando por su cuenta. (`F40:05`, Vestíbulo)
+5. En la Sala Maestra, el Maestro de Juego os pilla: Teddy lo tiene preso el Ratón Suerte, en el Sector Oeste. (`F1c:0e`, 0x305)
+
+### 0x0E Jefe Qing Long y el Chip TNT
+1. Te piden una bomba para abrir un muro. (`F1a:2b`)
+2. Baronmon, en las Ruinas Protocolo, haría un Chip TNT con una Bola TNT. (`F1c:4f`, 0x226)
+3. Consigue la Bola TNT. (`+Bola TNT`)
+4. Baronmon te hace el Chip TNT. (`+Chip TNT`, 0x226)
+5. Pon el Chip TNT en el muro del Pantano Bios. (`F40:07`, 0x455)
+
+### 0x0F-0x11 Ciudad Byakko
+1. Vence al Líder Byakko: el Pin Byakko está en una sala. (`F40:1e`, Cúpula Byakko)
+2. Era una trampa: caes al sótano. Busca una salida. (paso 0x10)
+3. Numemon te saca: la gente de Byakko es falsa. (`F40:a2`, Valle de las Balas)
+4. Encuentra a Numemon en la Fábrica Dum Dum. (`F40:3c`)
+5. Vence a HiAndromon: te abre las escaleras secretas y te da el Rifle Oxidado. (`F0a:04`, 0x252)
+
+### 0x12-0x15 Lisa, el Ratón Suerte y el Pase de Personal
+1. Sigue a Lisa por las alcantarillas; el Ratón Suerte es Numemon. (`F40:39`, Alcantarillas)
+2. En su escondite, vence al Atacante de la A.o.A. (`F40:3b`, Sala Secreta)
+3. Sin un Pase de Personal no se entra en Ciudad Asuka. (`F40:3a`)
+4. Datamon abriría los cimientos con un pase. (`F1c:1b`, 0x21C)
+5. Nick busca un pase en el ordenador. (`F40:03`, Sala Secreta)
+6. Usa el Pase de Personal con Datamon. (`F1c:1d`, 0x21C)
+
+### 0x16 Maestro de Juego
+1. Ábrete paso entre los soldados del Centro Admin. (combates `F0c:05`-`F0c:18`)
+2. Un Digimon raro en el Centro Admin. 2F. (`F40:4a`, `F40:4b`)
+3. Toca los sensores de la Sala de Control en orden: M-O-N-S-T-E-R. (`F1c:27`-`F1c:2e`)
+4. Se abre la puerta secreta de la Sala Maestra. (evento 661)
+
+### 0x17 Vemmon
+1. Vence a los guardias y al Maestro de Juego en el Cuartel A.o.A. (`F40:4e`, `F40:4f`)
+2. Lisa y Nick son de la S.A.P.: interrogad al Maestro de Juego. (`F40:50`)
+
+### 0x1A-0x1C Bulbmon y el Servidor Amaterasu
+1. Vence a Bulbmon en el Pozo del Laberinto y sigue su agujero. (`F40:51`, 0x545)
+2. Vence al Jefe Qing Long: Pase Azul. (`F40:a3`, Ciudad Qing Long)
+3. Vence al Jefe Zhu Que: Pase ID Rojo. (`F40:52`, Salón Zhu Que)
+
+### 0x1E Jefe Xuen Wu
+1. Vence al Líder Genbu en la Puerta de Batalla. (`F40:01`, 0x755)
+
+### 0x20-0x21 El Mundo Real
+1. 180 segundos en el Mundo Real: llega a la Base Submarina. (`F40:43`, 0x795)
+2. Se acaba el tiempo: el Juggernaut despega. (`F40:66`, Sala Cámara)
+3. Habla con Lisa y los demás. (`F40:59`, Sala Maestra)
+4. Interroga al Maestro de Juego en la Torre Prisión: Destromon. (`F40:57`, `F40:58`)
+
+### 0x22-0x24 Los cuatro códigos
+1. Para entrar en Amaterasu hacen falta cuatro códigos contra los Knightmon. (evento 893)
+2. Pase Blanco: Cúpula Bai Hu. (`F40:5a`)
+3. Pase Negro: vence al Jefe Xuen Wu en la Puerta de Batalla. (`F40:5b`)
+4. Cruza el Puente Amaterasu con Lisa y la Resistencia. (`F40:ca`)
+
+### 0x25-0x28 Ciudad Amaterasu
+1. Vence a la Guardia Real en el Cuartel A.o.A. (`F40:5e`)
+2. Vence al Oficial Jefe. (`F40:67`)
+3. Arrestad al Presidente de MAGAMI. (`F40:5f`)
+4. Destromon detenido: volved a la Sala de Registro. (`F40:60`)
+5. La Cámara no funciona: Oinkmon en la Sala Maestra. (`F40:69`)
+6. Sigue a Vemmon en el Cuartel. (paso 0x27)
+
+### 0x29-0x2A El satélite
+1. Llega a la Sala de Control del Satélite Espía. (`F40:74`)
+2. Vence a Lord Megadeath y a Snatchmon. (evento 1070)
+
+Los pasos que no aparecen aquí (0x00-0x03, 0x18-0x19, 0x1D, 0x1F, 0x2B-0x2D) ya se cuentan bien con su frase.
+
+## Lo que da cada jefe (sirve para las misiones)
+- **Armas viejas:** la Katana Oxidada, Zanbamon (Catacumba); los Guantes Oxidados, Datamon (Sala de Control de
+  Asuka); el Rifle Oxidado, HiAndromon (Sala de Operaciones, historia 0x11); la Garra Antigua, MasterTyranno (historia
+  0x04); la Varita Antigua, Pharaohmon (Ruinas Protocolo).
+- **Black Kings:** WarGreymon (ID Platino), MagnaGargomon (Casco Salvaje), Imperialdramon (Casco de Peligro),
+  Seraphimon (Traje de Tirador), WarGrowlmon (Armadura Peligro), KingNumemon (Adaptador BIT).
+- **Mazmorras:** la Bruja de Hielo, los Caballeros de Fuego y Oscuro, y los Maestros de Hielo (Chip PM), Fuego (Chip
+  Mente) y Oscuro (Adaptador EXP).
