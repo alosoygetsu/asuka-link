@@ -571,10 +571,12 @@ int native_coop_duel_take(int *kind, void *data, int max) {
     for (i = 0; i < DUEL_MSGS; i++) {
         if (in[i].seq == s_duelTaken + 1) {
             s_duelTaken++;
+            int size = SDL_min((int)in[i].size, DUEL_DATA); /* the other's word: never past the message's data */
+
             *kind = in[i].kind;
-            SDL_memcpy(data, in[i].data, SDL_min(max, in[i].size));
+            SDL_memcpy(data, in[i].data, SDL_min(max, size));
             native_coop_note("Duel: took message %d (kind %d)", in[i].seq, in[i].kind);
-            return in[i].size;
+            return size;
         }
     }
     return -1;

@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,1573 @@
+@@ -362,10 +362,1639 @@
      }
  }
  
@@ -341,8 +341,12 @@
 +static s32 coopTradeRoom(const NativeCoopTrade *in) {
 +    s32 i;
 +
++    if (in->count > COOP_TRADE_KINDS) { /* the other's word: never past the offer's lists */
++        return 0;
++    }
 +    for (i = 0; i < in->count; i++) {
-+        if (in->card[i] == 0 || in->card[i] >= COOP_CARDS || GAME.cards[in->card[i]] + in->copies[i] > CARD_COPIES_MAX) {
++        if (in->card[i] == 0 || in->card[i] >= COOP_CARDS || in->copies[i] == 0 ||
++            GAME.cards[in->card[i]] + in->copies[i] > CARD_COPIES_MAX) {
 +            return 0;
 +        }
 +    }
@@ -798,6 +802,54 @@
 +
 +static CoopTeam coopTeamMine;
 +static CoopTeam coopTeamTheirs;
++
++/* a party from the network is put into GAME.partners for the battle: 1 if every number in it is one the game can take
++   (party, slots, forms, equipment, level), and its mod forms are mods loaded here; else 0, with the reason logged */
++static s32 coopTeamValid(const CoopTeam *t) {
++    s32 i;
++    s32 k;
++    s32 any = 0;
++
++    for (i = 0; i < 3; i++) {
++        const PartnerStats *p = &t->partners[i].info;
++
++        if (t->party[i] < 0) {
++            continue;
++        }
++        if (t->party[i] >= PARTNER_COUNT || p->stats[STAT_LEVEL] < 1 || p->stats[STAT_LEVEL] > 99 ||
++            p->stats[STAT_MAX_HP] < 1) {
++            native_coop_note("A party from the network was refused: member %d isn't a partner the game knows", i);
++            return 0;
++        }
++        any = 1;
++        for (k = 0; k < 4; k++) {
++            if (p->slots[k] < -1 || p->slots[k] >= PARTNER_ENTRY_COUNT) {
++                native_coop_note("A party from the network was refused: a slot out of range");
++                return 0;
++            }
++        }
++        for (k = 0; k < 6; k++) {
++            if (p->equip[k] < 0 || p->equip[k] >= 0x193) {
++                native_coop_note("A party from the network was refused: equipment out of range");
++                return 0;
++            }
++        }
++        for (k = 0; k < PARTNER_ENTRY_COUNT; k++) {
++            s32 id = p->entries[k].id;
++
++            if (id < 0 || id >= NATIVE_MOD_FIRST_ID + 4) {
++                native_coop_note("A party from the network was refused: form %d out of range", id);
++                return 0;
++            }
++            if (id >= NATIVE_MOD_FIRST_ID && native_mod_at(id - NATIVE_MOD_FIRST_ID) == NULL) {
++                native_coop_note("A party from the network was refused: it has a Digimon mod (form %d) this game "
++                                 "doesn't have", id);
++                return 0;
++            }
++        }
++    }
++    return any;
++}
 +static Battle coopPvpBattle = {1, 15, MUSIC(2, 0)}; /* an encounter of none, the arena's stage and music */
 +
 +static s32 coopPvpBlob(void) {
@@ -919,6 +971,10 @@
 +    if (coopTrade.phase == COOP_TRADE_OPEN &&
 +        native_coop_blob_recv(coopTrade.peer, coopPvpBlob(), &coopTeamTheirs, sizeof coopTeamTheirs) == sizeof coopTeamTheirs &&
 +        native_coop_blob_sent(coopTrade.peer, coopPvpBlob())) {
++        if (!coopTeamValid(&coopTeamTheirs)) {
++            coopTradeEnd(COOP_TRADE_NO, T_CANCELLED);
++            return;
++        }
 +        coopTrade.phase = COOP_TRADE_READY;
 +    }
 +    /* both ready: "go" goes out a few frames (the field is left at once after), then the battle */
@@ -1184,6 +1240,12 @@
 +                n = 0;
 +            }
 +        }
++        for (k = 0; k < coopTrade.roomCount && n; k++) {
++            if (!coopTeamValid((const CoopTeam *)coopRoomTeams[k])) {
++                coopTradeEnd(COOP_TRADE_NO, T_CANCELLED);
++                return;
++            }
++        }
 +        if (n) {
 +            coopTrade.phase = COOP_TRADE_READY;
 +        }
@@ -1425,7 +1487,11 @@
 +                    coopTrade.phase = COOP_TRADE_OPEN; /* they went back before confirming: so does this side */
 +                } else if ((in.phase == COOP_TRADE_CONFIRM || in.phase == COOP_TRADE_DONE) && in.seen == out.offer &&
 +                           in.offer == theirs) {
-+                    /* both confirmed the same: theirs in, mine out, once */
++                    /* both confirmed the same: theirs in, mine out, once (theirs checked again: it came by network) */
++                    if (!coopTradeRoom(&in)) {
++                        coopTradeEnd(COOP_TRADE_NO, T_CANCELLED);
++                        return;
++                    }
 +                    for (i = 0; i < out.count; i++) {
 +                        GAME.cards[out.card[i]] -= out.copies[i];
 +                        if (GAME.cards[out.card[i]] < 0) {
@@ -1574,7 +1640,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +2155,9 @@
+@@ -592,6 +2221,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -1584,7 +1650,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +2211,9 @@
+@@ -645,6 +2277,9 @@
          }
          break;
      case TASK_RUN:
