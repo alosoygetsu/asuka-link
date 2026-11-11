@@ -91,10 +91,6 @@ map_objective = 0
 # 1: a journal row in the field menu (work in progress)
 journal = 0
 
-# 1: three more starter packs to choose from in a new game (Dragon, Tactical,
-# Mystic)
-extra_packs = 1
-
 # 1: partners can learn BladeGarurumon, a 45th Digimon (Growlmon and Grizzmon
 # at level 40), with its signature Solar Laser
 bladegarurumon = 1
@@ -121,14 +117,6 @@ ff_menu_speed = 0
 # Start on PRESS START (the ten seconds' timeout goes with it).
 skip_press_start = 0
 
-# 1: a partner that levels up in a battle gets its HP and MP back in full
-# (not its Digimon's levels).
-heal_on_levelup = 0
-
-# 1: the field menu gets a SAVE row (before QUIT) to save wherever the player
-# stands, not only at save points; loading puts the player back there. The
-# save has the same format, so it loads with the option off too.
-save_anywhere = 0
 
 # 0: the battle effects' own images (data/mods/effects/<id>/*.png) are left
 # out and the game's play. Switches in game, from the Mods tab.

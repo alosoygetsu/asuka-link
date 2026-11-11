@@ -88,10 +88,9 @@ int native_long_held(int held);
 #define NATIVE_TEXT_PRESSED(button) ((NATIVE_TEXT_BUTTONS() >> PAD.getButtonBit(0, button)) & 1)
 
 /* Extra starter packs (platform/packs.c): DRAGON, TACTICAL and MYSTIC, 3-5
-   after the game's three. The choice offers them while g_extra_packs is on;
+   after the game's three. Asuka Link's free team replaced the choice: they stay for the saves made with them;
    a game started with one plays as the pack it takes after in the lobby
    (NATIVE_PACK_SCENE: 1, Powerful), with its own partners there */
-extern int g_extra_packs;
 extern const int NATIVE_EXTRA_PACKS[3][3]; /* their partners */
 /* their texts, a text file as the game's in its language (LANGUAGE): 1-3 the
    names, 4-6 the labels D-F, 7-9 the packs' texts, 10 Veemon's, 11 its
@@ -116,9 +115,6 @@ void native_bladegarurumon_setup(void);
    (platform/mods.c; WFIGHTMN and STFGTREP patches). */
 extern int g_full_exp_share;
 extern int g_skip_press_start; /* skip_press_start = 1: the title has no PRESS START (STDWTITL menu.c) */
-extern int g_heal_on_levelup; /* heal_on_levelup = 1: a partner that levels up is healed (STFGTREP growth.c) */
-extern int g_save_anywhere;
-extern int g_save_from_menu;
 extern int g_full_exp_eligible[3];
 extern int g_full_exp_report;
 /* Digimon mods (platform/digimon_mods.c): a folder data/mods/digimon/<name>/digimon.json makes one more Digimon a partner can digivolve into

@@ -585,6 +585,17 @@
      if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP)) {
          task->choice--;
          if (task->choice < 0) {
+@@ -143,8 +688,8 @@
+     } else if (PAD_PRESSED(PAD_DOWN) || PAD_REPEATED(PAD_DOWN)) {
+         task->choice++;
+ #ifdef NATIVE
+-        if (task->choice > (g_extra_packs ? 5 : 2)) {
+-            task->choice = g_extra_packs ? 5 : 2;
++        if (task->choice > 5) {
++            task->choice = 5;
+         }
+ #else
+         if (task->choice > 2) {
 @@ -209,6 +754,14 @@
      PartnerChoice *task = createTask(STPLNMET_updateChoice, sizeof(PartnerChoice), sizeof(PartnerChoiceWindows));
  

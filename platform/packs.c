@@ -7,7 +7,6 @@
 #include "platform.h"
 #include "packs_text.h"
 
-int g_extra_packs = 1; /* extra_packs = 0: the choice has the game's three */
 
 /* The partners (0 Kotemon, 1 Kumamon, 2 Monmon, 3 Agumon, 4 Veemon,
    5 Guilmon, 6 Renamon, 7 Patamon) of packs 3, 4 and 5 */
@@ -114,7 +113,7 @@ const uint8_t *packs_file(int fid, long *size) {
     static long veemon_size;
     static int tried;
 
-    if (fid != NPC_VEEMON || !g_extra_packs) {
+    if (fid != NPC_VEEMON) {
         return NULL;
     }
     if (!tried) {

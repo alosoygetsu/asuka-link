@@ -14,12 +14,9 @@ int g_inactive_window = 0; /* inactive_window: 0 nothing, 1 mute, 2 pause the ga
 int g_give_form; /* --give ID (main.c) */
 int g_dna_other; /* native.h */
 int g_bladegarurumon = 1; /* bladegarurumon = 0: partners don't learn it (stfgtrep's growth.c) */
-int g_save_anywhere = 0; /* save_anywhere = 1: a SAVE row in the field menu (patches: main/menu/field_menu.c) */
-int g_save_from_menu = 0; /* the memory card screen was opened from that row: it goes back to the field */
 int g_menu_wrap = 0; /* menu_wrap = 1: a menu's cursor goes round at its ends (patches: native.h helpers) */
 int g_ff_menu_speed = 0; /* ff_menu_speed = 1: menus repeat at their normal pace in fast forward (patches: main/pad/port.c) */
 int g_skip_press_start = 0; /* skip_press_start = 1: the title shows its two options, not PRESS START (patches: stdwtitl/menu.c) */
-int g_heal_on_levelup = 0; /* heal_on_levelup = 1: a partner that levels up gets its HP and MP back (patches: stfgtrep/growth.c) */
 int g_full_exp_share = 1; /* full_exp_share = 1: full rewards for every non-KO party member */
 int g_full_exp_eligible[3]; /* battle-end HP > 0, including partners who stayed on the bench */
 int g_full_exp_report; /* the option captured once when a reward report starts */

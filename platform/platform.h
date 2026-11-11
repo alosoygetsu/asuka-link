@@ -261,7 +261,6 @@ void ff_cycle(void);        /* Tab / R3: the next speed */
 extern int g_map_objective; /* map_objective = 1: the map blinks the story's next area (mods.c) */
 extern int g_journal;       /* journal = 1: the field menu's journal row (mods.c) */
 extern int g_fast_travel;   /* fast_travel = 1: X on the map screen travels there (mods.c) */
-extern int g_extra_packs;   /* extra_packs = 0: the starter choice has the game's three (packs.c) */
 extern int g_bladegarurumon; /* bladegarurumon = 0: partners don't learn it (mods.c) */
 extern int g_custom_effects; /* custom_effects = 0: no effect images of data/mods/effects (effects.c) */
 extern int g_custom_sounds; /* custom_sounds = 0: no effect sounds of data/mods/effects, nor the sound library (effects.c) */
@@ -284,12 +283,9 @@ int native_script_compile(struct Json *root, short *out, char *err, int errsz); 
 void native_scripts_scan(void);
 int native_scripts_check(void); /* --check-mods: lists the script files, returns how many are rejected */
 extern int g_custom_scripts; /* custom_scripts = 0: the game's own battle scripts (scriptmod.c) */
-extern int g_save_anywhere; /* save_anywhere = 1: a SAVE row in the field menu (mods.c) */
-extern int g_save_from_menu;
 extern int g_menu_wrap;      /* menu_wrap = 1: a menu's cursor goes round at its ends (mods.c) */
 extern int g_ff_menu_speed;  /* ff_menu_speed = 1: menus repeat at their normal pace in fast forward (mods.c) */
 extern int g_skip_press_start; /* skip_press_start = 1: no PRESS START on the title (mods.c) */
-extern int g_heal_on_levelup; /* heal_on_levelup = 1: a partner that levels up is healed in full (mods.c) */
 extern int g_full_exp_share; /* full_exp_share = 1: full rewards for non-KO party members (mods.c) */
 extern int g_full_exp_eligible[3]; /* battle-end reward eligibility by party slot (mods.c) */
 extern int g_full_exp_report; /* the option captured for the current report (mods.c) */

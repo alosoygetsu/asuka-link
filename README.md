@@ -165,11 +165,8 @@ button can be changed in the options menu's Input tab, **Controls**.
 | Objective on map | the map screen blinks the area where the story's next step happens (visited or not); on the other server's map when the step is there. Off by default |
 | Digilog | a last row of the field menu, DIGILOG: a journal in the item list's own panels, two tabs turned with left / right. Active: the story's current step and the side quests found (8 DDNA bosses, the old weapons, the dungeons' knights and masters, the Black Kings, the Undersea Base's two (while the story is there) and a few errands, each titled with its reward's name); Done: what is behind. Each with the place it happens at and what to do; L1 / R1 turn the pages, X shows the place on the map. Off by default |
 | Fast forward | x2, x3 or x5 (Tab or R3 while playing); the music keeps its speed. Not saved |
-| Extra starter packs | three more packs to pick in a new game: Dragon (Agumon, Guilmon, Veemon), Tactical (Kotemon, Monmon, Patamon), Mystic (Kumamon, Renamon, Veemon) |
 | BladeGarurumon | a 45th Digimon every partner can learn, with Growlmon and Grizzmon at level 40: its own model (made at start from your disc's), techniques and signature, Solar Laser. Saves stay standard memory cards: its progress sits in the card file's spare space (see *Extra Digimon and your saves*), and an older save is carried over |
 | Full EXP Share | every party partner still above 0 HP at battle end gets the full partner EXP, even if benched; its selected or used digivolutions get full Digimon EXP. Knocked-out partners get neither. Each partner gets the whole reward, not a share, so with three partners the party earns three times the EXP. Off by default |
-| Heal on level up | a partner that levels up in a battle (not its Digimon) gets its HP and MP back in full, so grinding needs no trips to an inn |
-| Save anywhere | a SAVE row in the field menu (before QUIT): save wherever you stand, not only at save points, and loading puts you back in the same spot. It uses the game's own memory card screen and the same save format, so the save also loads with the option off. |
 | Custom effects | on by default: the battle effects' own images (`data/mods/effects/`, see below) play instead of the game's. Off plays the game's own; it switches in game, from the Mods tab, and shows at the next effect |
 | Custom sounds | on by default: the sound an effect's `effect.json` gives (see below) plays instead of the game's hit sound (an effect without one keeps the game's), and so do the sounds of the sound library that replace one of the game's. It switches in game, from the Mods tab |
 | Custom scripts | on by default: the battle scripts of `data/mods/scripts/` (see below) play instead of the game's for the fighters that have one. Off plays the game's own; it switches in game, from the Mods tab |
@@ -197,10 +194,8 @@ button can be changed in the options menu's Input tab, **Controls**.
     fast_travel = 0      ; 1: X on the map screen travels to the area
     map_objective = 0    ; 1: the map screen blinks the story's next area
     journal = 0          ; 1: the field menu's journal row
-    extra_packs = 1      ; 0: only the game's three starter packs
     bladegarurumon = 1   ; 0: partners don't learn BladeGarurumon
     full_exp_share = 0   ; 1: full EXP and Digimon EXP for non-KO party members
-    save_anywhere = 0    ; 1: a SAVE row in the field menu, to save anywhere
     custom_effects = 1   ; 0: the game's own effect images, not data/mods/effects'
     custom_sounds = 1    ; 0: no effect sounds from data/mods/effects
                          ; F12 in game saves the picture to screenshots/ by the exe
