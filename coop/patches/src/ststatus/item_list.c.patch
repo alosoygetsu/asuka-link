@@ -82,7 +82,14 @@
  #define TAB_ACTIVE 0
  #define TAB_DONE 1
  s32 STSTATUS_objectiveModeAt(s32 progress); /* map_screen.c */
-@@ -426,6 +484,7 @@
+@@ -421,11 +479,14 @@
+  * field's flag) while the story is not past `last`; done once that flag is
+  * set
+  */
++#include "journal_steps.h" /* Asuka Link's steps of the story and the side quests */
++
+ typedef struct SideQuest {
+     u16 item; /* its reward, the title */
      u16 mode; /* its field */
      u16 done; /* a flag code (FLAG) */
      u16 last; /* the last story step it can be done at */
@@ -90,7 +97,7 @@
  } SideQuest;
  #define ANY_STEP 0xFF
  
-@@ -449,7 +508,7 @@
+@@ -449,7 +510,7 @@
      { 0x033, 0x2D3, FLAG(0x40, 0x85) }, /* Mind Chip, Fire Master */
      { 0x141, 0x2D4, FLAG(0x40, 0x87) }, /* EXP Adapter, Dark Master */
      { 0x18C, 0x293, FLAG(0x40, 0x1D) }, /* Crony ID, Kenny */
@@ -99,7 +106,18 @@
      { 0x192, 0x211, FLAG(0x40, 0xA1) }, /* Folder Bag, the tamers */
      { 0x02A, 0x28B, FLAG(0x40, 0x77) }, /* Platinum ID, BK WarGreymon */
      { 0x0F2, 0x295, FLAG(0x40, 0x79) }, /* Wild Helmet, BK MegaGargomon */
-@@ -484,26 +543,39 @@
+@@ -461,7 +522,10 @@
+        the Wing Helmet's event follows the fight that sets 0x46 */
+     { 0x0CB, 0x2DB, FLAG(0x40, 0x45), 0x20 }, /* Dramon Guard */
+     { 0x0F0, 0x2DC, FLAG(0x40, 0x46), 0x20 }, /* Wing Helmet */
++    /* Asuka Link's (tools/journal_steps.py): their texts are the co-op's, not packs_text's */
++    JOURNAL_NEW_SIDE_QUESTS
+ };
++#define PORT_SIDE_QUESTS 29 /* the ones with a text in packs_text (TEXT_SIDE_QUEST) */
+ #define SIDE_QUEST_COUNT (s32)(sizeof SIDE_QUESTS / sizeof SIDE_QUESTS[0])
+ #define JOURNAL_MAX (JOURNAL_LAST_STEP + 1 + SIDE_QUEST_COUNT)
+ 
+@@ -484,26 +548,40 @@
      s32 cursor;
      s32 page;
      s32 pageCount;
@@ -109,6 +127,7 @@
      s32 arrowFrame;
      s32 time;
 -    PanelAnim fades[3]; /* the list, its title, the bar and the help */
++    s32 stepView; /* the step shown (square turns them), -1 the current one */
 +    PanelAnim fades[3]; /* [0] opens the panels; the item list's other two run with it */
  } Journal;
  
@@ -145,7 +164,7 @@
  
  static void *journalTexts(void) {
      return (void *)native_packs_text(LANGUAGE);
-@@ -515,6 +587,13 @@
+@@ -515,6 +593,13 @@
      return FLAGS_00.checkCondition((q->mode & 0xFF) | 0x2000, 1) == 1 && GAME.progress <= (q->last ? q->last : ANY_STEP);
  }
  
@@ -159,7 +178,21 @@
  static s32 sideQuestDone(s32 quest) {
      return FLAGS_00.checkCondition(SIDE_QUESTS[quest].done, 1) == 1;
  }
-@@ -566,30 +645,81 @@
+@@ -545,7 +630,13 @@
+ }
+ 
+ /* An entry's field */
++static s32 journalStepMode; /* the shown step's field, 0 for the entry's (showJournalEntry) */
++static s32 journalStepShown, journalStepIndex, journalStepTotal, journalStepIsDone, journalStepText;
++
+ static s32 journalMode(s32 entry) {
++    if (journalStepMode != 0) {
++        return journalStepMode;
++    }
+     return entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode;
+ }
+ 
+@@ -566,30 +657,187 @@
      return mode >= 0x200 && mode <= 0x2D6;
  }
  
@@ -182,6 +215,84 @@
 +
 +/* The chosen entry: its place, its title and kind, its record, its reward
 +   and its text */
++/* Asuka Link's steps: an entry's (a story step's, or a side quest's by its item), how many, and the one to do: the
++   next after the last that holds (an item handed in stops holding, and a quest doesn't go back for it), n when all do */
++static s32 journalSteps(s32 entry, const JournalStep **out) {
++    const JournalSteps *list = entry >= 0 ? JOURNAL_STORY : JOURNAL_QUEST_STEPS;
++    s32 count = entry >= 0 ? (s32)(sizeof JOURNAL_STORY / sizeof JOURNAL_STORY[0])
++                           : (s32)(sizeof JOURNAL_QUEST_STEPS / sizeof JOURNAL_QUEST_STEPS[0]);
++    s32 key = entry >= 0 ? entry : SIDE_QUESTS[-1 - entry].item;
++    s32 i;
++
++    for (i = 0; i < count; i++) {
++        if (list[i].key == key) {
++            *out = &JOURNAL_STEPS[list[i].first];
++            return list[i].count;
++        }
++    }
++    return 0;
++}
++
++static s32 journalStepDone(const JournalStep *step) {
++    if ((step->code & 0xF000) == 0xF000) {
++        return GAME.progress > (step->code & 0xFFF);
++    }
++    return FLAGS_00.checkCondition(step->code, 1) == 1;
++}
++
++static s32 journalStepNow(const JournalStep *steps, s32 n) {
++    s32 now = 0;
++    s32 i;
++
++    for (i = 0; i < n; i++) {
++        if (journalStepDone(&steps[i])) {
++            now = i + 1;
++        }
++    }
++    return now;
++}
++
++/* "Step k of n", made in a one-string text file of the co-op's words and digits */
++static void *journalStepCount(s32 k, s32 n) {
++    static u32 file[16];
++    s32 *texts = (s32 *)native_coop_text(LANGUAGE);
++    u8 *out = (u8 *)&file[2];
++    u8 *end = (u8 *)&file[16] - 1;
++    s32 part[4];
++    s32 i;
++
++    part[0] = COOP_TEXT_JOURNAL; /* "Step " */
++    part[1] = -k;
++    part[2] = COOP_TEXT_JOURNAL + 1; /* " of " */
++    part[3] = -n;
++    for (i = 0; i < 4; i++) {
++        char digits[4];
++        s32 d = 0;
++        s32 v = -part[i];
++        const u8 *src;
++
++        if (part[i] > 0) {
++            for (src = (const u8 *)getString(texts, part[i]); *src != 0 && out < end; src++) {
++                *out++ = *src;
++            }
++            continue;
++        }
++        do {
++            digits[d++] = (char)(v % 10);
++            v /= 10;
++        } while (v != 0 && d < 3);
++        while (d > 0) {
++            for (src = (const u8 *)getString(texts, COOP_TEXT_JOURNAL + 2 + digits[--d]); *src != 0 && out < end; src++) {
++                *out++ = *src;
++            }
++        }
++    }
++    *out = 0;
++    file[0] = 1;
++    file[1] = 8;
++    return file;
++}
++
  static void showJournalEntry(Journal *journal, JournalWindows *windows) {
 +    void *items = FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_NAMES));
 +    s32 done = journal->tab == TAB_DONE;
@@ -204,6 +315,23 @@
      }
      entry = journal->entries[journal->cursor];
 +    need = done ? 0 : journalNeeds(entry);
++    journalStepMode = 0;
++    {
++        const JournalStep *steps;
++        s32 n = journalSteps(entry, &steps);
++
++        journalStepShown = n != 0;
++        if (n != 0) {
++            s32 now = done ? n - 1 : journalStepNow(steps, n);
++            s32 v = journal->stepView >= 0 ? journal->stepView : (now < n ? now : n - 1);
++
++            journalStepIndex = v;
++            journalStepTotal = n;
++            journalStepIsDone = done || journalStepDone(&steps[v]);
++            journalStepText = steps[v].text;
++            journalStepMode = steps[v].mode;
++        }
++    }
      place = journalPlace(journalMode(entry));
      if (place != 0) {
          windows->area->setString(windows->area, FILE_CACHE.load(TEXT_FILE(TEXT_STAGE_NAMES)), place);
@@ -213,8 +341,7 @@
 +    }
 +    if (entry >= 0) {
 +        windows->questTitle->setString(windows->questTitle, journalTexts(), TEXT_STEP(entry));
-     } else {
--        windows->area->setVisible(windows->area, 0);
++    } else {
 +        windows->questTitle->setString(windows->questTitle, items, journalReward(entry));
 +    }
 +    windows->state->setString(windows->state, journalTexts(), done ? TEXT_DONE : entry >= 0 ? TEXT_MAIN : TEXT_SIDE);
@@ -226,8 +353,13 @@
 +        windows->keys[3]->setRightAlign(windows->keys[3], 1);
 +        windows->keys[3]->setPos(windows->keys[3], windows->keys[2]->x - windows->keys[2]->alignWidth - 8, FOOT_Y + 1);
 +    }
-+    windows->record->setString(windows->record, journalTexts(), need != 0 ? TEXT_NEEDS : TEXT_RECORD(journal->tab));
-+    windows->record->setPalette(windows->record, need != 0 ? PALETTE_YELLOW : PALETTE_WHITE);
++    if (journalStepShown && need == 0) { /* "Step k of n", green once done */
++        windows->record->setString(windows->record, journalStepCount(journalStepIndex + 1, journalStepTotal), 0);
++        windows->record->setPalette(windows->record, journalStepIsDone ? PALETTE_GREEN : PALETTE_WHITE);
++    } else {
++        windows->record->setString(windows->record, journalTexts(), need != 0 ? TEXT_NEEDS : TEXT_RECORD(journal->tab));
++        windows->record->setPalette(windows->record, need != 0 ? PALETTE_YELLOW : PALETTE_WHITE);
++    }
 +    windows->record->setPos(windows->record, done ? INNER_X + 12 : INNER_X, RECORD_Y + 13);
 +    if (need != 0) {
 +        windows->need->setString(windows->need, items, need);
@@ -236,10 +368,18 @@
 +        setJournalLabel(windows->rewardLabel, TEXT_REWARD_LABEL(journal->tab));
 +        windows->reward->setString(windows->reward, items, journalReward(entry));
 +        windows->reward->setPalette(windows->reward, PALETTE_GREEN);
++    }
++    if (journalStepShown) { /* the step's text */
++        windows->help->setString(windows->help, native_coop_text(LANGUAGE), journalStepText);
++    } else if (entry < 0 && -1 - entry >= PORT_SIDE_QUESTS) {
++        windows->help->setString(windows->help, native_coop_text(LANGUAGE), JOURNAL_NEW_QUESTS[-1 - entry - PORT_SIDE_QUESTS].text);
+     } else {
+-        windows->area->setVisible(windows->area, 0);
++        windows->help->setString(windows->help, journalTexts(), entry >= 0 ? TEXT_STEP(entry) + 1 : TEXT_SIDE_QUEST(-1 - entry));
      }
 -    windows->state->setString(windows->state, journalTexts(),
 -                              journal->tab == TAB_DONE ? TEXT_DONE : entry >= 0 ? TEXT_MAIN : TEXT_SIDE);
-     windows->help->setString(windows->help, journalTexts(), entry >= 0 ? TEXT_STEP(entry) + 1 : TEXT_SIDE_QUEST(-1 - entry));
+-    windows->help->setString(windows->help, journalTexts(), entry >= 0 ? TEXT_STEP(entry) + 1 : TEXT_SIDE_QUEST(-1 - entry));
  }
  
 -/* The page's titles, the story's highlighted; its arrows and number */
@@ -247,7 +387,7 @@
  static void showJournalPage(Journal *journal, JournalWindows *windows) {
      TextWindow *window;
      s32 i;
-@@ -604,28 +734,18 @@
+@@ -604,28 +852,18 @@
              window->setString(window, journalTexts(), TEXT_STEP(journal->entries[n]));
              window->setPalette(window, journal->tab == TAB_ACTIVE ? PALETTE_BLUE : PALETTE_WHITE);
          } else {
@@ -278,7 +418,7 @@
      windows->cursor->setVisible(windows->cursor, journal->count != 0);
  }
  
-@@ -633,66 +753,186 @@
+@@ -633,66 +871,186 @@
      s32 i;
  
      if (show) {
@@ -506,7 +646,32 @@
      }
  }
  
-@@ -730,7 +970,7 @@
+@@ -705,6 +1063,7 @@
+     if (PAD_PRESSED(PAD_LEFT) || PAD_PRESSED(PAD_RIGHT)) {
+         SOUND.playSound(SOUND_MENU_MOVE);
+         journal->tab ^= 1;
++        journal->stepView = -1;
+         journal->cursor = 0;
+         journal->page = 0;
+         fillJournal(journal);
+@@ -723,14 +1082,24 @@
+         journal->cursor = journal->cursor < journal->count - 1 ? journal->cursor + 1 : cursor;
+     }
+     if (cursor == journal->cursor) {
++        const JournalStep *steps;
++        s32 n = journal->count != 0 ? journalSteps(journal->entries[journal->cursor], &steps) : 0;
++
++        if (PAD_PRESSED(PAD_SQUARE) && n > 1) { /* Asuka Link: square turns the entry's steps */
++            SOUND.playSound(SOUND_CURSOR);
++            journal->stepView = journal->stepView < 0 ? (journalStepIndex + 1) % n : (journal->stepView + 1) % n;
++            showJournalEntry(journal, windows);
++            return 1;
++        }
+         return 0;
+     }
++    journal->stepView = -1;
+     SOUND.playSound(SOUND_CURSOR);
+     journal->page = journal->cursor / JOURNAL_ROWS;
      if (page != journal->page) {
          showJournalPage(journal, windows);
      }
@@ -515,7 +680,7 @@
      showJournalEntry(journal, windows);
      return 1;
  }
-@@ -799,21 +1039,36 @@
+@@ -799,21 +1168,36 @@
          if (FILE_CACHE.isLoading(TEXT_FILE(TEXT_STAGE_NAMES)) || FILE_CACHE.isLoading(TEXT_FILE(TEXT_ITEM_NAMES))) {
              break;
          }
@@ -564,12 +729,14 @@
          windows->cursor->setVisible(windows->cursor, 0);
          journal->nextState(journal);
          break;
-@@ -833,7 +1088,7 @@
+@@ -833,8 +1217,9 @@
      Journal *journal = createTask(updateJournal, sizeof(Journal), sizeof(JournalWindows));
  
      journal->layer = SCREEN_LAYER;
 -    journal->depth = 3;
 +    journal->depth = 6; /* under it, the menu's background at 7 */
      journal->menu = menu;
++    journal->stepView = -1;
      journal->current = GAME.progress < 0 ? 0 : GAME.progress > JOURNAL_LAST_STEP ? JOURNAL_LAST_STEP : GAME.progress;
      if (STSTATUS_journalMap == 3) {
+         journal->tab = journalTab;

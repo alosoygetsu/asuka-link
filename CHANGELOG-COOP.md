@@ -5,6 +5,22 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta. Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
 port `v0.18.9` más la versión 1 del cooperativo.
 
+## v1.3.0
+Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.0.
+
+- **Pasos en el Digilog (en pruebas):** la historia y las misiones ya no son una sola frase.
+  - **Dónde se ven:** donde ponía "En curso." ahora pone **"Paso 2 de 5"** (en verde si ese paso ya está hecho). La
+    caja de abajo dice qué toca hacer, y la foto, el lugar y el MAPA (X) son los de ese paso.
+  - **□ (Cuadrado)** va pasando por todos los pasos de la misión, para ver lo que ya hiciste y lo que queda.
+  - **La historia:** pasos dentro de casi todos sus tramos (el Líder Seiryu, la Tarjeta Azul, la máscara de Sepikmon,
+    el Chip TNT, Ciudad Byakko, los sensores MONSTER, el Mundo Real, Amaterasu…).
+  - **Las 8 misiones de DDNA:** hablar con el investigador DRI, el encargo, el combate y el DDNA.
+- **Misiones nuevas en el Digilog:** la **Caña de Pescar** (Tai Kong Wang, en Shell Beach, con sus materiales como
+  pasos), el **ID El Dorado** y los torneos de cartas: el **Trofeo Asuka** (Duel Island) y el **Trofeo Sol** (con el
+  micrófono de Etemon).
+- Los pasos salen en español; en los demás idiomas, de momento en inglés.
+- Lo que falta (las cadenas de armas, el resto de misiones) está en `docs/MISIONES.md`.
+
 ## v1.2.0
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.1.0.
 
