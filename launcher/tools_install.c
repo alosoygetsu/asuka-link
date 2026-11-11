@@ -1,5 +1,6 @@
 /* A tool's download: which release is newer than what's installed, and putting it in the tool's folder. */
 #include <windows.h> /* before launcher.h, whose L and enums its headers would trip on */
+#include <bcrypt.h>
 #include "launcher.h"
 #include "tools.h"
 
@@ -37,8 +38,42 @@ static bool to_file(const void *data, int size, void *ctx)
     return !SDL_GetAtomicInt(&s_stop) && SDL_WriteIO(ctx, data, size) == (size_t)size;
 }
 
-/* url's zip into tmp and unpacked there, the zip gone: S_T_READY or the string that says why not */
-int fetch_unpack(const char *url, const char *tmp)
+/* the file's SHA-256 in lowercase hex (64 characters and the end) into out; false if it can't be read */
+bool sha256_file(const char *path, char out[65])
+{
+    BCRYPT_ALG_HANDLE alg = NULL;
+    BCRYPT_HASH_HANDLE hash = NULL;
+    UCHAR digest[32];
+    bool ok = false;
+    SDL_IOStream *file = SDL_IOFromFile(path, "rb");
+    if (file && BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, NULL, 0) == 0 &&
+        BCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0) == 0) {
+        static UCHAR buf[65536];
+        size_t n;
+        ok = true;
+        while (ok && (n = SDL_ReadIO(file, buf, sizeof buf)) > 0) {
+            ok = BCryptHashData(hash, buf, (ULONG)n, 0) == 0;
+        }
+        ok = ok && SDL_GetIOStatus(file) == SDL_IO_STATUS_EOF && BCryptFinishHash(hash, digest, sizeof digest, 0) == 0;
+    }
+    if (hash) {
+        BCryptDestroyHash(hash);
+    }
+    if (alg) {
+        BCryptCloseAlgorithmProvider(alg, 0);
+    }
+    if (file) {
+        SDL_CloseIO(file);
+    }
+    for (int i = 0; ok && i < 32; i++) {
+        SDL_snprintf(out + 2 * i, 3, "%02x", digest[i]);
+    }
+    return ok;
+}
+
+/* url's zip into tmp and unpacked there, the zip gone: S_T_READY or the string that says why not. With sha256 (64 hex
+   characters), a zip whose SHA-256 isn't that one is refused before it's unpacked: a broken or wrong download */
+int fetch_unpack(const char *url, const char *tmp, const char *sha256)
 {
     char zip[1300], tar[MAX_PATH + 16];
     SDL_snprintf(zip, sizeof zip, "%s/tool.zip", tmp);
@@ -54,6 +89,13 @@ int fetch_unpack(const char *url, const char *tmp)
         native_log(stopped ? "%s: cancelled" : "%s: can't download it", url);
         SDL_RemovePath(tmp);
         return stopped ? S_T_CANCELLED : S_T_FAILED;
+    }
+    char got[65];
+    if (sha256 && !(sha256_file(zip, got) && SDL_strncasecmp(got, sha256, 64) == 0)) {
+        native_log("%s: its SHA-256 isn't the release's (%.64s): not installed", url, sha256);
+        SDL_RemovePath(zip);
+        SDL_RemovePath(tmp);
+        return S_T_FAILED;
     }
     /* Windows' own tar, by its full path: the zip's in a folder of plain names, whatever the path above it */
     SDL_SetAtomicInt(&s_phase, P_UNPACK);
@@ -114,7 +156,7 @@ int tool_install(int i)
         return S_T_FAILED; /* the log says why */
     }
     SDL_snprintf(url, sizeof url, "https://github.com/%s/releases/download/%s/%s-%s-win64.zip", TOOLS[i].repo, tag, TOOLS[i].folder, tag);
-    const int got = fetch_unpack(url, tmp);
+    const int got = fetch_unpack(url, tmp, NULL);
     if (got != S_T_READY) {
         return got;
     }
@@ -158,5 +200,10 @@ int tools_selftest(void)
     bad += tag_from_location("https://github.com/o/r/releases", "o/r", out, sizeof out); /* no release yet */
     bad += tag_from_location("https://github.com/o/other/releases/tag/v1.2.3", "o/r", out, sizeof out);
     bad += tag_from_location("https://github.com/o/r/releases/tag/nightly", "o/r", out, sizeof out);
+    char path[1300], sha[65];
+    path_in_root(path, sizeof path, ".sha256-test.tmp"); /* SHA-256("abc"), the standard's own example */
+    bad += !SDL_SaveFile(path, "abc", 3) || !sha256_file(path, sha) ||
+           SDL_strcmp(sha, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad") != 0;
+    SDL_RemovePath(path);
     return bad;
 }

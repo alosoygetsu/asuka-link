@@ -48,7 +48,22 @@ static int SDLCALL update_thread(void *unused)
     char tmp[1200], url[512], a[1300], b[1300];
     path_in_root(tmp, sizeof tmp, ".update-tmp");
     release_zip_url(url, sizeof url);
-    int result = fetch_unpack(url, tmp);
+    /* the release's SHA-256 (release.ps1 puts <zip>.sha256 beside it): checked when it's there; releases before
+       v1.1.0 have none */
+    char sum_url[600], sha[65] = "";
+    SDL_snprintf(sum_url, sizeof sum_url, "%s.sha256", url);
+    char *sum = net_text(sum_url);
+    if (sum) {
+        int n = 0;
+        while (n < 64 && SDL_isxdigit((unsigned char)sum[n])) {
+            n++;
+        }
+        if (n == 64) {
+            SDL_strlcpy(sha, sum, sizeof sha);
+        }
+        SDL_free(sum);
+    }
+    int result = fetch_unpack(url, tmp, sha[0] ? sha : NULL);
     SDL_snprintf(a, sizeof a, "%s/dw2003.exe", tmp);
     SDL_snprintf(b, sizeof b, "%s/dw3launcher.exe", tmp);
     if (result == S_T_READY && !(SDL_GetPathInfo(a, NULL) && SDL_GetPathInfo(b, NULL))) {
