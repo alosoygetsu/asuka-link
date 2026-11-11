@@ -72,33 +72,39 @@ def code(c, v):
     if c < 0x6000: return f"F{c >> 8:02x}:{c & 0xFF:02x}={v}"
     return f"{c:#x}={v}"
 
-# --busca CÓDIGO[,CÓDIGO...]: en todos los mapas, las conversaciones cuyas acciones tocan esos códigos (hex: una marca
-# como 0x0601, un objeto como 0x8063), en lugar de las de unos modos
-SEARCH = set()
-if len(sys.argv) > 2 and sys.argv[1] == "--busca":
-    SEARCH = {int(x, 16) for x in sys.argv[2].split(",")}
-    sys.argv[1:] = []
-want = {int(m, 16) for m in sys.argv[1:]}
-for f in sorted(glob.glob(str(DATA / "stages" / "wstag*.json"))):
-    d = json.load(open(f))
-    modes = [m[0] for m in d.get("euModes") or d.get("modes") or []]
-    if not SEARCH and not want & set(modes):
-        continue
-    text = (DATA / "files" / ("%04d.bin" % (d["textFile"] + 4))).read_bytes()
-    print(f"==== {Path(f).stem} modos {[hex(m) for m in modes]}")
-    seen = set()
-    for a in d.get("actors", []):
-        ac = [code(*c) for c in a.get("conditions", []) if code(*c)]
-        for t in a.get("talks", []):
-            tc = [code(*c) for c in t.get("conditions", []) if code(*c)]
-            ta = [code(*c) for c in t.get("actions", []) if code(*c)]
-            if SEARCH and not any((x[0] & 0xF1FF if x[0] & 0x8000 and x[0] < 0x9000 else x[0]) in SEARCH or x[0] in SEARCH for x in t.get("actions", [])):
-                continue
-            if not ta or (t["entry"], tuple(sorted(tc)), tuple(ta)) in seen:  # solo lo que hace algo, una vez
-                continue
-            seen.add((t["entry"], tuple(sorted(tc)), tuple(ta)))
-            said = dec(entry(text, t["entry"]), True)[:160]
-            print(f"  actor {a['id']} [{', '.join(ac)}] talk {t['entry']} si [{', '.join(tc)}] -> [{', '.join(ta)}]")
-            print(f"      «{said}»")
-    for s in d.get("slots", []):
-        pass
+def main():
+    # --busca CÓDIGO[,CÓDIGO...]: en todos los mapas, las conversaciones cuyas acciones tocan esos códigos (hex: una marca
+    # como 0x0601, un objeto como 0x8063), en lugar de las de unos modos
+    global SEARCH
+    SEARCH = set()
+    if len(sys.argv) > 2 and sys.argv[1] == "--busca":
+        SEARCH = {int(x, 16) for x in sys.argv[2].split(",")}
+        sys.argv[1:] = []
+    want = {int(m, 16) for m in sys.argv[1:]}
+    for f in sorted(glob.glob(str(DATA / "stages" / "wstag*.json"))):
+        d = json.load(open(f))
+        modes = [m[0] for m in d.get("euModes") or d.get("modes") or []]
+        if not SEARCH and not want & set(modes):
+            continue
+        text = (DATA / "files" / ("%04d.bin" % (d["textFile"] + 4))).read_bytes()
+        print(f"==== {Path(f).stem} modos {[hex(m) for m in modes]}")
+        seen = set()
+        for a in d.get("actors", []):
+            ac = [code(*c) for c in a.get("conditions", []) if code(*c)]
+            for t in a.get("talks", []):
+                tc = [code(*c) for c in t.get("conditions", []) if code(*c)]
+                ta = [code(*c) for c in t.get("actions", []) if code(*c)]
+                if SEARCH and not any((x[0] & 0xF1FF if x[0] & 0x8000 and x[0] < 0x9000 else x[0]) in SEARCH or x[0] in SEARCH for x in t.get("actions", [])):
+                    continue
+                if not ta or (t["entry"], tuple(sorted(tc)), tuple(ta)) in seen:  # solo lo que hace algo, una vez
+                    continue
+                seen.add((t["entry"], tuple(sorted(tc)), tuple(ta)))
+                said = dec(entry(text, t["entry"]), True)[:160]
+                print(f"  actor {a['id']} [{', '.join(ac)}] talk {t['entry']} si [{', '.join(tc)}] -> [{', '.join(ta)}]")
+                print(f"      «{said}»")
+        for s in d.get("slots", []):
+            pass
+
+
+if __name__ == "__main__":
+    main()
