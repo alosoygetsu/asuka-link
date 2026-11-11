@@ -1,5 +1,5 @@
-/* The model viewer and the field editor: found if they're there, else downloaded next to the launcher, set up to
-   read the port's data, and started. Their releases unpack to a folder of their own, whose ../data is the port's.
+/* The model viewer and the field editor: found if they're there (a local build, for making mods), set up to read the
+   port's data, and started. Asuka Link doesn't download them: Tools only lists the ones found (screens.c). Their releases unpack to a folder of their own, whose ../data is the port's.
    Nothing here deletes or stops anything but its own download. */
 #include "launcher.h"
 #include "extract.h"
@@ -176,9 +176,13 @@ void tool_activate(int i)
         return;
     }
     const bool found = tool_find(i, exe, sizeof exe);
-    if (found && tool_ready(i, exe)) {
+    if (!found) { /* Asuka Link: never downloaded */
+        g_app.note = L->s[S_T_NO_START];
+        return;
+    }
+    if (tool_ready(i, exe)) {
         launch(i, exe);
-    } else if (i == VIEWER && !data_has_file("names.txt") && !(found && viewer_has_data(exe))) {
+    } else if (i == VIEWER && !data_has_file("names.txt") && !viewer_has_data(exe)) {
         /* a game read before the extraction kept the disc's file names: those the viewer needs are only on the disc */
         g_app.note = L->s[S_T_NEED_DISC];
         disc_ask(disc_chosen);
@@ -202,6 +206,12 @@ void tool_value(int i, char *out, int size)
     }
     const bool found = tool_find(i, exe, sizeof exe);
     SDL_strlcpy(out, L->s[!found ? S_T_GET : tool_ready(i, exe) ? S_T_OPEN : S_T_SETUP], size);
+}
+
+bool tool_present(int i)
+{
+    char exe[1200];
+    return tool_find(i, exe, sizeof exe);
 }
 
 int tool_update_index(void)

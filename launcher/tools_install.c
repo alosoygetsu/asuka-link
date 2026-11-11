@@ -81,6 +81,7 @@ static void stamp_path(int i, char *out, int size)
    One without a stamp, from a launcher before this one or unpacked by hand, is offered the release once */
 void tools_check(void)
 {
+    return; /* Asuka Link: the tools are local builds, nothing is asked of their repos */
     for (int i = 0; i < TOOLS_COUNT; i++) {
         if (s_faked && i == VIEWER) {
             continue;

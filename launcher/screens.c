@@ -61,8 +61,15 @@ const Row *rows(void)
     if (s_screen == SC_SETTINGS) {
         return TABS[s_tab];
     }
-    if (s_screen == SC_TOOLS) {
-        return TOOLS;
+    if (s_screen == SC_TOOLS) { /* the viewer and the editor only when there's a local build of them */
+        static Row here[SDL_arraysize(TOOLS)];
+        int n = 0;
+        for (int i = 0; i < (int)SDL_arraysize(TOOLS); i++) {
+            if (!(TOOLS[i].kind == R_ACTION && ((TOOLS[i].id == S_VIEWER && !tool_present(0)) || (TOOLS[i].id == S_EDITOR && !tool_present(1))))) {
+                here[n++] = TOOLS[i];
+            }
+        }
+        return here;
     }
     if (s_screen == SC_SAVES) {
         return SAVES;

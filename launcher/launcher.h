@@ -137,7 +137,8 @@ bool net_redirect(const char *url, char *out, int size); /* where a redirect poi
 /* tools.c: the model viewer (0) and the field editor (1) */
 void tool_activate(int tool);
 void tool_value(int tool, char *out, int size);
-void tools_check(void);        /* blocking: which of those the launcher installed have a newer release */
+void tools_check(void);        /* blocking: which of those the launcher installed have a newer release (Asuka Link: none) */
+bool tool_present(int tool);   /* its exe is here: a local build (tools.c tool_find) */
 int tool_update_index(void);   /* the tool with an update on offer, or being updated, or -1 */
 bool tool_update_has(int tool);   /* its Update button is there to press */
 const char *tool_update_tag(int tool);
