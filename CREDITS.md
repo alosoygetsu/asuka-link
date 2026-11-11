@@ -7,8 +7,9 @@ branch `coop`): playing together online, card trades, battles between players an
 character creator, on top of the native port. None of it would exist without:
 
 - **Feerdus**, whose [native port of Digimon World 2003](https://github.com/Feerdus95/dw3-native-port) (MIT License,
-  © 2026 Feerdus) is the game this fork runs: the PC platform layer, the launcher, the options and every mod. The fork
-  keeps its patches as they are and adds its own in `native/coop/`, so that the port's updates keep coming in.
+  © 2026 Feerdus) is the game this fork runs: the PC platform layer, the launcher, the options and every mod. Asuka Link
+  is based on its v0.18.9: it keeps the port's patches as they are, adds its own in `native/coop/`, and has been
+  maintained on its own since v1.0.0.
 - **ReGame-Labs and juandav**, for [dw3_decomp](https://github.com/ReGame-Labs/dw3_decomp), the decompiled game both
   the port and the co-op are built from.
 - Everyone credited below, whose work the port stands on.

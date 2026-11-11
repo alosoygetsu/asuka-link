@@ -8,8 +8,8 @@ Este repositorio es un fork de [Feerdus95/dw3-native-port](https://github.com/Fe
 de *Digimon World 2003* para Windows, con un **modo cooperativo online para hasta 4 jugadores**. Cada uno juega su
 propia partida, y cuando estáis en el mismo mapa veis a los demás moverse por él.
 
-Se actualiza con las versiones del port original: todo lo que trae el port está aquí, más lo del cooperativo. El
-cooperativo lleva sus propias versiones (v1.x); más abajo, en [Qué es de quién](#qué-es-de-quién), está qué es de
+Está hecho sobre la versión v0.18.9 del port de Feerdus, que trae todo lo de esa versión. Desde la v1.0.0 el
+proyecto se mantiene aquí, por su cuenta, con sus propias versiones (v1.x); más abajo, en [Qué es de quién](#qué-es-de-quién), está qué es de
 cada uno.
 
 > **Necesitas tu propio disco.** Aquí no hay nada del juego: ni gráficos, ni sonido, ni textos. El port lee tu imagen

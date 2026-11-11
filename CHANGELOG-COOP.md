@@ -1,8 +1,8 @@
 # Cambios de Asuka Link (el cooperativo)
 
 Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2…** con cosas nuevas y **1.1.1,
-1.1.2…** con arreglos. Cada versión dice en qué release del port nativo de Feerdus está hecha; los cambios del port
-están en su [CHANGELOG.md](CHANGELOG.md). Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
+1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
+[CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta. Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
 port `v0.18.9` más la versión 1 del cooperativo.
 
 ## v1.0.0

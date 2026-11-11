@@ -10,7 +10,7 @@ from pathlib import Path
 NATIVE = Path(__file__).resolve().parents[1]
 DIST = NATIVE / "dist"
 OUT = DIST / "dw2003-native"
-GUIDE = NATIVE.parent / "LEEME-COOP.txt"
+GUIDE = NATIVE / "LEEME-COOP.txt"
 
 
 def main():

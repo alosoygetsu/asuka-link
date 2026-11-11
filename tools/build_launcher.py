@@ -24,7 +24,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     exe = OUT / "dw3launcher.exe"
     sources = [*sorted((NATIVE / "launcher").glob("*.c")), NATIVE / "platform/extract.c"]
-    # the co-op's own version (v1.0.0 on), else its old v0.18.9NN: never the port's, kept as upstream/vX.Y.Z (update.ps1)
+    # the co-op's own version (v1.0.0 on), else its old v0.18.9NN: never the port's, kept as upstream/vX.Y.Z (history only)
     tag = ""
     for match in ("v[1-9]*", "v*"):
         tag = tag or subprocess.run(["git", "describe", "--tags", "--abbrev=0", "--match", match], cwd=NATIVE, capture_output=True, text=True).stdout.strip()

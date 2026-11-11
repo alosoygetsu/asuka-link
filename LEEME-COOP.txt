@@ -1,0 +1,125 @@
+ASUKA LINK - COOPERATIVO ONLINE PARA DIGIMON WORLD 2003
+=======================================================
+
+Hasta 4 jugadores. Cada uno juega con su propia partida, pero cuando estáis en el
+mismo mapa veis a los demás moverse por él, con el aspecto que eligió cada uno y su
+nombre encima. En los Guardromon podéis intercambiar cartas, combatir entre vosotros,
+hacer raids contra jefes y jugar duelos de cartas (más abajo, en el punto 4).
+
+De quién es cada cosa: el juego nativo para PC y el launcher son el port de Feerdus
+(github.com/Feerdus95/dw3-native-port); el cooperativo, Asuka Link, es de alosoygetsu, con sus
+propias versiones (v1.0.0, v1.1.0...). Cada versión dice en qué versión del port
+está hecha.
+
+Lo que necesita cada uno
+------------------------
+- Windows 10 u 11.
+- Tu propia imagen del disco: Digimon World 2003 europeo (SLES-03936), mejor en
+  .cue/.bin. Tiene que ser la misma versión para todos.
+- Estar en una misma red. Lo más fácil es Tailscale (gratis), que os pone en una
+  red privada como si estuvierais en la misma casa, sin abrir puertos del router.
+  También vale una red local de verdad, ZeroTier, Radmin, etc.
+
+
+1. TAILSCALE (todos; saltáoslo si usáis otra red)
+----------------------
+1. Descargad e instalad Tailscale desde https://tailscale.com/download
+2. Abridlo e iniciad sesión (con Google, Microsoft o GitHub).
+3. Uno invita al otro a su red: en https://login.tailscale.com/admin/users,
+   botón "Invite users", y pone el correo del colega. El colega acepta la
+   invitación desde el correo. (El plan gratis deja hasta 3 personas; para un
+   cuarto, otro de vosotros comparte su PC con él desde "Share" en la lista de
+   máquinas.)
+4. Cada uno mira su IP de Tailscale: el launcher la enseña en Ajustes -> Mods ->
+   Tu IP (la marcada "Tailscale"), o en el icono de Tailscale junto al reloj.
+   Empieza por 100. (por ejemplo 100.101.102.103). Pasádosla entre todos.
+5. Comprobad que os veis: abrid una terminal (PowerShell) y escribid
+       tailscale ping 100.x.y.z
+   con la IP del otro. Si contesta "pong", está bien.
+
+
+2. EL JUEGO (la primera vez)
+---------------------------------------
+1. Descomprime asuka-link-<versión>.zip en una carpeta tuya, por ejemplo
+   C:\Juegos\dw2003-coop  (no en "Archivos de programa").
+2. Abre dw3launcher.exe. La primera vez pide la imagen del disco: arrastra el
+   .cue (o el .bin) a la ventana o usa "Browse...". Lee el disco una sola vez
+   (unos minutos).
+3. Desde entonces, el botón Play del launcher o dw2003.exe arrancan el juego.
+
+ACTUALIZAR: el launcher busca las versiones de Asuka Link. Cuando hay una nueva la anuncia en su pantalla de inicio, y se instala
+con un clic; también en Herramientas -> "Buscar actualizaciones". Tus ajustes y
+tus partidas no se tocan. Las versiones están en
+https://github.com/alosoygetsu/asuka-link/releases
+Para jugar juntos, todos necesitáis la misma "versión de red", que sale en las
+notas de cada versión. Si no coincide, coop.log dice "another version of the co-op".
+Las versiones van v1.0.0, v1.1.0... (cosas nuevas) y v1.1.1... (arreglos). Hasta
+la v0.18.918, el número iba pegado al del port.
+
+
+3. CONFIGURAR EL COOPERATIVO (todos)
+------------------------------------
+En el launcher: Ajustes -> pestaña Mods -> sección Cooperativo.
+1. "Cooperativo": Sí.
+2. "IP del jugador 2", "3" y "4": las IP de los DEMÁS (no la tuya). Selecciona la
+   fila, Enter, escribe la IP y Enter otra vez. Las que no uséis, vacías.
+   Si alguien usa un puerto que no es el 27500, ponlo detrás: 100.1.2.3:27600.
+3. Sal de Ajustes (se guarda solo).
+
+(A mano: en native.ini, coop = 1 y coop_peers = 100.1.2.3, 100.4.5.6)
+
+
+4. JUGAR
+--------
+1. Arrancad el juego todos y cargad vuestra partida.
+2. La primera vez, Windows pregunta si dejas a dw2003.exe usar la red: marca las
+   dos casillas (redes privadas y públicas) y dale a "Permitir".
+3. Id al mismo mapa. A los 1-2 segundos os veréis, cada uno con su personaje
+   (Junior, Chico o Chica) y su tono, y su nombre encima. Quien aún no tiene
+   aspecto (partida antigua, o antes de entrar al Mundo Digital) sale como Junior
+   de un color (rojo, verde, morado). Todos tenéis que tener la misma versión.
+   - Para intercambiar cartas: hablad cada uno con un Guardromon (el de guardar,
+     en cualquier sitio) y elegid "Intercambiar cartas". Solo salen las cartas
+     que no usa ningún mazo. Los dos marcáis Listo y luego Confirmar.
+   - Para combatir entre vosotros: los dos elegís "Combatir" en un Guardromon.
+     Turnos alternos (empieza el más rápido). Se puede atacar, usar técnicas,
+     digievolucionar, cambiar de Digimon y rendirse (Huir); sin objetos. Es una exhibición: al
+     terminar volvéis al mapa con la partida como estaba, sin game over.
+   - Para un duelo de cartas: los dos elegís "Duelo" en un Guardromon y cada uno
+     escoge uno de sus mazos. Se juega como contra la máquina, pero el rival es
+     el otro jugador. Los dos ganáis un sobre de cartas: el ganador uno de la
+     serie b (o R si su mejor Digimon es de nivel 30 o más, a veces), el que
+     pierde uno de la serie a. Se abren en la tienda de cartas. Si algo se
+     tuerce, mandad el coop.log.
+   - Para una raid (2 a 4 jugadores): uno elige "Raid" en un Guardromon y escoge
+     el jefe (salen los de hasta 5 niveles por encima de su mejor Digimon; el
+     Kuwagamon, siempre); los demás eligen "Raid" también y entran en su sala.
+     Combate por turnos, uno detrás de otro, y el jefe ataca una vez a cada uno.
+     Al ganar: EXP y dinero x3 y un objeto seguro; perder no da game over.
+   - Si uno entra en combate, un menú o una cinemática, desaparece para los demás
+     y vuelve cuando sale.
+   - Fuera de los mapas normales (combates, menús) no se ve nada.
+
+
+SI NO OS VEIS
+-------------
+Junto a dw2003.exe hay un archivo coop.log que dice lo que pasa:
+
+- "player 2 (100.x.y.z) is here": ese jugador está conectado. Si aun así no lo
+  ves, comprobad que estáis en el mismo mapa.
+- "player 2: ping 45 ms, ... 0% of their packets lost": la calidad de la conexión,
+  cada minuto. Cualquier ping por debajo de 150 ms va bien.
+- "a packet from ... which isn't in coop_peers ... ignored": te llegan datos de
+  alguien cuya IP o puerto no has puesto bien. Revisa las IP en el launcher.
+- "another version of the co-op": tenéis versiones distintas. Actualizad todos.
+- "can't find ...": una IP está mal escrita.
+- "no other players' addresses yet": no has puesto ninguna IP.
+- "port 27500 is taken": hay otra copia del juego abierta.
+- Solo sale "listening on port...": no llega nada del otro. Suele ser el
+  cortafuegos de Windows. Para permitirlo a mano, abrid PowerShell como
+  administrador y escribid:
+      netsh advfirewall firewall add rule name="DW2003 coop" dir=in action=allow protocol=UDP localport=27500
+  Comprobad también que Tailscale está encendido en todos los PCs.
+
+Vuestras partidas no se tocan: el cooperativo solo dibuja a los demás, no cambia
+nada de la memory card.
