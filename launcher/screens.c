@@ -258,7 +258,7 @@ static void draw_tabs(void)
 /* the old screen's heading: the title, what this is, a thin line */
 static void draw_title(void)
 {
-    text_centre(4, 2, C_GOLD, "DIGIMON WORLD 2003");
+    text_centre(4, 2, C_GOLD, APP_NAME);
     text_centre(28, 1, C_SOFT, L->s[S_TAGLINE]);
     fill(SCREEN_W / 2 - 120, 44, 240, 1, C_RULE);
 }

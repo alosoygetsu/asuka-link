@@ -240,7 +240,7 @@ int main(int argc, char **argv)
     const int k = best_scale();
     SDL_Window *window;
     SDL_Renderer *r;
-    if (!SDL_CreateWindowAndRenderer("Digimon World 2003", w ? w : SCREEN_W * k, h ? h : SCREEN_H * k,
+    if (!SDL_CreateWindowAndRenderer("Asuka Link - Digimon World 2003", w ? w : SCREEN_W * k, h ? h : SCREEN_H * k,
                                      SDL_WINDOW_RESIZABLE | (shot ? SDL_WINDOW_HIDDEN : 0), &window, &r)) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Digimon World 2003", SDL_GetError(), NULL);
         return 1;

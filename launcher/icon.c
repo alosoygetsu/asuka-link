@@ -1,19 +1,19 @@
-/* The bar's badge and the language flags, drawn from numbers: no image files. The badge is "DW3" slanted, in the co-op fork's
-   colours: teal letters with a dark violet edge, on violet, with the accent's line under it. */
+/* The bar's badge and the language flags, drawn from numbers: no image files. The badge is Asuka Link's "AL" slanted:
+   sunset letters with a dark edge on the night's blue, two links of a chain after them and the link's line under it. */
 #include "launcher.h"
 
 enum { ICON_W = 32, ICON_H = 22 };
 
 static const char *const GLYPH[3][7] = {
-    {"11110", "10001", "10001", "10001", "10001", "10001", "11110"}, /* D */
-    {"10001", "10001", "10001", "10101", "10101", "11011", "10001"}, /* W */
-    {"01110", "10001", "00001", "00110", "00001", "10001", "01110"}, /* 3 */
+    {"01110", "10001", "10001", "11111", "10001", "10001", "10001"}, /* A */
+    {"10000", "10000", "10000", "10000", "10000", "10000", "11111"}, /* L */
+    {"00000", "01100", "10010", "10110", "01101", "01001", "00110"}, /* two links of a chain */
 };
 
 /* the badge: w x h pixels, letters 5x7 cells drawn 2 wide (bold) and ry tall, pitch apart, slanted to the right going up */
 static void badge(int x, int y, int w, int h, int ry, int pitch)
 {
-    static const Uint32 NAVY = 0x241052, BLUE = 0x5530A8, BLUE_HI = 0x7650D0, WHITE = 0xFFFFFF; /* the co-op fork's violet */
+    static const Uint32 NAVY = 0x050B14, BLUE = 0x13304A, BLUE_HI = 0x1E4766, WHITE = 0xFFFFFF; /* Asuka Link's night */
     bool m[ICON_H][ICON_W] = {{false}};
     const int top = (h - 7 * ry) / 2 - 1, rows = 7 * ry;
     for (int g = 0; g < 3; g++) {
@@ -47,13 +47,13 @@ static void badge(int x, int y, int w, int h, int ry, int pitch)
     }
     for (int j = 0; j < h; j++) {
         for (int i = 0; i < w; i++) {
-            if (m[j][i]) { /* the co-op fork's: light teal to teal, top to bottom */
+            if (m[j][i]) { /* the sunset's: light gold to orange red, top to bottom; the chain in the link's cyan */
                 const int t = (j - top) * 256 / rows;
-                fill(x + i, y + j, 1, 1, ((0x80 - t * 0x68 / 256) << 16) | ((0xF4 - t * 0x48 / 256) << 8) | (0xE0 - t * 0x40 / 256));
+                fill(x + i, y + j, 1, 1, i >= 3 + 2 * pitch ? C_LINK : 0xFF0000 | ((0xD8 - t * 0x80 / 256) << 8) | (0x7A - t * 0x50 / 256));
             }
         }
     }
-    fill(x + 4, y + h - 3, w - 8, 1, C_GOLD);
+    fill(x + 4, y + h - 3, w - 8, 1, C_LINK);
 }
 
 void art_icon(int x, int y) { badge(x, y, ICON_W, ICON_H, 2, 8); }

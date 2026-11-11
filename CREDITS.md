@@ -2,7 +2,7 @@
 
 ## The co-op fork
 
-This is **alosoygetsu**'s co-op fork ([alosoygetsu/dw3-native-port](https://github.com/alosoygetsu/dw3-native-port),
+This is **Asuka Link**, **alosoygetsu**'s co-op fork ([alosoygetsu/dw3-native-port](https://github.com/alosoygetsu/dw3-native-port),
 branch `coop`): playing together online, card trades, battles between players and boss raids, the free team and the
 character creator, on top of the native port. None of it would exist without:
 

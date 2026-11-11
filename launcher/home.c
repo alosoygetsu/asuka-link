@@ -1,4 +1,4 @@
-/* The home screen once the disc is read: a night scene, a bar on top with the pages, the title, chips and Play. */
+/* The home screen once the disc is read: Asuka City at dusk, a bar on top with the pages, the title, chips and Play. */
 #include "launcher.h"
 
 #ifndef LAUNCHER_VERSION
@@ -112,12 +112,6 @@ int home_hit(int x, int y)
 
 /* ---- the scene ---- */
 
-static int tri(int x, int period) /* a triangle wave from 0 to period / 2 */
-{
-    const int p = x % period;
-    return p < period / 2 ? p : period - p;
-}
-
 static void disc(int cx, int cy, int r, Uint32 colour, Uint8 alpha)
 {
     for (int dy = -r; dy <= r; dy++) {
@@ -126,28 +120,81 @@ static void disc(int cx, int cy, int r, Uint32 colour, Uint8 alpha)
     }
 }
 
-/* stars, a moon with a halo, two ranges of hills that sink to the left, and a few lights in the valley */
+/* Asuka City at dusk: a few stars, the sky going orange at the horizon, the sun setting behind two rows of towers with
+   lit windows, and the link (the co-op) arcing between the antennas of the two tallest */
+static Uint32 s_seed;
+
+static int rnd(int n)
+{
+    s_seed = s_seed * 1103515245u + 12345u;
+    return (int)((s_seed >> 16) % (Uint32)n);
+}
+
+static void towers(int near)
+{
+    for (int x = near ? -6 : 0; x < SCREEN_W;) {
+        const int w = near ? 14 + rnd(18) : 10 + rnd(14), right = x * 100 / SCREEN_W; /* taller to the right */
+        const int h = near ? 10 + rnd(16) + right * 2 / 10 : 18 + rnd(22) + right * 3 / 10, top = SCENE_BASE - h;
+        fill(x, top, w, h, near ? C_CITY_NEAR : C_CITY_FAR);
+        if (!near && rnd(3) == 0) {
+            fill(x + w / 2, top - 4, 1, 4, C_CITY_FAR); /* a mast */
+        }
+        for (int wy = top + 3; wy < SCENE_BASE - 3; wy += 4) { /* its windows, some lit */
+            for (int wx = x + 2; wx < x + w - 2; wx += 3) {
+                if (rnd(near ? 9 : 6) == 0) {
+                    fill_alpha(wx, wy, 1, 1, C_WINDOW, near ? 220 : 120);
+                }
+            }
+        }
+        x += w + (near ? rnd(4) : 1 + rnd(3));
+    }
+}
+
+/* the tower at x, w wide, h tall, with an antenna; where its tip is */
+static SDL_Point antenna(int x, int w, int h)
+{
+    const int top = SCENE_BASE - h;
+    fill(x, top, w, h, C_CITY_NEAR);
+    fill(x + 1, top - 3, w - 2, 3, C_CITY_NEAR);
+    fill(x + w / 2, top - 16, 1, 13, C_CITY_NEAR);
+    fill_alpha(x + w / 2 - 1, top - 17, 3, 3, C_LINK, 110);
+    fill(x + w / 2, top - 16, 1, 1, C_LINK);
+    for (int wy = top + 4; wy < SCENE_BASE - 3; wy += 5) {
+        fill_alpha(x + 2, wy, w - 4, 1, C_WINDOW, (Uint8)(wy % 3 ? 60 : 150));
+    }
+    return (SDL_Point){x + w / 2, top - 16};
+}
+
 static void scene(void)
 {
-    Uint32 h = 12345;
-    for (int i = 0; i < 48; i++) {
-        h = h * 1103515245u + 12345u;
-        fill(150 + (int)(h >> 8) % (SCREEN_W - 150), BAR_H + 4 + (int)(h >> 20) % 100, 1, 1, i % 5 ? C_FAINT : C_SOFT);
+    s_seed = 2003;
+    for (int i = 0; i < 30; i++) {
+        fill(150 + rnd(SCREEN_W - 150), BAR_H + 4 + rnd(60), 1, 1, i % 4 ? C_FAINT : C_SOFT);
     }
-    disc(392, 64, 40, C_SOFT, 10);
-    disc(392, 64, 28, C_SOFT, 14);
-    disc(392, 64, 13, C_MOON, 255);
-    disc(388, 60, 3, C_MOON_DARK, 255);
-    disc(397, 68, 2, C_MOON_DARK, 255);
-    for (int layer = 0; layer < 2; layer++) {
-        for (int x = 0; x < SCREEN_W; x++) {
-            int height = layer ? 14 + tri(x + 40, 90) * 2 / 3 + tri(x, 30) / 3 : 30 + tri(x, 140) / 2 + tri(x + 17, 46) / 3;
-            height = height * (40 + x * 60 / SCREEN_W) / 100;
-            fill(x, SCENE_BASE - height, 1, height, layer ? C_HILL_NEAR : C_HILL_FAR);
+    for (int y = 90; y < SCENE_BASE; y++) { /* the dusk: deep blue, violet, then the horizon's rose */
+        const int t = (y - 90) * 256 / (SCENE_BASE - 90);
+        fill_alpha(0, y, SCREEN_W, 1, t < 110 ? C_DUSK_HI : t < 200 ? C_DUSK : C_DUSK_LOW, (Uint8)(40 + t * 150 / 256));
+    }
+    const int sx = 368, sy = SCENE_BASE - 50;
+    disc(sx, sy, 60, C_DUSK_LOW, 30);
+    disc(sx, sy, 44, C_SUN, 34);
+    disc(sx, sy, 30, C_SUN, 255);
+    disc(sx - 4, sy - 5, 19, C_SUN_HI, 255);
+    for (int y = sy + 3, gap = 1; y < sy + 31; y += 3 + gap / 2, gap++) { /* the stripes across its lower half */
+        fill_alpha(sx - 31, y, 63, 1 + gap / 3, C_DUSK, 255);
+    }
+    towers(0);
+    const SDL_Point a = antenna(286, 13, 74), b = antenna(446, 15, 92);
+    towers(1);
+    for (int i = 0; i <= 64; i++) { /* the link: an arc of dots from one antenna to the other */
+        const float t = i / 64.0f, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t - 34 * 4 * t * (1 - t);
+        fill_alpha((int)x - 1, (int)y - 1, 3, 3, C_LINK, 40);
+        if (i % 2 == 0) {
+            fill((int)x, (int)y, 1, 1, C_LINK);
         }
-    }
-    for (int x = 300; x < 460; x += 23) {
-        fill_alpha(x, SCENE_BASE - 5 - (x % 3) * 4, 2, 2, C_GOLD, 170);
+        if (i == 21 || i == 43) { /* two packets on their way */
+            fill((int)x - 1, (int)y - 1, 3, 3, C_TEXT);
+        }
     }
 }
 
@@ -159,7 +206,7 @@ void bar_draw(int page, int cur)
     fill_alpha(0, 0, SCREEN_W, BAR_H, C_BG, 235);
     fill(0, BAR_H - 1, SCREEN_W, 1, C_RULE);
     art_icon(3, 3);
-    text(TITLE_X, 3, 1, C_GOLD, "DIGIMON WORLD 2003");
+    text(TITLE_X, 3, 1, C_GOLD, APP_NAME);
     text(TITLE_X, 14, 1, C_SOFT, l->s[S_TAGLINE]);
     for (int i = 0; i < 4; i++) {
         const SDL_Rect t = nav_rect(l, PAGES[i]);

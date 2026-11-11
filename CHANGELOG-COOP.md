@@ -1,4 +1,4 @@
-# Cambios del cooperativo
+# Cambios de Asuka Link (el cooperativo)
 
 Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2…** con cosas nuevas y **1.1.1,
 1.1.2…** con arreglos. Cada versión dice en qué release del port nativo de Feerdus está hecha; los cambios del port
@@ -8,7 +8,7 @@ port `v0.18.9` más la versión 1 del cooperativo.
 ## v1.0.0
 Sobre el port v0.18.9. Red: versión 7.
 
-**Primera versión con numeración propia.** El cooperativo ya hace todo lo que se planteó al empezar, y deja de numerarse
+**Primera versión con nombre y numeración propios: Asuka Link.** El cooperativo ya hace todo lo que se planteó al empezar, y deja de numerarse
 con el port, que ya va por la v0.19 y se cruzaba con los números de aquí (port v0.18.10 frente a cooperativo
 v0.18.910).
 
@@ -20,6 +20,10 @@ v0.18.910).
     - raids de 2 a 4 contra 29 jefes;
     - duelos de cartas con premio para los dos.
   - **En solitario:** equipo libre, creador de personaje, entrenamiento sin azar y multiplicadores de EXP y dinero.
+- **Launcher nuevo:** Asuka City al atardecer, con el sol poniéndose entre los edificios y un enlace entre dos
+  antenas; colores de noche y naranja; la insignia "AL" y un icono nuevo. Al pie: "Asuka Link by alosoygetsu".
+- **El repositorio pasará a llamarse `asuka-link`.** Este launcher ya busca las actualizaciones con los dos nombres,
+  así que seguirá encontrándolas después del cambio.
 - **Qué es de quién:** el README tiene una tabla nueva que separa el juego decompilado (ReGame-Labs), el port nativo
   (Feerdus) y el cooperativo (alosoygetsu), cada uno con sus versiones.
 - **Red, versión 7:** las versiones anteriores ya no se conectan con esta. Actualizad todos a la vez.

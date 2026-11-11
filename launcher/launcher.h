@@ -6,18 +6,20 @@
 
 enum { SCREEN_W = 480, SCREEN_H = 270, LANGS = 5, LINE_H = 12, ROW_H_PIXELS = 13 };
 
-/* every colour on screen comes from here: the co-op fork's, a violet night with a Digivice teal for the accent (the
-   port's own was blue and gold) */
+/* every colour on screen comes from here: Asuka Link's, a city night going to dusk, with a sunset orange for the
+   accent (C_GOLD keeps the port's name for it; the port's own was blue and gold) */
 enum {
-    C_BG = 0x120B22, C_GLOW = 0x4A2A8A, C_PANEL = 0x261A44, C_EDGE = 0x6A55A8, C_RULE = 0x4A3A7E, C_SELECT = 0x40297A,
-    C_TEXT = 0xEEEAF6, C_SOFT = 0xA99BCF, C_DIM = 0x8576AE, C_FAINT = 0x5C4E82, C_GOLD = 0x2CD4BC, C_GOLD_HI = 0x6AF0DC,
-    C_RED = 0xFF6B6B,
-    /* the home scene */
-    C_MOON = 0xDCE8F2, C_MOON_DARK = 0xB8C8DC, C_HILL_FAR = 0x2E2266, C_HILL_NEAR = 0x1B1444,
+    C_BG = 0x08111C, C_GLOW = 0x1E4766, C_PANEL = 0x10202F, C_EDGE = 0x2E5A78, C_RULE = 0x22445E, C_SELECT = 0x1B3A55,
+    C_TEXT = 0xEEF5FA, C_SOFT = 0x92B6CC, C_DIM = 0x7095AD, C_FAINT = 0x4A6A82, C_GOLD = 0xFF8A3D, C_GOLD_HI = 0xFFB27A,
+    C_RED = 0xFF5A6E,
+    /* the home scene: the dusk's bands, the sun, Asuka City's towers and their windows, and the link between them */
+    C_DUSK_HI = 0x2A3E66, C_DUSK = 0x6A3A6A, C_DUSK_LOW = 0xC4566A, C_SUN = 0xFFC46A, C_SUN_HI = 0xFFE6B0,
+    C_CITY_FAR = 0x14273A, C_CITY_NEAR = 0x0B1826, C_WINDOW = 0xFFD27A, C_LINK = 0x5CE6FF,
 };
 
-/* the co-op fork's: the port it stands on is credited in CREDITS.md (Tools, Credits) */
-#define CREDIT "Co-op fork by alosoygetsu"
+/* Asuka Link's: the port it stands on is credited in CREDITS.md (Tools, Credits) */
+#define APP_NAME "ASUKA LINK"
+#define CREDIT "Asuka Link by alosoygetsu"
 #define GAME_LINE "Digimon World 2003 (Europe), SLES-03936"
 
 /* draw.c */

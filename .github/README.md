@@ -1,4 +1,6 @@
-# Digimon World 2003: port nativo para PC, con cooperativo online
+# Asuka Link
+
+**Cooperativo online para *Digimon World 2003***, sobre el port nativo para PC.
 
 *English below.*
 
@@ -14,7 +16,7 @@ cada uno.
 > del disco europeo (*Digimon World 2003*, SLES-03936).
 
 ## Instalar
-1. Descarga `dw2003-coop-<versión>.zip` de la [última versión](https://github.com/alosoygetsu/dw3-native-port/releases/latest) y descomprímelo en una carpeta
+1. Descarga `asuka-link-<versión>.zip` de la [última versión](https://github.com/alosoygetsu/dw3-native-port/releases/latest) y descomprímelo en una carpeta
    tuya (no en "Archivos de programa").
 2. Abre `dw3launcher.exe` y dale tu imagen del disco (`.cue`/`.bin`). La lee una vez.
 3. Juega con **Jugar**.
@@ -70,9 +72,9 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 |---|---|---|
 | **Juego decompilado** | [ReGame-Labs/dw3_decomp](https://github.com/ReGame-Labs/dw3_decomp): el código del juego, sacado del disco | la que usa el port |
 | **Port nativo** | [Feerdus](https://github.com/Feerdus95/dw3-native-port): que el juego funcione en PC, los gráficos mejorados, el launcher, las opciones y sus mods | la suya (v0.18.9, v0.19.0…) |
-| **Cooperativo** | alosoygetsu: todo lo de las tablas de arriba, en una capa aparte (`coop/patches/` y los ficheros `coop*`) | la propia: v1.0.0, v1.1.0… |
+| **Cooperativo: Asuka Link** | alosoygetsu: todo lo de las tablas de arriba, en una capa aparte (`coop/patches/` y los ficheros `coop*`) | la propia: v1.0.0, v1.1.0… |
 
-Cada release del cooperativo dice en qué versión del port está hecha, por ejemplo *"DW2003 Co-op v1.0.0 (port
+Cada release del cooperativo dice en qué versión del port está hecha, por ejemplo *"Asuka Link v1.0.0 (port
 v0.18.9)"*, y cuál es su versión de red: todos los que jugáis juntos tenéis que tener la misma.
 - **v1.x:** el número sube **1.1, 1.2…** cuando hay cosas nuevas y **1.1.1, 1.1.2…** cuando solo son arreglos.
 - **Antes de la v1.0.0** las versiones iban pegadas al número del port: de la v0.18.901 a la v0.18.918 son el
@@ -98,7 +100,7 @@ El [README del port original](https://github.com/alosoygetsu/dw3-native-port/blo
 
 A fork of [Feerdus95/dw3-native-port](https://github.com/Feerdus95/dw3-native-port) (the native Windows port of
 *Digimon World 2003*) with **online co-op for up to 4 players**: each plays their own save, and players on the same map
-see each other. You need your own European disc; nothing of the game is here. Get `dw2003-coop-<version>.zip` from the
+see each other. You need your own European disc; nothing of the game is here. Get `asuka-link-<version>.zip` from the
 [latest release](https://github.com/alosoygetsu/dw3-native-port/releases/latest), set the other players' addresses in the launcher (Settings → Mods → Co-op),
 and meet on a map: you see each other with your own look and name, and can trade spare cards at any Guardromon. A new game lets you pick your look (Junior, a boy or a girl, in 8 colours) and starts with a team you build yourself (any 3 of the 8 partners) instead of a starter
 pack, and there are EXP and money multipliers. Updates come through the launcher's Update button.

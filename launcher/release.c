@@ -6,7 +6,9 @@
 #ifndef LAUNCHER_VERSION
 #define LAUNCHER_VERSION "dev"
 #endif
-#define REPO "alosoygetsu/dw3-native-port" /* the co-op's fork: its releases are the co-op's (release.ps1) */
+#define REPO "alosoygetsu/asuka-link" /* Asuka Link's: its releases are the co-op's (release.ps1) */
+#define OLD_REPO "alosoygetsu/dw3-native-port" /* its name before (up to v1.0.0): asked when REPO doesn't answer yet */
+static const char *s_repo = REPO; /* the one whose feed answered: the release's page and zip are there */
 
 enum { IDLE, RUNNING, FOUND_OR_NOT, FAILED };
 static SDL_AtomicInt s_state;
@@ -36,15 +38,17 @@ bool release_newer(const char *tag, const char *own)
     return version_parse(tag, a) && version_parse(own, b) && newer(a, b);
 }
 
-/* the highest version linked in the feed above `own`, into out, or "". A link in a release's notes is escaped there, so it doesn't match */
+/* the highest version linked in the feed above `own`, into out, or "". A link in a release's notes is escaped there, so it
+   doesn't match. Its links name either name of the repo: the old one's feed is redirected to the new one's after the rename */
 static void release_pick(const char *feed, const char *own, char *out, int size)
 {
-    static const char LINK[] = "href=\"https://github.com/" REPO "/releases/tag/";
+    static const char *const LINKS[2] = {"href=\"https://github.com/" REPO "/releases/tag/", "href=\"https://github.com/" OLD_REPO "/releases/tag/"};
     char best[32];
     SDL_strlcpy(best, own, sizeof best);
     out[0] = 0;
-    for (const char *p = SDL_strstr(feed, LINK); p; p = SDL_strstr(p, LINK)) {
-        p += sizeof LINK - 1;
+    for (int k = 0; k < 2; k++)
+    for (const char *p = SDL_strstr(feed, LINKS[k]); p; p = SDL_strstr(p, LINKS[k])) {
+        p += SDL_strlen(LINKS[k]);
         const char *end = SDL_strchr(p, '"');
         char tag[32];
         if (end && end - p < (int)sizeof tag) {
@@ -62,6 +66,12 @@ static int SDLCALL check_thread(void *unused)
     (void)unused;
     /* ponytail: the feed's newest 10 are plenty, as a newer one is all it looks for */
     char *feed = net_text("https://github.com/" REPO "/releases.atom");
+    s_repo = REPO;
+    if (!feed || !SDL_strstr(feed, "<feed")) { /* not renamed yet: the old name */
+        SDL_free(feed);
+        feed = net_text("https://github.com/" OLD_REPO "/releases.atom");
+        s_repo = OLD_REPO;
+    }
     if (feed) {
         release_pick(feed, LAUNCHER_VERSION, s_tag, sizeof s_tag);
         SDL_free(feed);
@@ -93,11 +103,11 @@ const char *release_tag(void) { return SDL_GetAtomicInt(&s_state) != RUNNING && 
 
 bool release_busy(void) { return SDL_GetAtomicInt(&s_state) == RUNNING; }
 
-void release_url(char *out, int size) { SDL_snprintf(out, size, "https://github.com/" REPO "/releases/tag/%s", s_tag); }
+void release_url(char *out, int size) { SDL_snprintf(out, size, "https://github.com/%s/releases/tag/%s", s_repo, s_tag); }
 
 void release_zip_url(char *out, int size)
 {
-    SDL_snprintf(out, size, "https://github.com/" REPO "/releases/download/%s/dw2003-native-%s.zip", s_tag, s_tag);
+    SDL_snprintf(out, size, "https://github.com/%s/releases/download/%s/dw2003-native-%s.zip", s_repo, s_tag, s_tag);
 }
 
 int release_finished_manual(void)
@@ -121,6 +131,8 @@ int release_selftest(void)
         "<content>&lt;a href=&quot;https://github.com/" REPO "/releases/tag/v9.0.0&quot;&gt;</content>"
         "<link href=\"https://github.com/someone/else/releases/tag/v8.0.0\"/>";
     PICK(LIST, "v0.2.1", "v0.2.10"); /* odd tags, a link in the notes and other repos are skipped; 10 is above 9 */
+    PICK(LINK_TO("v1.0.0") "<link href=\"https://github.com/" OLD_REPO "/releases/tag/v1.1.0\"/>", "v0.18.918", "v1.1.0"); /* both names */
+    PICK("<link href=\"https://github.com/" OLD_REPO "/releases/tag/v1.0.0\"/>", "v0.18.918", "v1.0.0");
     PICK(LIST, "v0.2.10", "");       /* the same version isn't newer */
     PICK(LIST, "v1.0.0", "");        /* a local version above every release */
     PICK(LIST, "dev", "");           /* a development build */
