@@ -5,8 +5,8 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta. Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
 port `v0.18.9` más la versión 1 del cooperativo.
 
-## v1.3.0
-Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.0.
+## v1.2.0
+Basado en el port v0.18.9. Red: versión 7, la misma que la v1.1.0.
 
 - **Pasos en el Digilog (en pruebas):** la historia y las misiones ya no son una sola frase.
   - **Dónde se ven:** donde ponía "En curso." ahora pone **"Paso 2 de 5"** (en verde si ese paso ya está hecho). La
@@ -20,10 +20,6 @@ Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.0.
   micrófono de Etemon).
 - Los pasos salen en español; en los demás idiomas, de momento en inglés.
 - Lo que falta (las cadenas de armas, el resto de misiones) está en `docs/MISIONES.md`.
-
-## v1.2.0
-Basado en el port v0.18.9. Red: versión 7, la misma que la v1.1.0.
-
 - **El Digilog, completo:**
   - lista de misiones a la izquierda y detalle de la elegida a la derecha;
   - **una foto del mapa** donde ocurre cada misión;
