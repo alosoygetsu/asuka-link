@@ -61,6 +61,9 @@ try {
     python -I tools\package.py; if ($LASTEXITCODE -ne 0) { Fail "package.py" }
     $update = "$out\dw2003-native-$tag.zip"   # the launcher's update: no native.ini, so the player's stays
     Copy-Item "$native\dist\dw2003-native.zip" $update
+    # its SHA-256, which the launcher (v1.1.0 on) checks before installing it (launcher/self_update.c)
+    $sum = (Get-FileHash $update -Algorithm SHA256).Hash.ToLower()
+    [System.IO.File]::WriteAllText("$update.sha256", "$sum  dw2003-native-$tag.zip`n")
     python -I tools\package_coop.py; if ($LASTEXITCODE -ne 0) { Fail "package_coop.py" }
     $install = "$out\asuka-link-$tag.zip"    # the first install: with the co-op's native.ini and LEEME-COOP.txt
     Copy-Item "$native\dist\dw2003-coop.zip" $install
@@ -93,7 +96,7 @@ $changes
 # the notes through a file: Windows PowerShell splits an argument at its own quotes ("...") on the way to gh
 $notesFile = [System.IO.Path]::GetTempFileName()
 [System.IO.File]::WriteAllText($notesFile, $Notes, (New-Object System.Text.UTF8Encoding $false))
-gh release create $tag --repo $fork --target coop --title "Asuka Link $tag (port $base)" --notes-file $notesFile $update $install
+gh release create $tag --repo $fork --target coop --title "Asuka Link $tag (port $base)" --notes-file $notesFile $update "$update.sha256" $install
 $created = $LASTEXITCODE
 Remove-Item $notesFile
 $LASTEXITCODE = $created
