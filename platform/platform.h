@@ -144,6 +144,9 @@ void gl_image(const struct SDL_Surface *img, unsigned *tex, float x0, float y0, 
 void native_effects_warm(void); /* once a frame from the start: the mod's effects read and put on the card, one picture a frame */
 int gl_image_prepare(const struct SDL_Surface *img, unsigned *tex);
 void native_effect_draw(unsigned key, float x, float y, float xs, int cx1, int cy1, int cx2, int cy2);
+void postcard_draw(int mode, float x, float y, float w, float h, int cx1, int cy1, int cx2, int cy2); /* postcards.c */
+int postcards_make(void);   /* postcards.c: --postcards, the journal's pictures of the fields */
+void postcards_start(void); /* makes them apart, the first time */
 void gl_present(const struct SDL_Surface *menu, struct SDL_Surface **shot);
 int gte_precise(const uint32_t *word, float *x, float *y, float *z);
 void gte_precise_copy(void *dst, const void *src); /* the game's own code calls it too */

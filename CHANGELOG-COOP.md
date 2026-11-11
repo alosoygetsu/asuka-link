@@ -5,6 +5,21 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta. Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
 port `v0.18.9` más la versión 1 del cooperativo.
 
+## v1.2.0
+Basado en el port v0.18.9. Red: versión 7, la misma que la v1.1.0.
+
+- **El Digilog, completo:**
+  - lista de misiones a la izquierda y detalle de la elegida a la derecha;
+  - **una foto del mapa** donde ocurre cada misión;
+  - el objeto que pide cada misión, marcado;
+  - las teclas con sus iconos al pie;
+  - textos que ya no se salen de sus paneles.
+
+  Viene de la versión posterior del port de Feerdus, traído a mano a nuestra base.
+- **Fotos de los mapas:** las hace el propio juego a partir de tu disco la primera vez que arranca, en unos segundos y
+  en segundo plano, y las guarda en `data/postcards`. No se reparten, porque son imágenes del juego. Mientras no
+  están, el Digilog muestra el marco vacío.
+
 ## v1.1.0
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.0.0.
 

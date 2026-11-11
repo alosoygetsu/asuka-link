@@ -9,7 +9,7 @@
    PSX freed old files only when an allocation failed, also evicts when its
    slots run out (patches/src/main/file/file_cache.c) */
 #ifndef NATIVE_HEAP_SIZE /* build.py --sanitize takes 4 MB, to fit its bigger code under 16 MB */
-#define NATIVE_HEAP_SIZE (6 * 1024 * 1024)
+#define NATIVE_HEAP_SIZE (6 * 1024 * 1024 - 256 * 1024) /* 6 MB less the room the journal's pictures (postcards.c, stb) took */
 #endif
 
 /* A PSX heap address the game hard-codes, at the same offset in the arena */
@@ -97,6 +97,9 @@ extern const int NATIVE_EXTRA_PACKS[3][3]; /* their partners */
    greeting, 12-13 the word of the intro and the one replacing it; and the
    port's other texts: 14 fast travel's question */
 const void *native_packs_text(int language);
+/* The journal's picture of a field (data/postcards, platform/postcards.c): whether there is one. It is drawn by a
+   primitive of its own, three words: 0x1B000000 | mode, the place (y << 16 | x) and the size (h << 16 | w) */
+int native_postcard(int mode);
 void native_quit(void); /* the field menu's Quit: saves the options menu's changes, then exits as closing the window does */
 #define NATIVE_PACK_SCENE(pack) ((pack) >= 3 ? 1 : (pack))
 

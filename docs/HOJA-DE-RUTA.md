@@ -13,8 +13,9 @@ responsabilidad nuestra.
   - entradas de red validadas;
   - el avance rápido se apaga en los combates en red;
   - quitadas del todo "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra.
+- **v1.2.0:** el Digilog completo: paneles de lista y detalle, fotos de los mapas, el objeto que pide cada misión y los
+  iconos de las teclas.
 - **Después:**
-  - completar el Digilog;
   - raids: "Turno de X", objetos y huir, ajuste de jefes;
   - avisos de "X ha entrado en…".
 
@@ -41,7 +42,7 @@ responsabilidad nuestra.
 | Avance rápido (x2, x3, x5) | Como en el port | En el mapa va bien; en PvP, raids y duelos **se apaga solo** (v1.1.0) | — | — |
 | Viaje rápido | Activado por defecto | — | **Ir al mapa de un amigo** | medio |
 | Objetivo en el mapa | Como en el port | — | **Los amigos en la pantalla del mapa** | bajo-medio |
-| **Digilog** | Activado por defecto | — | **Completarlo:** paneles de lista y detalle, fotos de los mapas, marcar el objeto que pide cada misión, iconos de teclas, misiones que faltan (hoy 29), y en qué paso va cada amigo | medio |
+| **Digilog** | Activado por defecto; completado en la v1.2.0 (paneles, fotos de los mapas, objeto que pide cada misión, iconos de teclas) | — | **Misiones que faltan** (hoy 29): hay que descifrar los scripts de eventos del juego (`wstag260.c`) para encontrarlas | medio-alto |
 | BladeGarurumon y Digimon de mods (`data/mods/digimon`) | Como en el port | **Sin comprobar** en PvP, raids e intercambios si el otro no tiene el mod | Comprobarlo, y si falla, avisar o bloquear esa forma en red | bajo-medio |
 | EXP compartida completa | Activada por defecto | — | — | — |
 | Efectos, sonidos y scripts propios (`data/mods/`) | Como en el port | Solo cambian lo que ves | Comprobar que dos jugadores con mods distintos no se desincronizan | bajo |
@@ -60,3 +61,4 @@ responsabilidad nuestra.
 - **Chat:** bastan los avisos.
 - **Seguir las versiones del port de Feerdus:** congelado en la v0.18.9.
 - **Pestaña de cartas en el Digilog:** ya está en el menú principal.
+- **Los amigos en el Digilog:** mejor en la pantalla del mapa.
