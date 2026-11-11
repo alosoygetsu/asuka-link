@@ -107,6 +107,7 @@ NativeCoopPvp *native_coop_pvp(void); /* the battle's, or NULL when it's not one
 /* The raid: the PvP's pairing and commands, both players on this side against a boss, turn about (wfightmn/menu.c) */
 NativeCoopPvp *native_coop_raid(void); /* the raid's, or NULL */
 NativeCoopPvp *native_coop_duel(void); /* the card duel's, or NULL */
+int native_coop_lockstep(void); /* a PvP battle, a raid or a card duel is on: no fast forward (platform/mods.c) */
 void native_coop_duel_set(void);
 /* the duel's messages (cardgame/): sent in order, the other's taken in order (its size; -1 none yet) */
 void native_coop_duel_post(int kind, const void *data, int size);

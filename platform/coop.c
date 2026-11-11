@@ -609,6 +609,7 @@ void native_coop_raid_begin(const int *seatPeer, int players, const void *teams,
     s_pvp.raid = encounter;
     s_pvp.raidTier = tier;
     s_pvp.on = 1;
+    g_ff_speed = 1; /* no fast forward in a battle in lockstep (mods.c ff_cycle) */
 }
 
 int native_coop_raid_take(int seat, NativeCoopCommand *c) {
@@ -674,7 +675,12 @@ void native_coop_pvp_begin(int peer, const void *team, int size, const void *sav
     s_pvp.battle = battle & 0xFFFF;
     s_pvp.first = first;
     s_pvp.on = 1;
+    g_ff_speed = 1; /* no fast forward in a battle in lockstep (mods.c ff_cycle) */
     native_coop_commands_out(peer, s_pvp.out);
+}
+
+int native_coop_lockstep(void) {
+    return s_pvp.on;
 }
 
 void native_coop_pvp_end(void) {

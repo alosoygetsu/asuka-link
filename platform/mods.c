@@ -60,6 +60,10 @@ void ff_cycle(void) {
     static const int SPEEDS[] = {1, 2, 3, 5};
     int i = 0;
 
+    if (native_coop_lockstep()) { /* a PvP battle, a raid or a card duel: every game at the same pace */
+        g_ff_speed = 1;
+        return;
+    }
     while (i < 3 && SPEEDS[i] != g_ff_speed) {
         i++;
     }
