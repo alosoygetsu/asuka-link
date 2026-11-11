@@ -60,12 +60,17 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 - [x] Verse en el mapa (hasta 4 jugadores, configuración en el launcher)
 - [x] Elegir tu propio equipo inicial de 3 Digimon
 - [x] Nombre encima de cada jugador y su aspecto visible para los demás
-- [ ] Chat y avisos ("X ha entrado en Asuka City")
 - [x] Intercambio de cartas (en los Guardromon)
 - [x] Duelos de cartas entre jugadores
 - [x] Combates entre jugadores
 - [x] Combates cooperativos contra jefes (raids)
 - [x] Personalizar el aspecto del personaje (modelo y color)
+- [ ] Avisos ("X ha entrado en Asuka City")
+- [ ] Completar el Digilog (paneles, fotos de los mapas, misiones que faltan, en qué va cada amigo)
+- [ ] Raids: aviso de turno, objetos y huir
+- [ ] Ver a los amigos en la pantalla del mapa e ir a su mapa
+
+Todo lo del juego y del port, con su estado y las ideas, está en la [hoja de ruta completa](https://github.com/alosoygetsu/asuka-link/blob/coop/docs/HOJA-DE-RUTA.md).
 
 ## Qué es de quién
 | | De quién | Versión |
