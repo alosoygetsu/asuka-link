@@ -15,6 +15,16 @@ responsabilidad nuestra.
   - quitadas del todo "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra.
 - **v1.2.0:** el Digilog completo: paneles de lista y detalle, fotos de los mapas, el objeto que pide cada misión y los
   iconos de las teclas.
+- **v1.2.x:** pasos en todas las misiones del Digilog (y en 5 idiomas), misiones de cartas, arreglos de red.
+- **v1.2.3, transición:** un solo zip por release (`asuka-link-<versión>.zip`, también para actualizar), el
+  cooperativo activado por defecto. Es la última que sube además el `dw2003-native-<versión>.zip` de los launchers
+  anteriores.
+- **v1.3.0, la versión base:** a partir de su lanzamiento es el punto de partida del proyecto.
+  - **El cooperativo, integrado en el launcher** (por definir con detalle): hoy son unas filas en Ajustes → Mods.
+  - **Cambios en el launcher** (por definir).
+  - **Una sola descarga:** solo `asuka-link-<versión>.zip` y su `.sha256` (release.ps1 deja de subir el nombre viejo
+    a partir de la 1.3.0).
+  - Al publicarla: decidir qué hacer con las releases y el historial anteriores.
 - **Después:**
   - raids: "Turno de X", objetos y huir, ajuste de jefes;
   - avisos de "X ha entrado en…".

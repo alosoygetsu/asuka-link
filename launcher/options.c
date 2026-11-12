@@ -34,7 +34,7 @@ static const struct { const char *key; Uint8 kind; short def, min, max, step; } 
     [O_CUSTOM_EFFECTS] = {"custom_effects", K_BOOL, 1},
     [O_CUSTOM_SOUNDS] = {"custom_sounds", K_BOOL, 1},
     [O_CUSTOM_SCRIPTS] = {"custom_scripts", K_BOOL, 1},
-    [O_COOP] = {"coop", K_BOOL, 0},
+    [O_COOP] = {"coop", K_BOOL, 1}, /* on, as the game: Asuka Link is the co-op */
     [O_EXP_MULT] = {"exp_multiplier", K_MULT, 1, 1, 5, 1}, /* 1: no line */
     [O_MONEY_MULT] = {"money_multiplier", K_MULT, 1, 1, 5, 1},
     [O_SURE_TRAINING] = {"sure_training", K_BOOL, 1},

@@ -107,7 +107,7 @@ void release_url(char *out, int size) { SDL_snprintf(out, size, "https://github.
 
 void release_zip_url(char *out, int size)
 {
-    SDL_snprintf(out, size, "https://github.com/%s/releases/download/%s/dw2003-native-%s.zip", s_repo, s_tag, s_tag);
+    SDL_snprintf(out, size, "https://github.com/%s/releases/download/%s/asuka-link-%s.zip", s_repo, s_tag, s_tag); /* release.ps1 */
 }
 
 int release_finished_manual(void)

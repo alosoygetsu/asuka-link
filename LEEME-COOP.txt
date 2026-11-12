@@ -59,13 +59,13 @@ Las versiones van v1.0.0, v1.1.0... (cosas nuevas) y v1.1.1... (arreglos).
 3. CONFIGURAR EL COOPERATIVO (todos)
 ------------------------------------
 En el launcher: Ajustes -> pestaña Mods -> sección Cooperativo.
-1. "Cooperativo": Sí.
+1. "Cooperativo": Sí (viene activado).
 2. "IP del jugador 2", "3" y "4": las IP de los DEMÁS (no la tuya). Selecciona la
    fila, Enter, escribe la IP y Enter otra vez. Las que no uséis, vacías.
    Si alguien usa un puerto que no es el 27500, ponlo detrás: 100.1.2.3:27600.
 3. Sal de Ajustes (se guarda solo).
 
-(A mano: en native.ini, coop = 1 y coop_peers = 100.1.2.3, 100.4.5.6)
+(A mano: en native.ini, coop_peers = 100.1.2.3, 100.4.5.6; coop = 0 lo apaga)
 
 
 4. JUGAR

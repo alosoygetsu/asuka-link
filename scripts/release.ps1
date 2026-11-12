@@ -1,5 +1,6 @@
 ﻿# Publishes the co-op as a release of the fork (remote "origin", alosoygetsu/asuka-link): the launcher's
-# Update button reads that repo's releases (launcher/release.c REPO) and downloads dw2003-native-<tag>.zip.
+# Update button reads that repo's releases (launcher/release.c REPO) and downloads asuka-link-<tag>.zip, the release's
+# only zip (the first install too), after checking its .sha256.
 # Versions: the co-op's own, semver from v1.0.0 (-Bump minor for new things, the default; patch for fixes only; major
 # for a big change), or -Version 1.2.3. Each release names the port it is based on: Feerdus's v0.18.9, frozen since
 # v1.0.0 (its tags are kept as upstream/vX.Y.Z, history only). Before v1.0.0 the versions were v0.18.901-918;
@@ -58,15 +59,20 @@ try {
     $out = "$native\dist\release"
     New-Item -ItemType Directory -Force $out | Out-Null
     Remove-Item "$out\*" -ErrorAction SilentlyContinue
-    python -I tools\package.py; if ($LASTEXITCODE -ne 0) { Fail "package.py" }
-    $update = "$out\dw2003-native-$tag.zip"   # the launcher's update: no native.ini, so the player's stays
-    Copy-Item "$native\dist\dw2003-native.zip" $update
-    # its SHA-256, which the launcher (v1.1.0 on) checks before installing it (launcher/self_update.c)
-    $sum = (Get-FileHash $update -Algorithm SHA256).Hash.ToLower()
-    [System.IO.File]::WriteAllText("$update.sha256", "$sum  dw2003-native-$tag.zip`n")
+    # one zip, the first install and the launcher's update alike: no native.ini, so an update keeps the player's
     python -I tools\package_coop.py; if ($LASTEXITCODE -ne 0) { Fail "package_coop.py" }
-    $install = "$out\asuka-link-$tag.zip"    # the first install: with the co-op's native.ini and LEEME-COOP.txt
-    Copy-Item "$native\dist\dw2003-coop.zip" $install
+    $zips = @("asuka-link-$tag.zip")
+    # the launchers before v1.2.3 download dw2003-native-<tag>.zip: the same zip under that name too, up to v1.3.0
+    # (from then on every launcher reads asuka-link-<tag>.zip)
+    if ([version]$tag.TrimStart("v") -lt [version]"1.3.0") { $zips += "dw2003-native-$tag.zip" }
+    $assets = @()
+    foreach ($z in $zips) {
+        Copy-Item "$native\dist\dw2003-coop.zip" "$out\$z"
+        # its SHA-256, which the launcher (v1.1.0 on) checks before installing it (launcher/self_update.c)
+        $sum = (Get-FileHash "$out\$z" -Algorithm SHA256).Hash.ToLower()
+        [System.IO.File]::WriteAllText("$out\$z.sha256", "$sum  $z`n")
+        $assets += "$out\$z", "$out\$z.sha256"
+    }
 } finally { Pop-Location }
 Get-ChildItem $out | ForEach-Object { Write-Host ("  {0} ({1:N1} MB)" -f $_.Name, ($_.Length / 1MB)) }
 if ($DryRun) { Step "DryRun: ni tag ni publicación"; exit 0 }
@@ -88,15 +94,13 @@ $changes
 - **Red: versión $net.** Para jugar juntos, todos tenéis que tener la misma.
 
 - **Si ya lo tienes instalado:** en el launcher, *Buscar actualizaciones* y luego *Actualizar*. Tu ``native.ini`` y tus partidas no se tocan.
-- **Primera vez:** descarga ``asuka-link-$tag.zip`` y sigue ``LEEME-COOP.txt``.
-
-``dw2003-native-$tag.zip`` es el que usa el launcher para actualizar. Ninguno lleva nada del juego: cada uno usa su propio disco.
+- **Primera vez:** descarga ``asuka-link-$tag.zip`` y sigue ``LEEME-COOP.txt``. No lleva nada del juego: cada uno usa su propio disco.
 "@
 }
 # the notes through a file: Windows PowerShell splits an argument at its own quotes ("...") on the way to gh
 $notesFile = [System.IO.Path]::GetTempFileName()
 [System.IO.File]::WriteAllText($notesFile, $Notes, (New-Object System.Text.UTF8Encoding $false))
-gh release create $tag --repo $fork --target coop --title "Asuka Link $tag (port $base)" --notes-file $notesFile $update "$update.sha256" $install
+gh release create $tag --repo $fork --target coop --title "Asuka Link $tag (port $base)" --notes-file $notesFile @assets
 $created = $LASTEXITCODE
 Remove-Item $notesFile
 $LASTEXITCODE = $created

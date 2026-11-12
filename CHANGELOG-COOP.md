@@ -4,6 +4,18 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.2.3
+Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.2.
+
+Versión de paso hacia la 1.3.
+- **Una sola descarga:** cada versión trae solo `asuka-link-<versión>.zip`, que sirve para instalar y para que el
+  launcher actualice (comprobando su `.sha256`). Ya no lleva `native.ini`: al actualizar se queda el tuyo, y en una
+  instalación nueva el juego usa los valores por defecto.
+- **El cooperativo viene activado por defecto.** Sin direcciones de otros jugadores no abre ninguna conexión, así que
+  jugar solo sigue igual.
+- Esta es la última versión que sube también `dw2003-native-<versión>.zip`, para que los launchers de antes puedan
+  actualizarse a esta. Desde la 1.3, solo el de Asuka Link.
+
 ## v1.2.2
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.1.
 

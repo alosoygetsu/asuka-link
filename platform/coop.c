@@ -10,7 +10,7 @@
 #include "../include/native.h"
 #include "coop_net.h"
 
-int g_coop = 0; /* coop = 1: the ghost (main.c reads native.ini) */
+int g_coop = 1; /* coop = 0 in native.ini turns it off; on by default: without coop_peers it opens no socket */
 int g_coop_debug = 0; /* DW3_COOP_DEBUG=1: the ghost's state in the log every 2 s (main.c) */
 
 int g_exp_mult = 1;   /* exp_multiplier: the battle report's EXP times this (coop/patches stfgtrep/report.c) */
