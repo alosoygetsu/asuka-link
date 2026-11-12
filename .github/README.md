@@ -67,6 +67,7 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 - [x] Personalizar el aspecto del personaje (modelo y color)
 - [ ] Avisos ("X ha entrado en Asuka City")
 - [x] Completar el Digilog (paneles, fotos de los mapas, objeto que pide cada misión)
+- [x] Pasos en la historia y en todas las misiones del Digilog
 - [ ] Encontrar las misiones que el Digilog aún no tiene
 - [ ] Raids: aviso de turno, objetos y huir
 - [ ] Ver a los amigos en la pantalla del mapa e ir a su mapa

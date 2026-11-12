@@ -97,7 +97,8 @@ En el launcher: Ajustes -> pestaña Mods -> sección Cooperativo.
      Combate por turnos, uno detrás de otro, y el jefe ataca una vez a cada uno.
      Al ganar: EXP y dinero x3 y un objeto seguro; perder no da game over.
    - DIGILOG (en el menú del mapa): cada misión dice en qué paso vas ("Paso 2 de
-     5") y qué toca hacer; con □ (Cuadrado) ves todos sus pasos.
+     5") y qué toca hacer; con □ (Cuadrado) ves todos sus pasos. Las que solo
+     se pueden hacer en un tramo de la historia lo avisan.
    - Si uno entra en combate, un menú o una cinemática, desaparece para los demás
      y vuelve cuando sale.
    - Fuera de los mapas normales (combates, menús) no se ve nada.

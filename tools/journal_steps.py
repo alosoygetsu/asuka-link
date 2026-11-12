@@ -258,6 +258,100 @@ QUEST_STEPS.update({
     ],
 })
 
+# los jefes de las misiones del port: cada uno pone una marca al encontrarlo (y empieza el combate) y otra al vencerlo;
+# casi todos solo están en un tramo de la historia (sus condiciones de rango, PROGRESS_RANGES de main/game/events.c)
+QUEST_STEPS.update({
+    # las armas viejas
+    0x066: [
+        (F(0x40, 0x55), M(0x243), "Zanbamon está en la Catacumba al buscar la máscara y tras Vemmon.",
+         "Zanbamon is in the Catacomb while you seek the mask and after Vemmon."),
+        (F(0x40, 0x56), M(0x243), "Vence a Zanbamon: te da la Katana Oxidada.", "Beat Zanbamon: he gives you the Rusty Katana."),
+    ],
+    0x074: [
+        (F(0x40, 0x08), M(0x21C), "Habla con Datamon en la Sala de Control de Asuka.", "Talk to Datamon in Asuka's Control Room."),
+        (F(0x40, 0x09), M(0x21C), "Vence a Datamon: te da el Guante Oxidado.", "Beat Datamon: he gives you the Rusty Glove."),
+    ],
+    0x099: [
+        (F(0x40, 0x0F), M(0x22B), "MasterTyranno, en el Valle Tyranno, al ir a por el Líder Seiryu.",
+         "MasterTyranno, in Tyranno Valley, on the way to Leader Seiryu."),
+        (F(0x40, 0x10), M(0x22B), "Vence a MasterTyranno: te da la Garra Antigua.", "Beat MasterTyranno: he gives you the Old Claw."),
+    ],
+    0x08D: [
+        (F(0x40, 0x53), M(0x226), "Pharaohmon guarda las Ruinas Protocolo: antes de Seiryu o tras el final.",
+         "Pharaohmon guards the Protocol Ruins: before Seiryu or after the end."),
+        (F(0x40, 0x54), M(0x226), "Vence a Pharaohmon: te da la Varita Vieja.", "Beat Pharaohmon: he gives you the Old Wand."),
+    ],
+    # las mazmorras del Sector Norte: la Bruja y los Caballeros, de 0x1B a 0x25; los Maestros, solo en 0x27-0x28
+    0x0DD: [
+        (F(0x40, 0x0E), M(0x26A), "Ve a la Mazmorra de Hielo, al oeste del Agujero Kulon.", "Go to the Ice Dungeon, west of Kulon Pit."),
+        (F(0x40, 0x19), M(0x26A), "Vence a la Bruja de Hielo antes de asaltar el Cuartel A.o.A.",
+         "Beat the Ice Witch before you storm the A.o.A HQ."),
+    ],
+    0x088: [
+        (F(0x40, 0x3F), M(0x26B), "Ve a la Mazmorra de Fuego, tras la de Hielo.", "Go to the Fire Dungeon, past the Ice one."),
+        (F(0x40, 0x40), M(0x26B), "Vence al Caballero de Fuego antes de asaltar el Cuartel A.o.A.",
+         "Beat the Fire Knight before you storm the A.o.A HQ."),
+    ],
+    0x0A3: [
+        (F(0x40, 0x41), M(0x26C), "Ve a la Mazmorra Oscura, tras la de Fuego.", "Go to the Dark Dungeon, past the Fire one."),
+        (F(0x40, 0x42), M(0x26C), "Vence al Caballero Oscuro antes de asaltar el Cuartel A.o.A.",
+         "Beat the Dark Knight before you storm the A.o.A HQ."),
+    ],
+    # Kenny: solo en el paso 0x1B justo (PROGRESS(0x1B), 1 es igualdad)
+    0x18C: [
+        (AFTER(0x1A), None, "Llega al servidor Amaterasu tras vencer a Bulbmon.", "Reach the Amaterasu server after beating Bulbmon."),
+        (F(0x40, 0x1D), M(0x293), "Baja al sótano de la Posada del Bosque antes de vencer a Qing Long.",
+         "Go down to the Forest Inn's basement before you beat Qing Long."),
+    ],
+    # la Bolsa de Carpetas: hablar con Divermon (desde el paso 0x04)
+    0x192: [
+        (F(0x40, 0xA1), M(0x211), "Habla con Divermon en el Crucero Amarillo de Asuka.", "Talk to Divermon on Asuka's Yellow Cruiser."),
+    ],
+    # la Base Submarina, en los 180 segundos del Mundo Real (paso 0x20)
+    0x0CB: [
+        (F(0x40, 0x44), M(0x2DB), "Mundo Real: en Magasta B2F, ve al este y luego al norte.",
+         "Real World: in Magasta B2F, head east and then north."),
+        (F(0x40, 0x45), M(0x2DB), "Vence al Soldado de Metal antes de que se acabe el tiempo.",
+         "Beat the Metal Soldier before time runs out."),
+    ],
+    0x0F0: [
+        (F(0x40, 0x46), M(0x2DC), "Vence a la Guardia Real en Magasta 1F antes del despegue.",
+         "Beat the Royal Guard in Magasta 1F before the launch."),
+    ],
+})
+for item, mode, meet, es, en in [
+    (0x030, M(0x2D2), 0x82, ("el Maestro de Hielo", "la Mazmorra de Hielo"), ("the Ice Master", "the Ice Dungeon")),
+    (0x033, M(0x2D3), 0x84, ("el Maestro de Fuego", "la Mazmorra de Fuego"), ("the Fire Master", "the Fire Dungeon")),
+    (0x141, M(0x2D4), 0x86, ("el Maestro Oscuro", "la Mazmorra Oscura"), ("the Dark Master", "the Dark Dungeon")),
+]:
+    QUEST_STEPS[item] = [
+        (AFTER(0x26), None, "Se abre al final: tras seguir a Vemmon en el Cuartel A.o.A.",
+         "Opens near the end: after you follow Vemmon in the A.o.A HQ."),
+        (F(0x40, meet), mode, f"Ve a {es[1]} por el Agujero Kulon.", f"Go to {en[1]} through Kulon Pit."),
+        (F(0x40, meet + 1), mode, f"Vence a {es[0]} antes del Satélite Espía.".replace("a el ", "al "),
+         f"Beat {en[0]} before the Spy Satellite."),
+    ]
+# los Black Kings, en el servidor Amaterasu: cinco hasta cruzar su puente (0x1B-0x24); WarGreymon, después (0x25-0x28)
+for item, es_name, en_name, mode, meet, es_place, en_place in [
+    (0x0F2, "MagnaGargomon", "MegaGargomon", M(0x295), 0x78, "las Ruinas Protocolo", "the Protocol Ruins"),
+    (0x0F5, "Imperialdramon", "Imperialdramon", M(0x29A), 0x7A, "el Valle Tyranno", "Tyranno Valley"),
+    (0x100, "Seraphimon", "Seraphimon", M(0x2B0), 0x7C, "la Catacumba", "the Catacomb"),
+    (0x10E, "WarGrowlmon", "WarGrowlmon", M(0x2BC), 0x7E, "la Fábrica Dum Dum", "the Dum Dum Factory"),
+    (0x142, "KingNumemon", "KingNumemon", M(0x2BE), 0x80, "las Alcantarillas", "the Sewers"),
+]:
+    QUEST_STEPS[item] = [
+        (F(0x40, meet), mode, f"{es_name} BK, en {es_place} del servidor Amaterasu.",
+         f"BK {en_name}, in {en_place} on the Amaterasu server."),
+        (F(0x40, meet + 1), mode, f"Vence a {es_name} BK antes de cruzar el Puente Amaterasu.",
+         f"Beat BK {en_name} before you cross Amaterasu Bridge."),
+    ]
+QUEST_STEPS[0x02A] = [
+    (F(0x40, 0x76), M(0x28B), "Tras el Puente Amaterasu, bucea por sus Alcantarillas.",
+     "After Amaterasu Bridge, dive through its Sewers."),
+    (F(0x40, 0x77), M(0x28B), "Vence a WarGreymon BK en la Sala de Control, antes del satélite.",
+     "Beat BK WarGreymon in the Control Room, before the satellite."),
+]
+
 # las 8 DDNA: el mismo patrón (docs/MISIONES.md)
 DDNA = [  # DDNA, DRI y su mapa, su marca, la de su encargo, el Digimon y su mapa, la de su combate
     (0x006, "Johann", M(0x22B), 0x2D, 0, "MetalGreymon", M(0x233), 0x12),

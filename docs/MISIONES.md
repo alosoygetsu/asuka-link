@@ -219,6 +219,27 @@ está hecho cuando su condición se cumple. Abajo, los subpasos de cada paso, co
 
 Los pasos que no aparecen aquí (0x00-0x03, 0x18-0x19, 0x1D, 0x1F, 0x2B-0x2D) ya se cuentan bien con su frase.
 
+## Los jefes de las misiones del port: sus marcas y sus tramos
+Cada jefe pone una marca al encontrarlo (y empieza el combate) y otra al vencerlo (la de hecha). Casi todos solo están
+en un tramo de la historia: sus actores llevan una condición especial de rango (`SPECIAL(id)`, cuyo rango está en
+`PROGRESS_RANGES` de `main/game/events.c`; `SPECIAL(0x19)` es 0x1B-0x25, `SPECIAL(0x1A)` es 0x27-0x28). Ojo:
+`PROGRESS(n), 1` es igualdad, no "desde".
+- **Armas viejas:** Zanbamon `F40:55`/`56` (Catacumba, solo en los pasos 0x08 y 0x18); Datamon `F40:08`/`09` (Sala
+  de Control de Asuka, siempre); MasterTyranno `F40:0f`/`10` (Valle Tyranno, solo en 0x04); Pharaohmon `F40:53`/`54`
+  (Ruinas Protocolo, en 0x04 y en el capítulo extra).
+- **Mazmorras del Sector Norte** (al oeste del Agujero Kulon): la Bruja de Hielo `F40:0e`/`19`, el Caballero de Fuego
+  `F40:3f`/`40` y el Oscuro `F40:41`/`42`, de 0x1B a 0x25. Los Maestros de Hielo `F40:82`/`83`, Fuego `F40:84`/`85` y
+  Oscuro `F40:86`/`87`, solo en 0x27-0x28: tras el punto sin retorno (la guía los pone antes; el código manda).
+- **Kenny:** el evento 720 de la Posada del Bosque BF (`F40:1d`) solo con la historia en 0x1B justo.
+- **Bolsa de Carpetas:** hablar con Divermon en el Crucero Amarillo de Asuka (desde 0x04): `F1c:48` y el evento 1415
+  (el 92 de la tabla de eventos de campo), que da la bolsa y `F40:a1`.
+- **Black Kings** (servidor Amaterasu): MagnaGargomon `F40:78`/`79` (Ruinas Protocolo), Imperialdramon `F40:7a`/`7b`
+  (Valle Tyranno), Seraphimon `F40:7c`/`7d` (Catacumba), WarGrowlmon `F40:7e`/`7f` (Fábrica Dum Dum), KingNumemon
+  `F40:80`/`81` (Alcantarillas), de 0x1B a 0x24; WarGreymon `F40:76`/`77` (Sala de Control de Amaterasu, buceando por
+  sus alcantarillas), de 0x25 a 0x28.
+- **Base Submarina** (los 180 segundos del paso 0x20): el Soldado de Metal en Magasta B2F `F40:44`/`45`; la Guardia
+  Real en Magasta 1F, `F40:46` (se pone al empezar el combate).
+
 ## Lo que da cada jefe (sirve para las misiones)
 - **Armas viejas:** la Katana Oxidada, Zanbamon (Catacumba); los Guantes Oxidados, Datamon (Sala de Control de
   Asuka); el Rifle Oxidado, HiAndromon (Sala de Operaciones, historia 0x11); la Garra Antigua, MasterTyranno (historia

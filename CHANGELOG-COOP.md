@@ -5,6 +5,19 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta. Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
 port `v0.18.9` más la versión 1 del cooperativo.
 
+## v1.2.2
+Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.1.
+
+- **Todas las misiones del Digilog tienen pasos.** Las 19 que quedaban (las 4 armas viejas, la Bruja de Hielo, los
+  Caballeros de Fuego y Oscuro, los 3 Maestros, Kenny, la Bolsa de Carpetas, los 6 Black Kings y los 2 de la Base
+  Submarina) dicen ahora dónde está el rival y **hasta cuándo** se puede hacer, sacado del código del juego:
+  - Zanbamon solo está en la Catacumba al buscar la máscara y tras Vemmon; Pharaohmon, antes del Líder Seiryu o tras
+    el final.
+  - La Bruja y los Caballeros, hasta asaltar el Cuartel A.o.A; los Maestros, solo al final (tras seguir a Vemmon y
+    antes del Satélite Espía).
+  - Kenny, solo antes de vencer al Jefe Qing Long.
+  - Cinco Black Kings, hasta cruzar el Puente Amaterasu; WarGreymon BK, después.
+
 ## v1.2.1
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.0.
 
