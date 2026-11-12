@@ -227,3 +227,49 @@ Los pasos que no aparecen aquí (0x00-0x03, 0x18-0x19, 0x1D, 0x1F, 0x2B-0x2D) ya
   Seraphimon (Traje de Tirador), WarGrowlmon (Armadura Peligro), KingNumemon (Adaptador BIT).
 - **Mazmorras:** la Bruja de Hielo, los Caballeros de Fuego y Oscuro, y los Maestros de Hielo (Chip PM), Fuego (Chip
   Mente) y Oscuro (Adaptador EXP).
+
+## Lo que añade la guía de PhalX
+Datos sacados de la *Guía para Digimon World 2003* de **PhalX** (versión 3.5, 2012), que permite usarla citándolo. Aquí
+van resumidos con nuestras palabras; la guía no se copia al repositorio.
+
+### Encargos
+- **Caña de Pescar:** la Jabalina de Bambú se **compra en Ciudad Asuka**; la Tela de Araña la sueltan los
+  **Dokugumon del Bosque Protocolo**; el Pez Rojo, Divermon en su lago. Con la caña se pesca en la orilla de lagos y
+  mares (pocos usos por mapa).
+- **ID El Dorado:** pide **210 de carisma** (la condición del juego es el umbral 2 de `PARTY_STAT_THRESHOLDS`, 210).
+- **Bola TNT** (Chip TNT de la historia): la sueltan los **Triceramon** (Capa de Conexión y Valle Tyranno de Asuka).
+- **Trofeo Asuka:** se abre al conseguir el **Digihuevo de la Seriedad**. Rivales: 4 Divermon (Maestros Blanco,
+  Negro, Verde y Rojo), un quinto (Maestro Azul) y KingDivermon.
+- **Trofeo Sol:** mejor tras el **Digihuevo de la Sabiduría**. 3 Etemon; el cuarto pide su micrófono:
+  - **BK Agumon** está en la Placa de Circuitos: por el agujero frente a donde se conoce a Zanbamon en la Tumba de la
+    Selva de Asuka, tres pantallas al norte.
+  - **El líder BKZ**, en el Central Park de Amaterasu, por el hoyo junto al gimnasio de Panjyamon.
+  - Luego un Etemon más, MetalEtemon y KingEtemon.
+- **Rivales de cartas sueltos** (podría ser una misión): 5 Numemon y 5 BK Agumon por el mapa, que dan cartas especiales
+  (MarineAngemon, SaberLeomon, Rosemon II, Gryphonmon, Creepymon, Puerta de la Fortuna, Anti Poder, Puerta de la
+  Miseria, Borrar Matriz, Acceso al Deseo).
+
+### Cadenas de armas: los ingredientes se compran
+Corrige lo que pensábamos: no son solo del capítulo extra.
+- **1.ª mejora**, en el servidor Amaterasu: el arma vieja (de su jefe) + un objeto de la **Torre Delirios** de
+  Amaterasu (Colmillo Sable, Khakkhara, Puño Kaiser, Cañón Racimo, Onimaru).
+- **2.ª mejora**, con el compañero a **nivel 45**: un objeto de las **ciudades Bai Hu o Xuan Wu** (Colmillo Veneno,
+  Vara de Cristal, Brazo Tempestad; el Juicio y el Masamune no piden compra).
+- **3.ª mejora**, con **MetalEtemon** en cualquier servidor: un objeto de **Ciudad Amaterasu** (Colmillo Oculto, Milenio,
+  Puño Raijin, Cañón Suijin, Acero Fujin).
+
+Los herreros, por compañero:
+- **Invencible (Agumon, Guilmon o Veemon):**
+  - Shadramon: con Agumon en las alcantarillas de la Fábrica Dum Dum; con Guilmon en Shell Beach; con Veemon en el
+    Bosque Protocolo, detrás del pilar.
+  - Depthmon, buceando: con Guilmon en el fondo de Shell Beach (Asuka); con Agumon en el de la Bahía Fénix
+    (Amaterasu); con Veemon en el del Lago de Hielo.
+- **Eternamente (Renamon o Patamon):**
+  - Ponchomon: con Renamon fuera de la Torre Delirios (Amaterasu); con Patamon subiendo las escaleras de las Ruinas
+    Protocolo (Amaterasu).
+  - Kongoumon: con Renamon en el Gimnasio Legendario (Amaterasu); con Patamon en la Mina Kulon (entrando con Digmon
+    por la Tumba de la Selva de Amaterasu).
+- **Super Nova (Kumamon):** Nohemon en las Catacumbas (Amaterasu); Seehomon buceando en el Central Park de Asuka.
+- **Castigo (Monmon):** Shurimon en el Lago SB Zhu Que; Sagitarimon en el Desierto Mobius (Amaterasu).
+- **Muramasa (Kotemon):** Kabukimon en una zona escondida de la Jungla de Éter (Amaterasu), buceando desde la Bahía
+  Fénix; Yashamon en la Sala Secreta (Amaterasu).
