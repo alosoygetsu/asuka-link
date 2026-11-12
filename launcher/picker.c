@@ -2,7 +2,7 @@
    it; elsewhere it is at the foot of the menu on the left, and the list opens upwards. */
 #include "launcher.h"
 
-enum { W = 96, H = 14, SIDE_Y = SCREEN_H - 62 };
+enum { W = 96, H = 14, SIDE_Y = SCREEN_H - 58 };
 
 static bool s_open;
 static int s_hover = PICKER_NONE;

@@ -865,6 +865,47 @@ void net_room_name(char *out, int size)
 
 int net_room_size(void) { return s_members; }
 
+/* this PC's IPv4 addresses, one each, Tailscale's first (tailscale[i] says which); looked up every 5 s at most */
+int net_my_ips(char out[][20], bool *tailscale, int max)
+{
+    static char ip[6][20];
+    static bool ts[6];
+    static int n;
+    static Uint64 at;
+    if (!at || SDL_GetTicks() - at > 5000) {
+        ULONG len = 16384;
+        IP_ADAPTER_ADDRESSES *list = SDL_malloc(len);
+        at = SDL_GetTicks() | 1;
+        n = 0;
+        if (list && GetAdaptersAddresses(AF_INET, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER, NULL, list, &len) == NO_ERROR) {
+            for (int pass = 0; pass < 2; pass++) { /* Tailscale's, then the rest */
+                for (IP_ADAPTER_ADDRESSES *a = list; a; a = a->Next) {
+                    if (a->OperStatus != IfOperStatusUp || a->IfType == IF_TYPE_SOFTWARE_LOOPBACK) {
+                        continue;
+                    }
+                    for (IP_ADAPTER_UNICAST_ADDRESS *u = a->FirstUnicastAddress; u && n < 6; u = u->Next) {
+                        const Uint32 v = ((struct sockaddr_in *)u->Address.lpSockaddr)->sin_addr.s_addr;
+                        const Uint8 *b = (const Uint8 *)&v;
+                        const bool t = b[0] == 100 && (b[1] & 0xC0) == 64;
+                        if ((b[0] == 169 && b[1] == 254) || t != (pass == 0)) {
+                            continue;
+                        }
+                        addr_text(v, 0, ip[n], sizeof ip[n], false);
+                        ts[n++] = t;
+                    }
+                }
+            }
+        }
+        SDL_free(list);
+    }
+    const int k = SDL_min(n, max);
+    for (int i = 0; i < k; i++) {
+        SDL_strlcpy(out[i], ip[i], 20);
+        tailscale[i] = ts[i];
+    }
+    return k;
+}
+
 /* the addresses this PC has, for the description of Add by IP (Tailscale's first) */
 void net_my_addresses(char *out, int size)
 {

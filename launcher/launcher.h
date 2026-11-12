@@ -245,6 +245,7 @@ bool net_all_ready(void);
 void net_room_name(char *out, int size);
 int net_room_size(void);
 void net_my_addresses(char *out, int size);
+int net_my_ips(char out[][20], bool *tailscale, int max); /* this PC's, Tailscale's first */
 
 /* sala.c: the room on the home screen (R_PEER rows) */
 enum { SALA_MEMBER = 0x100, SALA_NEAR = 0x200, SALA_ADD = 0x300, SALA_INVITE = 0x400, SALA_READY = 0x500, SALA_LEAVE = 0x600 };

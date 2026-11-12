@@ -13,6 +13,8 @@ La versión base de Asuka Link: a partir de aquí, el punto de partida del proye
     Tailscale ni escribir IP. Eliges a uno y **Invitar**; el otro ve "X te invita" y acepta o rechaza.
   - **Añadir por IP**, para jugar desde lejos (Tailscale, ZeroTier, Internet): escribes la IP del otro y entra
     directamente en tu sala, sin que tenga que escribir la tuya.
+  - **Tus IP**, siempre a la vista en un recuadro del menú lateral (la de Tailscale, en azul), para pasárselas a quien
+    te quiera añadir.
   - Hasta 4 por sala. Si en una red sois más, cada grupo invita a los suyos y no se mezclan.
   - Cada jugador sale con su **nombre de domador**, su **personaje** (Junior, Chico o Chica, en su tono) y sus **barras
     de señal**. Al seleccionarlo se ven su equipo con niveles y su ping.

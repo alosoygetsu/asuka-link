@@ -252,6 +252,24 @@ static void scene(void)
 
 /* ---- the screen ---- */
 
+/* this PC's addresses, small, between Quit and the language: to give them to whoever adds you by IP (Tailscale's
+   in cyan) */
+static void ips_box(void)
+{
+    char ip[3][20];
+    bool ts[3];
+    const int n = net_my_ips(ip, ts, 3), y = menu_rect(4).y + MENU_H + 5, h = 14 + 8 * SDL_max(n, 1); /* digits are 5 tall: 8 a line */
+    fill_alpha(6, y, SIDE_W - 12, h, C_PANEL, 200);
+    outline(6, y, SIDE_W - 12, h, C_RULE);
+    text_flat(10, y + 3, C_GOLD, L->s[S_COOP_MINE]);
+    for (int i = 0; i < n; i++) {
+        text_flat(10, y + 11 + i * 8, ts[i] ? C_LINK : C_TEXT, ip[i]);
+    }
+    if (!n) {
+        text_flat(10, y + 11, C_FAINT, "-");
+    }
+}
+
 void side_draw(int page, int cur)
 {
     const Lang *l = L;
@@ -275,6 +293,7 @@ void side_draw(int page, int cur)
         }
         text_sel(14, t.y + 4, sel, here ? C_LINK : C_SOFT, l->s[PAGES[i]]);
     }
+    ips_box();
     text(8, SCREEN_H - 36, 1, C_FAINT, LAUNCHER_VERSION);
     text(8, SCREEN_H - 24, 1, C_FAINT, "by alosoygetsu");
 }

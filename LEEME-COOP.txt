@@ -54,9 +54,9 @@ y abajo, por sus filas. También con el ratón.
   INVITAR les manda una invitación; les sale "X te invita" con SÍ y NO. Al
   aceptar, entran en tu grupo (y dejan el suyo).
 - + AÑADIR POR IP (para jugar desde lejos): escribe la IP del otro y Enter. Entra
-  directamente en tu sala, sin que tenga que hacer nada. Ahí mismo, abajo, salen
-  tus IP para pasárselas a quien te quiera añadir (la de Tailscale, si la hay,
-  la primera).
+  directamente en tu sala, sin que tenga que hacer nada. Tus IP, para pasárselas
+  a quien te quiera añadir, están siempre en el recuadro TU IP del menú de la
+  izquierda (la de Tailscale, si la hay, la primera y en azul).
 - SALIR DE LA SALA: vuelves a jugar solo.
 - LISTO: marca que estás preparado; cuando lo estáis todos, os avisa.
 - La sala se recuerda: al abrir el launcher otro día, os volvéis a juntar solos.
