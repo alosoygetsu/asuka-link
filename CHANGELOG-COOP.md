@@ -5,7 +5,7 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta. Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
 port `v0.18.9` más la versión 1 del cooperativo.
 
-## v1.3.0
+## v1.2.1
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.0.
 
 - **Las 5 cadenas de armas, en el Digilog** (Muramasa, Super Nova, Castigo, Eternamente e Invencible): del jefe que
