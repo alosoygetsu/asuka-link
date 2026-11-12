@@ -84,8 +84,6 @@ Todo lo del juego y del port, con su estado y las ideas, está en la [hoja de ru
 Cada release del cooperativo dice en qué versión del port está hecha, por ejemplo *"Asuka Link v1.0.0 (port
 v0.18.9)"*, y cuál es su versión de red: todos los que jugáis juntos tenéis que tener la misma.
 - **v1.x:** el número sube **1.1, 1.2…** cuando hay cosas nuevas y **1.1.1, 1.1.2…** cuando solo son arreglos.
-- **Antes de la v1.0.0** las versiones iban pegadas al número del port: de la v0.18.901 a la v0.18.918 son el
-  cooperativo sobre el port v0.18.9.
 - **Lo único del port que cambia el cooperativo:**
   - viaje rápido, Digilog y EXP compartida completa, activados por defecto;
   - "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra, eliminados;
@@ -116,4 +114,4 @@ pack, and there are EXP and money multipliers. Updates come through the launcher
 launcher, the options and its mods) is Feerdus's, with its own versions (v0.18.9, v0.19.0…); the co-op is alosoygetsu's,
 kept in a layer of its own (`coop/patches/`, the `coop*` files), with its own versions from **v1.0.0** (1.1, 1.2… for new
 things, 1.1.1… for fixes). Each release names the port release it stands on and its network version, which all players
-must share. Up to v0.18.918 the co-op's numbers rode on the port's (v0.18.901-918: the co-op on port v0.18.9).
+must share.

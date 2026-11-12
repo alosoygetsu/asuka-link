@@ -53,8 +53,7 @@ tus partidas no se tocan. Las versiones están en
 https://github.com/alosoygetsu/asuka-link/releases
 Para jugar juntos, todos necesitáis la misma "versión de red", que sale en las
 notas de cada versión. Si no coincide, coop.log dice "another version of the co-op".
-Las versiones van v1.0.0, v1.1.0... (cosas nuevas) y v1.1.1... (arreglos). Hasta
-la v0.18.918, el número iba pegado al del port.
+Las versiones van v1.0.0, v1.1.0... (cosas nuevas) y v1.1.1... (arreglos).
 
 
 3. CONFIGURAR EL COOPERATIVO (todos)
