@@ -19,7 +19,7 @@
 #include "coop_net.h"
 
 #define COOP_MAGIC 0x43335744u /* "DW3C" */
-#define COOP_VERSION 7 /* 3: the look and the name; 4: the card trade; 5: blobs (the PvP battle's teams); 6: the PvP battle's commands; 7: v1.0.0 (raids, card duels) */
+#define COOP_VERSION 8 /* 3: the look and the name; 4: the card trade; 5: blobs (the PvP battle's teams); 6: the PvP battle's commands; 7: v1.0.0 (raids, card duels); 8: v1.3.0 (the launcher's room) */
 #define COOP_BUFFER_MS 80 /* the least; more with jitter */
 #define COOP_TIMEOUT_MS 2000
 #define COOP_RX 32 /* states kept, ~0.6 s at 50 Hz */
@@ -197,7 +197,7 @@ int coop_net_start(void) {
     }
     s_net_tried = 1;
     if (g_coop_peer[0] == 0) {
-        coop_log("no other players' addresses yet (launcher: Settings, Mods, Co-op; or coop_peers in native.ini)");
+        coop_log("no other players yet (the launcher's room, or coop_peers in native.ini): the room is followed while you play");
         return 0;
     }
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
@@ -258,6 +258,86 @@ int coop_net_start(void) {
     coop_log("listening on port %d, %d other player%s", g_coop_port, s_peer_count, s_peer_count > 1 ? "s" : "");
     g_coop_net_on = 1;
     return 1;
+}
+
+/* The launcher's room changes coop_peers while the game runs: native.ini read again every 2 s and followed. The players
+   who stay keep their place and state; the ones gone leave (as a disconnect), the new ones come in. On the field only
+   (native_coop_publish), so no battle in lockstep loses its player halfway */
+void coop_net_follow(void) {
+    static Uint64 next;
+    char path[1100], line[1200], key[32], value[256] = "", list[256], *entry, *rest;
+    CoopPeer kept[COOP_PEERS];
+    int n = 0;
+    FILE *f;
+
+    if (SDL_GetTicks() < next) {
+        return;
+    }
+    next = SDL_GetTicks() + 2000;
+    SDL_snprintf(path, sizeof path, "%snative.ini", SDL_GetBasePath());
+    if ((f = fopen(path, "r")) == NULL) {
+        return;
+    }
+    while (fgets(line, sizeof line, f) != NULL) {
+        if (line[0] != '#' && line[0] != ';' && sscanf(line, " %31[^= ] = %255[^\r\n]", key, value) == 2 && SDL_strcasecmp(key, "coop_peers") == 0) {
+            break;
+        }
+        value[0] = 0;
+    }
+    fclose(f);
+    for (char *e = value + SDL_strlen(value); e > value && (e[-1] == ' ' || e[-1] == '\t');) {
+        *--e = 0;
+    }
+    if (SDL_strcmp(value, g_coop_peer) == 0) {
+        return;
+    }
+    coop_log("the room changed: coop_peers = %s", value[0] ? value : "(nobody)");
+    SDL_strlcpy(g_coop_peer, value, sizeof g_coop_peer);
+    if (!g_coop_net_on) { /* nobody before: the network starts now */
+        s_net_tried = 0;
+        coop_net_start();
+        return;
+    }
+    SDL_strlcpy(list, value, sizeof list);
+    for (entry = list; entry != NULL && n < COOP_PEERS; entry = rest) {
+        rest = SDL_strchr(entry, ',');
+        if (rest != NULL) {
+            *rest++ = 0;
+        }
+        while (*entry == ' ') {
+            entry++;
+        }
+        if (*entry == 0) {
+            continue;
+        }
+        CoopPeer *same = NULL;
+        for (int i = 0; i < s_peer_count; i++) {
+            if (SDL_strcmp(s_peers[i].name, entry) == 0) {
+                same = &s_peers[i];
+            }
+        }
+        if (same != NULL) {
+            kept[n++] = *same;
+        } else {
+            memset(&kept[n], 0, sizeof kept[n]);
+            kept[n].rtt = -1;
+            if (resolve(&kept[n], entry)) {
+                coop_log("player %d: %s (new in the room)", n + 2, entry);
+                n++;
+            }
+        }
+    }
+    for (int i = 0; i < s_peer_count; i++) {
+        bool stays = false;
+        for (int j = 0; j < n; j++) {
+            stays |= SDL_strcmp(kept[j].name, s_peers[i].name) == 0;
+        }
+        if (!stays) {
+            coop_log("%s left the room", s_peers[i].name);
+        }
+    }
+    memcpy(s_peers, kept, sizeof kept[0] * n);
+    s_peer_count = n;
 }
 
 int coop_net_peer_count(void) {

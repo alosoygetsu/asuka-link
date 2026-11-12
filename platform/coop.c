@@ -69,6 +69,9 @@ void native_coop_reset(void) {
 
 void native_coop_publish(const NativeCoopState *now) {
     s_last = *now;
+    if (g_coop) {
+        coop_net_follow();
+    }
     if (coop_net_start()) {
         coop_net_send(now);
         coop_net_receive();
