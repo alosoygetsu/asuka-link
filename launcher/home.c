@@ -9,7 +9,7 @@
 #define GAME_NAME "Digimon World 2003 (Europe)"
 
 enum {
-    MENU_Y = 54, MENU_H = 16, MENU_GAP = 2, QUIT_GAP = 10, NAME_X = 40,
+    MENU_Y = 66, MENU_H = 16, MENU_GAP = 2, QUIT_GAP = 10, NAME_X = 46,
     CHIPS_Y = 84, CHIP_H = 14, CHIP_GAP = 6, TITLE_Y = 100, SUB_Y = 126, CARD_Y = 142, CARD_H = 26, CARD_GAP = 8,
     INFO_Y = 172, BTN_Y = 186, BTN_H = 28, SCENE_BASE = 200
 };
@@ -194,9 +194,9 @@ void side_draw(int page, int cur)
     fill_alpha(0, 0, SIDE_W, SCREEN_H, C_BG, 225);
     fill(SIDE_W - 1, 0, 1, SCREEN_H, C_RULE);
     art_icon(8, 8);
-    text(NAME_X, 15, 1, C_GOLD, APP_NAME);
-    text(8, 33, 1, C_SOFT, l->s[S_TAGLINE]);
-    fill(8, 46, SIDE_W - 16, 1, C_RULE);
+    text(NAME_X, 19, 1, C_GOLD, APP_NAME);
+    text(8, 45, 1, C_SOFT, l->s[S_TAGLINE]);
+    fill(8, 58, SIDE_W - 16, 1, C_RULE);
     for (int i = 0; i < 5; i++) {
         const SDL_Rect t = menu_rect(i);
         const bool sel = PAGES[i] == cur, here = PAGES[i] == page;

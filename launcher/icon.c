@@ -1,62 +1,19 @@
-/* The bar's badge and the language flags, drawn from numbers: no image files. The badge is Asuka Link's "AL" slanted:
-   sunset letters with a dark edge on the night's blue, two links of a chain after them and the link's line under it. */
+/* Asuka Link's icon on the menu and the language flags, drawn from numbers: no image files. The icon's pixels come from
+   tools/asuka_icon.py, the same as the .exe's (platform/dw3.ico). */
 #include "launcher.h"
+#include "icon_data.inc"
 
-enum { ICON_W = 32, ICON_H = 22 };
-
-static const char *const GLYPH[3][7] = {
-    {"01110", "10001", "10001", "11111", "10001", "10001", "10001"}, /* A */
-    {"10000", "10000", "10000", "10000", "10000", "10000", "11111"}, /* L */
-    {"00000", "01100", "10010", "10110", "01101", "01001", "00110"}, /* two links of a chain */
-};
-
-/* the badge: w x h pixels, letters 5x7 cells drawn 2 wide (bold) and ry tall, pitch apart, slanted to the right going up */
-static void badge(int x, int y, int w, int h, int ry, int pitch)
+void art_icon(int x, int y)
 {
-    static const Uint32 NAVY = 0x050B14, BLUE = 0x13304A, BLUE_HI = 0x1E4766, WHITE = 0xFFFFFF; /* Asuka Link's night */
-    bool m[ICON_H][ICON_W] = {{false}};
-    const int top = (h - 7 * ry) / 2 - 1, rows = 7 * ry;
-    for (int g = 0; g < 3; g++) {
-        for (int r = 0; r < 7; r++) {
-            for (int c = 0; c < 5; c++) {
-                for (int sy = 0; GLYPH[g][r][c] == '1' && sy < ry; sy++) {
-                    const int yy = r * ry + sy, py = top + yy, px = 3 + g * pitch + c + (rows - 1 - yy) / (5 * ry / 2);
-                    if (py < h && px + 1 < w) {
-                        m[py][px] = m[py][px + 1] = true;
-                    }
-                }
+    for (int j = 0; j < 32; j++) {
+        for (int i = 0; i < 32; i++) {
+            const char c = ICON[j][i];
+            if (c != ' ') {
+                fill(x + i, y + j, 1, 1, c == 'e' ? C_EDGE : c == 'c' ? C_LINK : c == 'y' ? C_GOLD : C_BG);
             }
         }
     }
-    fill(x, y, w, h, NAVY);
-    fill(x + 1, y + 1, w - 2, h - 2, BLUE);
-    fill(x + 1, y + 1, w - 2, 3, BLUE_HI);
-    fill(x, y, 1, 1, C_BG), fill(x + w - 1, y, 1, 1, C_BG);                      /* rounded corners */
-    fill(x, y + h - 1, 1, 1, C_BG), fill(x + w - 1, y + h - 1, 1, 1, C_BG);
-    fill(x + w - 4, y + 3, 1, 1, WHITE), fill(x + w - 3, y + h / 3, 1, 1, WHITE), fill(x + 2, y + h - 4, 1, 1, WHITE); /* the logo's sparkles */
-    for (int j = 0; j < h; j++) {
-        for (int i = 0; i < w; i++) { /* the edge: any neighbour of a letter pixel */
-            for (int d = 0; d < 9 && !m[j][i]; d++) {
-                const int a = i + d % 3 - 1, b = j + d / 3 - 1;
-                if (a >= 0 && a < w && b >= 0 && b < h && m[b][a]) {
-                    fill(x + i, y + j, 1, 1, NAVY);
-                    break;
-                }
-            }
-        }
-    }
-    for (int j = 0; j < h; j++) {
-        for (int i = 0; i < w; i++) {
-            if (m[j][i]) { /* the sunset's: light gold to orange red, top to bottom; the chain in the link's cyan */
-                const int t = (j - top) * 256 / rows;
-                fill(x + i, y + j, 1, 1, i >= 3 + 2 * pitch ? C_LINK : 0xFF0000 | ((0xD8 - t * 0x80 / 256) << 8) | (0x7A - t * 0x50 / 256));
-            }
-        }
-    }
-    fill(x + 4, y + h - 3, w - 8, 1, C_LINK);
 }
-
-void art_icon(int x, int y) { badge(x, y, ICON_W, ICON_H, 2, 8); }
 
 enum { FLAG_W = 16, FLAG_H = 10 };
 

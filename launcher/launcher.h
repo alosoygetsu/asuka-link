@@ -41,7 +41,7 @@ void text_right(int right, int y, Uint32 colour, const char *s);
 void text_centre(int y, int scale, Uint32 colour, const char *s);
 int wrap(int x, int y, int width, Uint32 colour, const char *s); /* returns its line count */
 void triangle(int x, int y, int half, int dir, Uint32 colour);   /* dir: -1 left, 1 right */
-void art_icon(int x, int y); /* icon.c: the bar's DW3 badge */
+void art_icon(int x, int y); /* icon.c: Asuka Link's icon, 32 x 32 */
 void art_flag(int x, int y, int lang); /* 16x10: en, es, fr, de, it */
 
 /* lang_*.c */
