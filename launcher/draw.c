@@ -31,10 +31,14 @@ void outline(int x, int y, int w, int h, Uint32 colour)
     fill(x + w - 1, y, 1, h, colour);
 }
 
+/* Asuka Link's panels: a thick edge, the corners cut */
 void panel(int x, int y, int w, int h)
 {
-    fill(x, y, w, h, C_PANEL);
+    fill_alpha(x, y, w, h, C_PANEL, 230);
     outline(x, y, w, h, C_EDGE);
+    outline(x + 1, y + 1, w - 2, h - 2, C_EDGE);
+    fill(x, y, 2, 2, C_BG);
+    fill(x + w - 2, y + h - 2, 2, 2, C_BG);
 }
 
 /* the old screen's soft glow from the top */
@@ -104,6 +108,15 @@ void text(int x, int y, int scale, Uint32 colour, const char *s)
 }
 
 void text_flat(int x, int y, Uint32 colour, const char *s) { line(x, y, 1, colour, s, s + SDL_strlen(s)); }
+
+void text_sel(int x, int y, bool sel, Uint32 colour, const char *s)
+{
+    if (sel) {
+        text_flat(x, y, C_ON_SELECT, s);
+    } else {
+        text(x, y, 1, colour, s);
+    }
+}
 
 void text_centre(int y, int scale, Uint32 colour, const char *s) { text((SCREEN_W - text_width(s, scale)) / 2, y, scale, colour, s); }
 

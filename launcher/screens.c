@@ -139,7 +139,7 @@ int bind_column(int slot)
 
 static void draw_bind(const Row *row, int y, bool sel)
 {
-    text(list_rect().x + 13, y, 1, sel ? C_GOLD : C_TEXT, bind_label(row->id));
+    text_sel(list_rect().x + 13, y + 2, sel, C_TEXT, bind_label(row->id));
     for (int slot = 0; slot < 3; slot++) {
         const int x = bind_column(slot);
         const bool here = sel && slot == bind_slot();
@@ -150,7 +150,11 @@ static void draw_bind(const Row *row, int y, bool sel)
                 s = SDL_GetTicks() / 267 & 1 ? "..." : "";
             }
         }
-        text(x, y, 1, here ? C_GOLD : s[0] == '-' ? C_SOFT : C_TEXT, s);
+        if (sel && !here) {
+            text_flat(x, y + 2, C_ON_SELECT, s);
+        } else {
+            text(x, y + 2, 1, here ? C_GOLD : s[0] == '-' ? C_SOFT : C_TEXT, s);
+        }
     }
 }
 
@@ -193,8 +197,7 @@ static void draw_list(void)
             continue;
         }
         if (sel) {
-            fill(a.x + 1, y, a.w - 2, ROW_H, C_SELECT);
-            triangle(a.x + 5, y + 7, 3, 1, C_GOLD);
+            fill(a.x + 3, y, a.w - 6 - list_inset(), ROW_H, C_SELECT);
         }
         if (r[i].kind == R_BIND) {
             draw_bind(&r[i], y, sel);
@@ -211,24 +214,29 @@ static void draw_list(void)
                 update_label(tool, label, sizeof label);
                 fill(b.x, y + 1, b.w, ROW_H - 2, C_EDGE);
                 fill(b.x + 1, y + 2, b.w - 2, ROW_H - 4, on ? C_PANEL : C_BG);
-                text(b.x + 6, y, 1, on ? C_GOLD : C_TEXT, label);
+                text(b.x + 6, y + 2, 1, on ? C_GOLD : C_TEXT, label);
                 right = b.x - 8;
             }
             tool_value(tool, value, sizeof value);
-            text_right(right, y, sel && !on ? C_GOLD : C_SOFT, value);
+            if (sel) {
+                text_flat(right - text_width(value, 1), y + 2, C_ON_SELECT, value);
+            } else {
+                text_right(right, y + 2, C_SOFT, value);
+            }
         }
-        text(a.x + 13, y, 1, sel ? C_GOLD : C_TEXT, r[i].kind == R_OPTION ? L->option[r[i].id].name : L->s[r[i].id]);
+        text_sel(a.x + 13, y + 2, sel, C_TEXT, r[i].kind == R_OPTION ? L->option[r[i].id].name : L->s[r[i].id]);
         if (r[i].kind == R_ACTION && r[i].id == S_SWAP) { /* on or off, so it shows it took */
-            text_right(a.x + a.w - 12 - list_inset(), y, binds_swapped() ? C_GOLD : C_SOFT, L->s[binds_swapped() ? S_ON : S_OFF]);
+            const char *v = L->s[binds_swapped() ? S_ON : S_OFF];
+            text_sel(a.x + a.w - 12 - list_inset() - text_width(v, 1), y + 2, sel, binds_swapped() ? C_GOLD : C_SOFT, v);
         }
         if (r[i].kind == R_OPTION) {
             char value[32];
             const int right = a.x + a.w - (sel ? 13 : 8) - list_inset();
             option_value(r[i].id, L, value, sizeof value);
-            text_right(right, y, option_is_off(r[i].id) ? C_SOFT : C_TEXT, value);
+            text_sel(right - text_width(value, 1), y + 2, sel, option_is_off(r[i].id) ? C_SOFT : C_TEXT, value);
             if (sel) {
-                triangle(right - text_width(value, 1) - 8, y + 7, 3, -1, C_GOLD);
-                triangle(right + 3, y + 7, 3, 1, C_GOLD);
+                triangle(right - text_width(value, 1) - 8, y + 6, 3, -1, C_ON_SELECT);
+                triangle(right + 3, y + 6, 3, 1, C_ON_SELECT);
             }
         }
     }
@@ -269,9 +277,15 @@ static void draw_tabs(void)
     for (int i = 0; i < TAB_COUNT; i++) {
         const SDL_Rect t = tab_rect(i);
         const bool sel = i == s_tab;
-        fill(t.x, t.y, t.w, t.h, sel && g_app.tabfocus ? C_GOLD : C_EDGE);
-        fill(t.x + 1, t.y + 1, t.w - 2, t.h - 1, sel ? C_PANEL : C_BG);
-        text(t.x + 8, t.y + 2, 1, sel ? C_GOLD : C_SOFT, L->s[TAB_NAME[i]]);
+        if (sel) { /* the tab in sight: filled cyan, yellow when the focus is on the tabs */
+            fill(t.x, t.y, t.w, t.h, g_app.tabfocus ? C_SELECT : C_LINK);
+            text_flat(t.x + 8, t.y + 5, C_ON_SELECT, L->s[TAB_NAME[i]]);
+        } else {
+            fill_alpha(t.x, t.y, t.w, t.h, C_BG, 200);
+            outline(t.x, t.y, t.w, t.h, C_EDGE);
+            outline(t.x + 1, t.y + 1, t.w - 2, t.h - 2, C_EDGE);
+            text(t.x + 8, t.y + 5, 1, C_SOFT, L->s[TAB_NAME[i]]);
+        }
     }
 }
 

@@ -204,12 +204,12 @@ void side_draw(int page, int cur)
             fill(8, t.y - QUIT_GAP / 2 - 1, SIDE_W - 16, 1, C_RULE);
         }
         if (sel) {
-            fill(t.x, t.y, t.w, t.h, C_SELECT);
+            fill(t.x + 6, t.y, t.w - 12, t.h, C_SELECT);
+        } else if (here) {
+            outline(t.x + 6, t.y, t.w - 12, t.h, C_LINK);
+            outline(t.x + 7, t.y + 1, t.w - 14, t.h - 2, C_LINK);
         }
-        if (here) {
-            fill(t.x, t.y, 3, t.h, C_GOLD);
-        }
-        text(14, t.y + 2, 1, sel ? C_GOLD : here ? C_TEXT : C_SOFT, l->s[PAGES[i]]);
+        text_sel(14, t.y + 4, sel, here ? C_LINK : C_SOFT, l->s[PAGES[i]]);
     }
     text(8, SCREEN_H - 36, 1, C_FAINT, LAUNCHER_VERSION);
     text(8, SCREEN_H - 24, 1, C_FAINT, "by alosoygetsu");
@@ -225,7 +225,7 @@ static void draw_chips(const Lang *l, int cur)
         chip_text(l, i, tag ? tag : "", s, sizeof s);
         fill_alpha(c.x, c.y, c.w, c.h, sel ? C_SELECT : C_PANEL, 225);
         outline(c.x, c.y, c.w, c.h, news ? C_GOLD : C_EDGE);
-        text(c.x + 6, c.y + 1, 1, news ? C_GOLD : C_TEXT, s);
+        text_sel(c.x + 6, c.y + 3, sel, news ? C_GOLD : C_TEXT, s);
     }
 }
 

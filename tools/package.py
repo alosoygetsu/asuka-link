@@ -16,7 +16,7 @@ FILES = {
     "SDL3.dll": NATIVE / "build/SDL3.dll",
     "dw2003.fill": NATIVE / "build/dw2003.fill",
     "dw3launcher.exe": NATIVE / "build/dw3launcher.exe",
-    "licenses/PixelDigivolve-License.txt": NATIVE / "launcher/PixelDigivolve-License.txt",
+    "licenses/Silkscreen-OFL.txt": NATIVE / "launcher/fonts/Silkscreen-OFL.txt",
     "README.md": NATIVE / "README.md",
     "CREDITS.md": NATIVE / "CREDITS.md",
     "CHANGELOG.md": NATIVE / "CHANGELOG.md",

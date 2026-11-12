@@ -18,7 +18,7 @@ void picker_draw(int lang, bool focused)
     fill(b.x, b.y, b.w, b.h, C_PANEL);
     outline(b.x, b.y, b.w, b.h, focused || s_open ? C_GOLD : C_EDGE);
     art_flag(b.x + 4, b.y + 2, lang);
-    text_flat(b.x + 24, b.y + 1, C_TEXT, LANG_TABLE[lang]->name);
+    text_flat(b.x + 24, b.y + 3, C_TEXT, LANG_TABLE[lang]->name);
     for (int i = 0; i < 3; i++) { /* the arrow */
         fill(b.x + b.w - 10 + i, b.y + 5 + i, 7 - 2 * i, 1, C_TEXT);
     }
@@ -28,7 +28,7 @@ void picker_draw(int lang, bool focused)
     for (int i = 0; i < LANGS; i++) {
         fill(list_x(), row_y(i), W, H, i == lang ? C_SELECT : i == s_hover ? C_RULE : C_PANEL);
         art_flag(list_x() + 6, row_y(i) + 2, i);
-        text_flat(list_x() + 28, row_y(i) + 1, i == lang ? C_GOLD : C_TEXT, LANG_TABLE[i]->name);
+        text_flat(list_x() + 28, row_y(i) + 3, i == lang ? C_ON_SELECT : C_TEXT, LANG_TABLE[i]->name);
     }
     outline(list_x(), row_y(0), W, LANGS * H, C_EDGE);
 }

@@ -248,7 +248,13 @@ int sala_hit(int x, int y)
     return -1;
 }
 
-static void dot(int x, int y, Uint32 colour) { fill(x, y + 4, 4, 4, colour); }
+/* a player's signal: three bars, lit up to `level` (you: 3; the others' come with the room's protocol) */
+static void signal(int x, int y, int level)
+{
+    for (int i = 0; i < 3; i++) {
+        fill(x + i * 3, y + 7 - 2 * i, 2, 2 + 2 * i, i < level ? C_LINK : C_RULE);
+    }
+}
 
 void sala_draw(int sel)
 {
@@ -257,12 +263,12 @@ void sala_draw(int sel)
     char count[8], line[ADDR + 72];
     fill_alpha(SALA_X, SALA_Y, SALA_W, h, C_BG, 215);
     outline(SALA_X, SALA_Y, SALA_W, h, C_GOLD);
-    text(SALA_X + 6, SALA_Y + 3, 1, C_GOLD, L->s[S_SALA]);
+    text(SALA_X + 6, SALA_Y + 4, 1, C_GOLD, L->s[S_SALA]);
     SDL_snprintf(count, sizeof count, "%d/4", 1 + members());
-    text_right(SALA_X + SALA_W - 6, SALA_Y + 3, C_SOFT, count);
-    dot(SALA_X + 6, SALA_Y + 4 + SALA_ROW, C_LINK);
+    text_right(SALA_X + SALA_W - 6, SALA_Y + 4, C_SOFT, count);
+    signal(SALA_X + 5, SALA_Y + 4 + SALA_ROW, 3);
     SDL_snprintf(line, sizeof line, "%s: %s", L->s[S_SALA_YOU], s_name);
-    text(SALA_X + 14, SALA_Y + 4 + SALA_ROW, 1, C_TEXT, line);
+    text(SALA_X + 16, SALA_Y + 5 + SALA_ROW, 1, C_TEXT, line);
     for (int i = 0; i < n; i++) {
         const int y = row_y(i), id = r[i].id;
         const bool on = id == sel;
@@ -274,11 +280,11 @@ void sala_draw(int sel)
                 SDL_snprintf(line, sizeof line, "%s_", s_edit);
                 text(SALA_X + 14, y, 1, C_GOLD, line);
             } else {
-                text(SALA_X + 6, y, 1, on ? C_GOLD : C_SOFT, L->s[S_SALA_ADD]);
+                text_sel(SALA_X + 6, y + 1, on, C_SOFT, L->s[S_SALA_ADD]);
             }
         } else {
-            dot(SALA_X + 6, y, C_SOFT);
-            text(SALA_X + 14, y, 1, on ? C_GOLD : C_TEXT, s_peer[id - SALA_MEMBER]);
+            signal(SALA_X + 5, y, 1);
+            text_sel(SALA_X + 16, y + 1, on, C_TEXT, s_peer[id - SALA_MEMBER]);
         }
     }
 }

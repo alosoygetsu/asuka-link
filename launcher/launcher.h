@@ -9,15 +9,16 @@ enum { SCREEN_W = 480, SCREEN_H = 270, LANGS = 5, LINE_H = 12, ROW_H_PIXELS = 13
 enum { SIDE_W = 112, MAIN_X = SIDE_W + 8, MAIN_W = SCREEN_W - MAIN_X - 8 };
 extern const short TAB_NAME[TAB_COUNT]; /* the settings' tabs (screens.c) */
 
-/* every colour on screen comes from here: Asuka Link's, a city night going to dusk, with a sunset orange for the
-   accent (C_GOLD keeps the port's name for it; the port's own was blue and gold) */
+/* every colour on screen comes from here: Asuka Link's own since v1.3.0, "the link's signal": ink blue, the link's cyan
+   and a signal yellow for the accent (C_GOLD keeps its old name). What's selected is filled with it, its text dark
+   (C_ON_SELECT, text_sel) */
 enum {
-    C_BG = 0x08111C, C_GLOW = 0x1E4766, C_PANEL = 0x10202F, C_EDGE = 0x2E5A78, C_RULE = 0x22445E, C_SELECT = 0x1B3A55,
-    C_TEXT = 0xEEF5FA, C_SOFT = 0x92B6CC, C_DIM = 0x7095AD, C_FAINT = 0x4A6A82, C_GOLD = 0xFF8A3D, C_GOLD_HI = 0xFFB27A,
-    C_RED = 0xFF5A6E,
-    /* the home scene: the dusk's bands, the sun, Asuka City's towers and their windows, and the link between them */
-    C_DUSK_HI = 0x2A3E66, C_DUSK = 0x6A3A6A, C_DUSK_LOW = 0xC4566A, C_SUN = 0xFFC46A, C_SUN_HI = 0xFFE6B0,
-    C_CITY_FAR = 0x14273A, C_CITY_NEAR = 0x0B1826, C_WINDOW = 0xFFD27A, C_LINK = 0x5CE6FF,
+    C_BG = 0x04111B, C_GLOW = 0x0B2A40, C_PANEL = 0x071C2B, C_EDGE = 0x1F5F6E, C_RULE = 0x15404D, C_SELECT = 0xFFE08A,
+    C_ON_SELECT = 0x04111B, C_TEXT = 0xE8FBFF, C_SOFT = 0x8CC7D6, C_DIM = 0x5E9AAB, C_FAINT = 0x3F7486, C_GOLD = 0xFFE08A,
+    C_GOLD_HI = 0xFFF0B8, C_RED = 0xFF5A6E,
+    /* the home scene: the night's bands, the moon-like sun, Asuka City's towers and their windows, and the link */
+    C_DUSK_HI = 0x0B2A40, C_DUSK = 0x16485A, C_DUSK_LOW = 0x2B7C86, C_SUN = 0xFFE08A, C_SUN_HI = 0xFFF6D0,
+    C_CITY_FAR = 0x072233, C_CITY_NEAR = 0x03101A, C_WINDOW = 0x5CE6FF, C_LINK = 0x5CE6FF,
 };
 
 /* Asuka Link's: the port it stands on is credited in CREDITS.md (Tools, Credits) */
@@ -35,6 +36,7 @@ void background(int w, int h); /* in window pixels */
 int text_width(const char *s, int scale);
 void text(int x, int y, int scale, Uint32 colour, const char *s); /* with a shadow */
 void text_flat(int x, int y, Uint32 colour, const char *s);
+void text_sel(int x, int y, bool sel, Uint32 colour, const char *s); /* on a selected fill: dark and flat; else colour, shadowed */
 void text_right(int right, int y, Uint32 colour, const char *s);
 void text_centre(int y, int scale, Uint32 colour, const char *s);
 int wrap(int x, int y, int width, Uint32 colour, const char *s); /* returns its line count */

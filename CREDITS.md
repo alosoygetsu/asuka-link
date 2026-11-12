@@ -35,8 +35,9 @@ The native port of Digimon World 2003 builds on the work of others:
   decompiled Digimon World 2 that Flamedramon's model was read through.
 - **[dcb_decomp](https://github.com/ReGame-Labs/dcb_decomp)** (MIT License, ReGame-Labs). The decompiled Digimon Digital
   Card Battle that Flamedramon's attacks were read through.
-- **Pixel Digivolve** (by Neale Davidson, Pixel Sagas). The launcher's font, baked into `dw3launcher.exe`; its license
-  is in `licenses/`.
+- **[Silkscreen](https://github.com/googlefonts/silkscreen)** (SIL Open Font License 1.1, Jason Kottke). The launcher's
+  font since Asuka Link v1.3.0, baked into `dw3launcher.exe`; its license is in `licenses/`. Before, the port's launcher
+  used **Pixel Digivolve** (Neale Davidson, Pixel Sagas).
 - **[SDL 3](https://libsdl.org)** (zlib License, Copyright (C) 1997-2026 Sam Lantinga). The window, input and audio.
   `SDL3.dll` ships as it comes.
 - **[stb](https://github.com/nothings/stb)** (public domain / MIT, by Sean Barrett and its contributors). `stb_image`
