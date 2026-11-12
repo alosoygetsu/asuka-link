@@ -145,6 +145,12 @@ const Lang LANG_EN = {
         [S_COOP_MINE] = "Your IP",
         [S_COOP_MINE_D] = "Give the others one of these:",
         [S_COOP_NO_IP] = "none found",
+        [S_SALA] = "Room",
+        [S_SALA_YOU] = "You",
+        [S_SALA_ADD] = "+ Add by IP",
+        [S_SALA_ADD_D] = "To play with someone outside your network (Tailscale, ZeroTier, Internet): type their IP and press Enter.",
+        [S_SALA_MEMBER_D] = "A player in your room. Enter twice takes them out.",
+        [S_SALA_OUT_SURE] = "Press Enter again to take them out of the room.",
     },
     .option = {
         [O_FPS] = {"Frame rate", "50 is the European original, 60 the game's own 60 Hz mode. Walking speed follows at the next area."},

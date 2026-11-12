@@ -145,6 +145,12 @@ const Lang LANG_DE = {
         [S_COOP_MINE] = "Deine IP",
         [S_COOP_MINE_D] = "Gib den anderen eine davon:",
         [S_COOP_NO_IP] = "keine gefunden",
+        [S_SALA] = "Raum",
+        [S_SALA_YOU] = "Du",
+        [S_SALA_ADD] = "+ Per IP hinzufügen",
+        [S_SALA_ADD_D] = "Um mit jemandem außerhalb deines Netzes zu spielen (Tailscale, ZeroTier, Internet): IP eingeben, Enter.",
+        [S_SALA_MEMBER_D] = "Ein Spieler in deinem Raum. Zweimal Enter entfernt ihn.",
+        [S_SALA_OUT_SURE] = "Nochmal Enter, um ihn aus dem Raum zu entfernen.",
     },
     .option = {
         [O_FPS] = {"Bildrate", "50 ist das europäische Original, 60 der eigene 60-Hz-Modus des Spiels. Das Lauftempo passt sich im nächsten Gebiet an."},

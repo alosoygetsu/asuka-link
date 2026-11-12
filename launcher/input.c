@@ -9,7 +9,6 @@ static void go(int screen)
     g_app.sel[screen] = 0;
     g_app.btn = 0;
     g_app.tabfocus = false;
-    g_app.playtab = false;
 }
 
 static void go_home(void)
@@ -29,9 +28,8 @@ static int first_selectable(void)
     return i;
 }
 
-/* Home has two levels. The bar: Play | Settings | Saves | Tools | Language, moved with
-   Left/Right only (Down from the Play tab goes under it). Under it: the release chip
-   above the Play and Quit buttons; Left/Right swap those two, Up/Down go between levels */
+/* Home has three columns: the menu on the left (Settings, Saves, Tools, Quit, the language), the game in the middle (the
+   release's chip over Play) and the room on the right. Up/Down move in a column, Left/Right between them */
 static int find_row(int kind, int id)
 {
     const Row *r = rows();
@@ -43,36 +41,41 @@ static int find_row(int kind, int id)
     return -1;
 }
 
+static int column_of(const Row *r)
+{
+    if (r->kind == R_PEER) {
+        return 2;
+    }
+    return r->kind == R_ACTION && (r->id == S_PLAY || r->id == S_RELEASE) ? 1 : 0;
+}
+
 static void home_move(int a)
 {
-    static const short BAR[5] = {S_PLAY, S_SETTINGS, S_SAVES, S_TOOLS, -1}; /* -1: the language */
-    const Row *cur = &rows()[g_app.sel[SC_HOME]];
-    const bool bar = home_on_bar();
+    const Row *r = rows();
+    const int n = row_count(r), at = g_app.sel[SC_HOME], col = column_of(&r[at]);
     int to = -1;
-    if (bar && (a == A_LEFT || a == A_RIGHT)) {
-        int at = 0;
-        for (int k = 0; k < 5; k++) {
-            at = (cur->kind == R_LANGUAGE ? BAR[k] == -1 : cur->id == BAR[k]) ? k : at;
+    if (a == A_UP || a == A_DOWN) { /* the next row of the same column, round */
+        const int dir = a == A_DOWN ? 1 : -1;
+        for (int k = 1; k < n && to < 0; k++) {
+            const int i = (at + dir * k + n) % n;
+            if (column_of(&r[i]) == col) {
+                to = i;
+            }
         }
-        const int want = BAR[(at + (a == A_RIGHT ? 1 : 4)) % 5];
-        to = want == -1 ? find_row(R_LANGUAGE, 0) : find_row(R_ACTION, want);
-        g_app.playtab = want == S_PLAY;
-    } else if (bar && a == A_DOWN && cur->id == S_PLAY) {
+    } else if (a == A_LEFT && col > 0) {
+        to = col == 2 ? find_row(R_ACTION, S_PLAY) : find_row(R_ACTION, S_SETTINGS);
+    } else if (a == A_RIGHT && col == 0) {
         to = find_row(R_ACTION, S_PLAY);
-        g_app.playtab = false;
-    } else if (!bar && (a == A_LEFT || a == A_RIGHT) && cur->id != S_RELEASE) {
-        to = find_row(R_ACTION, cur->id == S_PLAY ? S_QUIT : S_PLAY);
-    } else if (!bar && a == A_UP) {
-        to = cur->id != S_RELEASE ? find_row(R_ACTION, S_RELEASE) : -1;
-        if (to < 0) {
-            to = find_row(R_ACTION, S_PLAY);
-            g_app.playtab = true;
+    } else if (a == A_RIGHT && col == 1) { /* the room's first row */
+        for (int i = 0; i < n && to < 0; i++) {
+            if (r[i].kind == R_PEER) {
+                to = i;
+            }
         }
-    } else if (!bar && a == A_DOWN && cur->id == S_RELEASE) {
-        to = find_row(R_ACTION, S_PLAY);
     }
-    if (to >= 0) {
+    if (to >= 0 && to != at) {
         g_app.sel[SC_HOME] = to;
+        sala_moved();
     }
     g_app.btn = 0;
 }
@@ -244,9 +247,9 @@ void screens_action(int a)
             }
         } else if (r->kind == R_OPTION) {
             option_step(r->id, dir);
-        } else if (r->kind == R_TEXT) {
+        } else if (r->kind == R_PEER) {
             if (a == A_OK) {
-                coop_row_activate(r->id);
+                sala_activate(r->id);
             }
         } else if (r->kind == R_LANGUAGE) {
             if (a == A_OK) {
@@ -286,7 +289,7 @@ static void select_row(int i)
     }
     g_app.sel[g_app.screen] = i;
     g_app.tabfocus = false;
-    g_app.playtab = false;
+    sala_moved();
 }
 
 /* the language list, over everything: true when it took the mouse */
@@ -337,14 +340,15 @@ void screens_mouse(int x, int y, bool clicked)
         }
         return;
     }
-    const int page = g_app.screen == SC_HOME ? -1 : bar_hit(x, y);
-    if (page >= 0) { /* the bar's pages from Settings, Saves or Tools */
+    const int page = g_app.screen == SC_HOME ? -1 : side_hit(x, y);
+    if (page >= 0) { /* the menu's pages from Settings, Saves or Tools */
         const int here = g_app.screen == SC_SETTINGS ? S_SETTINGS : g_app.screen == SC_SAVES ? S_SAVES : S_TOOLS;
         if (clicked && page != here && bind_capturing() < 0) {
             go_home();
-            if (page != S_PLAY) {
+            if (page != S_PLAY && page != S_QUIT) {
                 activate(page);
             }
+            g_app.quit = page == S_QUIT;
         }
         return;
     }

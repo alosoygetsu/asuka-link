@@ -5,6 +5,8 @@
 #include <stdbool.h>
 
 enum { SCREEN_W = 480, SCREEN_H = 270, LANGS = 5, LINE_H = 12, ROW_H_PIXELS = 13, TAB_COUNT = 3 };
+/* the menu down the left of every screen but the first run's (home.c side_draw), and the page right of it */
+enum { SIDE_W = 112, MAIN_X = SIDE_W + 8, MAIN_W = SCREEN_W - MAIN_X - 8 };
 extern const short TAB_NAME[TAB_COUNT]; /* the settings' tabs (screens.c) */
 
 /* every colour on screen comes from here: Asuka Link's, a city night going to dusk, with a sunset orange for the
@@ -69,6 +71,7 @@ enum {
     S_SV_SLOT, S_SV_EMPTY, S_SV_DAMAGED, S_SV_NONE, S_SV_OK, S_SV_STALE, S_SV_NEWER, S_SV_BAD, S_SV_NOCARD,
     S_SV_EXPORTED, S_SV_IMPORTED, S_SV_WARN, S_SV_REJECT, S_SV_RESTORED, S_SV_NO_BACKUP, S_SV_FAILED,
     S_COOP, S_COOP_PEER, S_COOP_PEER_D, S_COOP_TYPING, S_COOP_EMPTY, S_COOP_MINE, S_COOP_MINE_D, S_COOP_NO_IP, /* the co-op's */
+    S_SALA, S_SALA_YOU, S_SALA_ADD, S_SALA_ADD_D, S_SALA_MEMBER_D, S_SALA_OUT_SURE, /* the room (sala.c) */
     S_COUNT
 };
 typedef struct { const char *name, *desc; } Text;
@@ -171,7 +174,7 @@ int release_finished_manual(void); /* once after a manual check: a string to sho
 int release_selftest(void);
 
 /* screens.c: what's on screen */
-enum { R_ACTION, R_OPTION, R_LANGUAGE, R_HEADING, R_BIND, R_TEXT, R_END }; /* R_TEXT: the co-op's (coop_rows.c) */
+enum { R_ACTION, R_OPTION, R_LANGUAGE, R_HEADING, R_BIND, R_PEER, R_END }; /* R_PEER: the room's (sala.c) */
 enum { SC_HOME, SC_SETTINGS, SC_TOOLS, SC_SAVES, SC_COUNT };
 enum { ST_READY, ST_NO_GAME, ST_ERROR };
 typedef struct { Uint8 kind; short id; } Row; /* action: its name's string; the description is the next one */
@@ -182,7 +185,6 @@ typedef struct {
     int scroll; /* the first row in sight of a list too long for its panel */
     bool quit;
     const char *note; /* shown instead of the description until the next move */
-    bool playtab; /* Home: the Play row stands for the bar's Play, not the button */
     bool tabfocus; /* Settings: the focus is on the tabs, Left/Right switch them */
     int btn; /* on a tool's row with an update: 1 when its Update button has the focus */
 } App;
@@ -193,7 +195,6 @@ int row_count(const Row *r);
 int list_rows(const Row *r); /* those drawn in the list: all but the language */
 int list_inset(void);       /* the width the scroll bar takes from the rows' right edge, 0 without one */
 int list_in_sight(void);    /* the rows a settings list shows at once */
-bool home_on_bar(void);    /* Home: the focus is on the bar (Play tab, Settings, Saves, Tools, language) */
 int list_first(void);       /* the first in sight, with the selected one kept in sight */
 int bind_column(int slot);  /* where a binding's slot starts on screen */
 SDL_Rect list_rect(void);
@@ -206,14 +207,18 @@ void screens_draw(void);
 /* input.c: what's done with it */
 enum { A_NONE, A_UP, A_DOWN, A_LEFT, A_RIGHT, A_OK, A_BACK, A_PREV, A_NEXT, A_CLEAR };
 void screens_action(int action);
-/* coop_rows.c: the co-op's rows of the Mods tab (R_TEXT, ids 0-2 the other players, 3 this PC) */
-void coop_rows_load(void);
-bool coop_rows_save(void);
-bool coop_row_editing(void);
-void coop_row_activate(int id);
-bool coop_row_event(const SDL_Event *e);
-void coop_row_draw(int id, int x, int right, int y, bool sel);
-const char *coop_row_desc(int id);
+/* sala.c: the room on the home screen (R_PEER rows): your group, saved as native.ini's coop_peers */
+enum { SALA_MEMBER = 0x100, SALA_ADD = 0x300 };
+void sala_load(void);
+int sala_rows(Row *out, int max); /* its rows, in order */
+bool sala_editing(void);
+void sala_activate(int id);
+void sala_moved(void); /* the selection left a row: a half-asked removal is forgotten */
+bool sala_event(const SDL_Event *e);
+SDL_Rect sala_row_rect(int id);
+int sala_hit(int x, int y); /* the row's id, or -1 */
+void sala_draw(int sel);    /* sel: the selected row's id, or -1 */
+const char *sala_desc(int id);
 void screens_mouse(int x, int y, bool clicked);
 bool scroll_mouse(int x, int y, bool clicked); /* scroll.c: true while the scroll bar holds the pointer */
 int scrollbar_state(void);   /* 0 at rest, 1 pointer over the bar, 2 held */
@@ -258,8 +263,8 @@ int saves_selftest(void);
 
 /* home.c: the home screen once the disc is read, and the bar on top of the others */
 void home_draw(void);
-void bar_draw(int page, int selected); /* page and selected: S_PLAY, S_SETTINGS, S_SAVES or S_TOOLS */
-int bar_hit(int x, int y);             /* the page under the mouse, or -1 */
+void side_draw(int page, int selected); /* the menu on the left. page: S_PLAY (home), S_SETTINGS, S_SAVES or S_TOOLS */
+int side_hit(int x, int y);             /* its entry under the mouse (S_PLAY... S_QUIT), or -1 */
 int home_hit(int x, int y); /* the row under the mouse, or -1 */
 bool home_fits(const Lang *l);
 

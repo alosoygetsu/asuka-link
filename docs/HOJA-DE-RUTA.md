@@ -33,19 +33,21 @@ responsabilidad nuestra.
     - Fijo: 60 fps, VSync, vídeos suaves, sigue funcionando sin foco, sub-píxel, profundidad, perspectiva, texturas
       suaves, color real, sin tramado, sombras suaves, sombras y cielo en combate, zona muerta 10 %, menús en avance
       rápido, saltar PRESS START y cursor que da la vuelta.
-  - **Launcher rehecho:** el cooperativo en la pantalla principal, sin pasar por Ajustes.
-  - **Conectarse sin Tailscale:**
-    - **Código de sala:**
-      - El anfitrión pulsa "Crear sala". Se abre el puerto en su router (UPnP, con NATUPnP de Windows) y sale un
-        código con su dirección, su puerto y una clave.
-      - Los demás lo pegan en "Unirse".
-      - El anfitrión acepta a quien llega con esa clave (hasta 4).
-      - Cambia en cada sesión.
-    - **Red local:** el juego se anuncia por difusión y los de la misma red se encuentran solos.
-    - Tailscale, ZeroTier y las IP a mano siguen valiendo (el código lleva la IP que toque).
-    - Si el router no tiene UPnP, se avisa (abrir el puerto a mano o usar una VPN).
-    - Red: versión 8.
-    - Más adelante, quizá: un código de amigo fijo, con un servidor pequeño nuestro.
+  - **Launcher rehecho entero, también en lo gráfico:** el cooperativo en la pantalla principal, sin pasar por
+    Ajustes.
+  - **Estilo:** el atardecer de Asuka renovado: la escena a pantalla completa, un menú lateral (Jugar, Ajustes,
+    Partidas, Herramientas, Salir) y la **sala** arriba a la derecha.
+  - **La sala** (red: versión 8):
+    - Tu grupo de juego, de hasta 4 contigo.
+    - **En tu red:** los launchers de la misma red se anuncian por difusión y salen como **disponibles**, sin
+      entrar en tu grupo. Con "Invitar", el otro ve la invitación y la acepta o la rechaza. Así puede haber dos
+      grupos en la misma red si sois más de 4.
+    - **Añadir por IP** (para Tailscale, ZeroTier o Internet): empareja directamente. Quien recibe se añade a tu
+      grupo sin tener que escribir tu IP.
+    - Un grupo lleno (4) no sale como invitable. "Salir de la sala" te deja solo.
+    - El grupo se guarda como `coop_peers`, y el juego, si está abierto, sigue los cambios sin reiniciar.
+  - Descartado para la 1.3: el código de sala (UPnP). Más adelante, quizá, un código de amigo fijo con un servidor
+    pequeño nuestro.
   - **Una sola descarga:** solo `asuka-link-<versión>.zip` y su `.sha256` (release.ps1 deja de subir el nombre viejo
     a partir de la 1.3.0).
   - Al publicarla: decidir qué hacer con las releases y el historial anteriores.

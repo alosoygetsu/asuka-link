@@ -7,8 +7,6 @@ enum { DESC_Y = 176, DESC_H = 58, HINT_Y = 240, BOTTOM_Y = 256, ROW_H = ROW_H_PI
 #define ACT(s) {R_ACTION, s}
 #define OPT(o) {R_OPTION, o}
 #define BIND(b) {R_BIND, b}
-static const Row HOME[] = {ACT(S_PLAY), ACT(S_SETTINGS), ACT(S_SAVES), ACT(S_TOOLS), ACT(S_QUIT), {R_LANGUAGE}, {R_END}};
-static const Row HOME_NEWS[] = {ACT(S_PLAY), ACT(S_SETTINGS), ACT(S_SAVES), ACT(S_TOOLS), ACT(S_RELEASE), ACT(S_QUIT), {R_LANGUAGE}, {R_END}};
 static const Row SAVES[] = {ACT(S_EXPORT), ACT(S_IMPORT), ACT(S_UNDO), ACT(S_SV_FOLDER), ACT(S_BACK), {R_END}};
 static const Row FIRST_RUN[] = {ACT(S_BROWSE), {R_LANGUAGE}, {R_END}};
 static const Row TOOLS[] = {ACT(S_VIEWER), ACT(S_EDITOR), ACT(S_FOLDER), ACT(S_LOG), ACT(S_CHECK), ACT(S_CREDITS), ACT(S_BACK), {R_END}};
@@ -20,7 +18,7 @@ static const Row TABS[TAB_COUNT][27] = {
     {OPT(O_ICONS), OPT(O_RUMBLE), ACT(S_SWAP), {R_HEADING, S_BUTTONS},
      BIND(14), BIND(13), BIND(15), BIND(12), BIND(10), BIND(11), BIND(8), BIND(9), BIND(1), BIND(2), BIND(3), BIND(0), BIND(4), BIND(6), BIND(7), BIND(5),
      ACT(S_RESET), ACT(S_BACK), {R_END}},
-    {OPT(O_EXP_MULT), OPT(O_MONEY_MULT), {R_HEADING, S_COOP}, {R_TEXT, 0}, {R_TEXT, 1}, {R_TEXT, 2}, {R_TEXT, 3}, ACT(S_RESET), ACT(S_BACK), {R_END}},
+    {OPT(O_EXP_MULT), OPT(O_MONEY_MULT), ACT(S_RESET), ACT(S_BACK), {R_END}},
 };
 const short TAB_NAME[TAB_COUNT] = {S_DISPLAY, S_INPUT, S_MODS};
 const Lang *const LANG_TABLE[LANGS] = {&LANG_EN, &LANG_ES, &LANG_FR, &LANG_DE, &LANG_IT};
@@ -74,7 +72,24 @@ const Row *rows(void)
     if (s_screen == SC_SAVES) {
         return SAVES;
     }
-    return s_state != ST_READY ? FIRST_RUN : release_tag() ? HOME_NEWS : HOME;
+    if (s_state != ST_READY) {
+        return FIRST_RUN;
+    }
+    /* Home: Play first (where it starts), the release's chip, the menu, the room's rows, the language last */
+    static Row home[16];
+    int n = 0;
+    home[n++] = (Row)ACT(S_PLAY);
+    if (release_tag()) {
+        home[n++] = (Row)ACT(S_RELEASE);
+    }
+    home[n++] = (Row)ACT(S_SETTINGS);
+    home[n++] = (Row)ACT(S_SAVES);
+    home[n++] = (Row)ACT(S_TOOLS);
+    home[n++] = (Row)ACT(S_QUIT);
+    n += sala_rows(home + n, 16 - n - 2);
+    home[n++] = (Row){R_LANGUAGE};
+    home[n] = (Row){R_END};
+    return home;
 }
 
 int row_count(const Row *r)
@@ -95,9 +110,9 @@ int list_rows(const Row *r) /* those drawn in the list: all but the language */
 SDL_Rect list_rect(void)
 {
     if (s_screen == SC_SETTINGS) {
-        return (SDL_Rect){PAD, 48, SCREEN_W - 2 * PAD, SETTINGS_H};
+        return (SDL_Rect){MAIN_X, 48, MAIN_W, SETTINGS_H};
     }
-    return (SDL_Rect){PAD, s_screen == SC_SAVES ? 86 : 54, s_screen == SC_HOME ? 178 : SCREEN_W - 2 * PAD, list_rows(rows()) * ROW_H + 8};
+    return (SDL_Rect){MAIN_X, s_screen == SC_SAVES ? 86 : 32, MAIN_W, list_rows(rows()) * ROW_H + 8};
 }
 
 int list_in_sight(void) { return ROWS_IN_SIGHT; }
@@ -118,7 +133,7 @@ int list_first(void)
 
 int bind_column(int slot)
 {
-    static const short COLUMN[3] = {130, 230, 330};
+    static const short COLUMN[3] = {110, 190, 270};
     return list_rect().x + COLUMN[slot];
 }
 
@@ -185,10 +200,6 @@ static void draw_list(void)
             draw_bind(&r[i], y, sel);
             continue;
         }
-        if (r[i].kind == R_TEXT) {
-            coop_row_draw(r[i].id, a.x, a.x + a.w - 8 - list_inset(), y, sel);
-            continue;
-        }
         const int tool = row_tool(&r[i]);
         if (tool >= 0) {
             char value[64];
@@ -233,22 +244,24 @@ static void draw_description(void)
                   : r->kind == R_OPTION ? L->option[r->id].desc
                   : r->kind == R_LANGUAGE ? L->s[S_LANGUAGE_D]
                   : r->kind == R_BIND ? L->s[S_BIND_D]
-                  : r->kind == R_TEXT ? coop_row_desc(r->id)
+                  : r->kind == R_PEER ? sala_desc(r->id)
                   : row_tool(r) >= 0 && g_app.btn && tool_update_has(row_tool(r)) ? L->s[S_T_UPDATE_D]
                   : L->s[r->id + 1];
-    const bool home = s_screen == SC_HOME; /* two lines under the team, with room around it */
-    const int y = home ? 204 : DESC_Y, h = home ? 28 : DESC_H;
-    panel(PAD, y, SCREEN_W - 2 * PAD, h);
-    wrap(PAD + 8, y + (home ? 2 : 3), SCREEN_W - 2 * PAD - 16, C_TEXT, s);
+    if (s_screen == SC_HOME) { /* two lines under Play, on the scene */
+        wrap(MAIN_X, 218, MAIN_W, C_SOFT, s);
+        return;
+    }
+    panel(MAIN_X, DESC_Y, MAIN_W, DESC_H);
+    wrap(MAIN_X + 8, DESC_Y + 3, MAIN_W - 16, C_TEXT, s);
 }
 
 SDL_Rect tab_rect(int tab)
 {
-    int x = PAD;
+    int x = MAIN_X;
     for (int i = 0; i < tab; i++) {
         x += text_width(L->s[TAB_NAME[i]], 1) + 18;
     }
-    return (SDL_Rect){x, 32, text_width(L->s[TAB_NAME[tab]], 1) + 16, 17};
+    return (SDL_Rect){x, 30, text_width(L->s[TAB_NAME[tab]], 1) + 16, 17};
 }
 
 static void draw_tabs(void)
@@ -260,6 +273,13 @@ static void draw_tabs(void)
         fill(t.x + 1, t.y + 1, t.w - 2, t.h - 1, sel ? C_PANEL : C_BG);
         text(t.x + 8, t.y + 2, 1, sel ? C_GOLD : C_SOFT, L->s[TAB_NAME[i]]);
     }
+}
+
+/* a page's name over it, right of the menu */
+static void page_title(int id)
+{
+    text(MAIN_X, 10, 1, C_GOLD, L->s[id]);
+    fill(MAIN_X + text_width(L->s[id], 1) + 8, 18, MAIN_W - text_width(L->s[id], 1) - 8, 1, C_RULE);
 }
 
 /* the old screen's heading: the title, what this is, a thin line */
@@ -276,12 +296,15 @@ void screens_draw(void)
     if (home) {
         home_draw();
     } else if (s_screen == SC_SETTINGS) {
-        bar_draw(S_SETTINGS, -1);
+        side_draw(S_SETTINGS, -1);
+        page_title(S_SETTINGS);
         draw_tabs();
     } else if (s_screen == SC_TOOLS) {
-        bar_draw(S_TOOLS, -1);
+        side_draw(S_TOOLS, -1);
+        page_title(S_TOOLS);
     } else if (s_screen == SC_SAVES) {
-        bar_draw(S_SAVES, -1);
+        side_draw(S_SAVES, -1);
+        page_title(S_SAVES);
         saves_draw();
     } else {
         draw_title();
@@ -294,10 +317,14 @@ void screens_draw(void)
             draw_list();
         }
         draw_description();
-        text(PAD, HINT_Y, 1, C_DIM, L->s[s_screen == SC_SETTINGS ? S_HINT_SETTINGS : S_HINT_MENU]);
+        if (!home) {
+            text(MAIN_X, HINT_Y, 1, C_DIM, L->s[s_screen == SC_SETTINGS ? S_HINT_SETTINGS : S_HINT_MENU]);
+        }
     }
-    text_right(SCREEN_W - PAD, HINT_Y, C_FAINT, CREDIT);
-    text_right(SCREEN_W - PAD, BOTTOM_Y, C_FAINT, L->s[S_FAN]);
+    if (first_run_screen()) {
+        text_right(SCREEN_W - PAD, HINT_Y, C_FAINT, CREDIT);
+    }
+    text_right(SCREEN_W - 8, BOTTOM_Y, C_FAINT, L->s[S_FAN]);
     if (s_screen == SC_HOME && !first_run_reading()) {
         picker_draw(s_lang, rows()[s_sel[SC_HOME]].kind == R_LANGUAGE);
     }

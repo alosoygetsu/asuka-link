@@ -71,7 +71,6 @@ void options_load(void)
             break;
         }
     }
-    coop_rows_load();
 }
 
 void options_reset(void)
@@ -88,7 +87,7 @@ bool options_save(void)
     static char text[O_COUNT][16];
     IniEdit edits[O_COUNT];
     int n = 0;
-    if (!binds_save() || !coop_rows_save()) {
+    if (!binds_save()) {
         return false;
     }
     for (int o = 0; o < O_COUNT; o++) {

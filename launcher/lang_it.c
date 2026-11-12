@@ -145,6 +145,12 @@ const Lang LANG_IT = {
         [S_COOP_MINE] = "Il tuo IP",
         [S_COOP_MINE_D] = "Dai agli altri uno di questi:",
         [S_COOP_NO_IP] = "nessuno trovato",
+        [S_SALA] = "Stanza",
+        [S_SALA_YOU] = "Tu",
+        [S_SALA_ADD] = "+ Aggiungi per IP",
+        [S_SALA_ADD_D] = "Per giocare con qualcuno fuori dalla tua rete (Tailscale, ZeroTier, Internet): scrivi il suo IP e Invio.",
+        [S_SALA_MEMBER_D] = "Un giocatore della tua stanza. Invio due volte lo toglie.",
+        [S_SALA_OUT_SURE] = "Premi di nuovo Invio per toglierlo dalla stanza.",
     },
     .option = {
         [O_FPS] = {"Fotogrammi al secondo", "50 è l'originale europeo, 60 la modalità a 60 Hz del gioco stesso. La velocità di camminata si adegua nell'area seguente."},

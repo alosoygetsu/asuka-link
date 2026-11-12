@@ -62,7 +62,7 @@ static void handle_event(SDL_Renderer *r, SDL_Event *e)
         bind_event(e);
         return;
     }
-    if (coop_row_event(e)) {
+    if (sala_event(e)) {
         return;
     }
     switch (e->type) {
@@ -209,6 +209,7 @@ int main(int argc, char **argv)
     }
     paths_init();
     options_load();
+    sala_load();
     if (lang < 0) {
         char code[8];
         lang = system_lang();

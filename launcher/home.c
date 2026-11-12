@@ -1,4 +1,5 @@
-/* The home screen once the disc is read: Asuka City at dusk, a bar on top with the pages, the title, chips and Play. */
+/* The home screen once the disc is read: Asuka City at dusk over the whole window, the menu down the left (side_draw,
+   on the other pages too), the room top right (sala.c) and, bottom left, the game: the disc, the team and Play. */
 #include "launcher.h"
 
 #ifndef LAUNCHER_VERSION
@@ -8,33 +9,27 @@
 #define GAME_NAME "Digimon World 2003 (Europe)"
 
 enum {
-    BAR_H = 28, MARGIN = 16, NAV_X = 160, NAV_PAD = 3, NAV_END_MAX = 444, TITLE_X = 38, TITLE_Y = 38, SUB_Y = 66,
-    CHIPS_Y = 86, CHIP_H = 14, CHIP_GAP = 6, BTN_Y = 108, BTN_H = 34, BTN_GAP = 10, SCENE_BASE = 200,
-    TEAM_Y = 152, CARD_Y = 166, CARD_W = 144, CARD_H = 30, CARD_GAP = 8
+    MENU_Y = 54, MENU_H = 16, MENU_GAP = 2, QUIT_GAP = 10, NAME_X = 40,
+    CHIPS_Y = 84, CHIP_H = 14, CHIP_GAP = 6, TITLE_Y = 100, SUB_Y = 126, CARD_Y = 142, CARD_H = 26, CARD_GAP = 8,
+    INFO_Y = 172, BTN_Y = 186, BTN_H = 28, SCENE_BASE = 200
 };
 
 static bool inside(SDL_Rect r, int x, int y) { return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h; }
 
 /* ---- where things are, for the language given: drawing, the mouse and --check use the same numbers ---- */
 
-/* the pages, left to right */
-static const short PAGES[4] = {S_PLAY, S_SETTINGS, S_SAVES, S_TOOLS};
+/* the menu, top to bottom; Quit a little apart */
+static const short PAGES[5] = {S_PLAY, S_SETTINGS, S_SAVES, S_TOOLS, S_QUIT};
 
-static SDL_Rect nav_rect(const Lang *l, int id)
+static SDL_Rect menu_rect(int i)
 {
-    int x = NAV_X;
-    for (int i = 0; PAGES[i] != id; i++) {
-        x += text_width(l->s[PAGES[i]], 1) + 2 * NAV_PAD + 1;
-    }
-    return (SDL_Rect){x, 4, text_width(l->s[id], 1) + 2 * NAV_PAD, BAR_H - 8};
+    return (SDL_Rect){0, MENU_Y + i * (MENU_H + MENU_GAP) + (i == 4 ? QUIT_GAP : 0), SIDE_W - 1, MENU_H};
 }
 
 static void chip_text(const Lang *l, int i, const char *tag, char *out, int size)
 {
     if (i == 0) {
         SDL_snprintf(out, size, "%s SLES-03936", l->s[S_DISC_OK]);
-    } else if (i == 1) {
-        SDL_snprintf(out, size, "%s", LAUNCHER_VERSION);
     } else {
         SDL_snprintf(out, size, "%s %s", l->s[S_RELEASE], tag);
     }
@@ -43,7 +38,7 @@ static void chip_text(const Lang *l, int i, const char *tag, char *out, int size
 static SDL_Rect chip_rect(const Lang *l, int i, const char *tag)
 {
     char s[96];
-    int x = MARGIN;
+    int x = MAIN_X;
     for (int k = 0; k < i; k++) {
         chip_text(l, k, tag, s, sizeof s);
         x += text_width(s, 1) + 12 + CHIP_GAP;
@@ -52,36 +47,19 @@ static SDL_Rect chip_rect(const Lang *l, int i, const char *tag)
     return (SDL_Rect){x, CHIPS_Y, text_width(s, 1) + 12, CHIP_H};
 }
 
-static SDL_Rect play_rect(const Lang *l) { return (SDL_Rect){MARGIN, BTN_Y, SDL_max(104, text_width(l->s[S_PLAY], 2) + 52), BTN_H}; }
+static SDL_Rect play_rect(const Lang *l) { return (SDL_Rect){MAIN_X, BTN_Y, SDL_max(120, text_width(l->s[S_PLAY], 2) + 52), BTN_H}; }
 
-static SDL_Rect quit_rect(const Lang *l)
-{
-    const SDL_Rect p = play_rect(l);
-    return (SDL_Rect){p.x + p.w + BTN_GAP, BTN_Y, text_width(l->s[S_QUIT], 1) + 28, BTN_H};
-}
-
-static SDL_Rect rect_of(const Lang *l, int id, const char *tag)
-{
-    switch (id) {
-    case S_PLAY: return play_rect(l);
-    case S_QUIT: return quit_rect(l);
-    case S_SETTINGS:
-    case S_SAVES:
-    case S_TOOLS: return nav_rect(l, id);
-    case S_RELEASE: return chip_rect(l, 2, tag);
-    default: return (SDL_Rect){0, 0, 0, 0};
-    }
-}
+static int card_w(void) { return (MAIN_W - 2 * CARD_GAP) / 3; }
 
 static void team_info(const Lang *l, const Team *t, char *out, int size)
 {
     SDL_snprintf(out, size, "%s %s  -  %d:%02d", l->s[S_LAST_SAVE], t->when, t->hours, t->minutes);
 }
 
-int bar_hit(int x, int y)
+int side_hit(int x, int y)
 {
-    for (int i = 0; i < 4; i++) {
-        if (inside(nav_rect(L, PAGES[i]), x, y)) {
+    for (int i = 0; i < 5; i++) {
+        if (inside(menu_rect(i), x, y)) {
             return PAGES[i];
         }
     }
@@ -92,18 +70,28 @@ bool home_fits(const Lang *l)
 {
     const Team worst = {.when = "2026-10-28 13:23", .hours = 999, .minutes = 59};
     char info[96];
+    bool menu = true;
+    for (int i = 0; i < 5; i++) {
+        menu &= text_width(l->s[PAGES[i]], 1) <= SIDE_W - 20;
+    }
     team_info(l, &worst, info, sizeof info);
-    const SDL_Rect tools = nav_rect(l, S_TOOLS), chip = chip_rect(l, 2, "v99.99.99"), quit = quit_rect(l);
-    return tools.x + tools.w <= NAV_END_MAX && text_width(l->s[S_READY], 2) <= 340 && text_width(l->s[S_TAGLINE], 1) <= NAV_X - TITLE_X - 2 &&
-           chip.x + chip.w <= SCREEN_W - MARGIN && quit.x + quit.w <= SCREEN_W - MARGIN &&
-           text_width(l->s[S_TEAM], 1) + text_width(info, 1) + 24 <= SCREEN_W - 2 * MARGIN && text_width(l->s[S_NO_TEAM], 1) <= SCREEN_W - 2 * MARGIN;
+    const SDL_Rect chip = chip_rect(l, 1, "v99.99.99");
+    return menu && text_width(l->s[S_TAGLINE], 1) <= SIDE_W - 16 && text_width(l->s[S_READY], 2) <= MAIN_W &&
+           chip.x + chip.w <= SCREEN_W - 8 && text_width(info, 1) <= MAIN_W && text_width(l->s[S_NO_TEAM], 1) <= 2 * MAIN_W - 60 &&
+           text_width(l->s[S_SALA_ADD], 1) <= 130 && text_width(l->s[S_SALA], 1) + 30 <= 130;
 }
 
 int home_hit(int x, int y)
 {
     const Row *r = rows();
+    const char *tag = release_tag() ? release_tag() : "";
+    const int page = side_hit(x, y), peer = sala_hit(x, y);
     for (int i = 0; i < list_rows(r); i++) {
-        if (r[i].kind == R_ACTION && inside(rect_of(L, r[i].id, release_tag() ? release_tag() : ""), x, y)) {
+        const bool hit = r[i].kind == R_PEER ? r[i].id == peer
+                       : r[i].id == S_PLAY ? inside(play_rect(L), x, y)
+                       : r[i].id == S_RELEASE ? inside(chip_rect(L, 1, tag), x, y)
+                       : r[i].id == page;
+        if (hit) {
             return i;
         }
     }
@@ -169,7 +157,7 @@ static void scene(void)
 {
     s_seed = 2003;
     for (int i = 0; i < 30; i++) {
-        fill(150 + rnd(SCREEN_W - 150), BAR_H + 4 + rnd(60), 1, 1, i % 4 ? C_FAINT : C_SOFT);
+        fill(150 + rnd(SCREEN_W - 150), 6 + rnd(84), 1, 1, i % 4 ? C_FAINT : C_SOFT);
     }
     for (int y = 90; y < SCENE_BASE; y++) { /* the dusk: deep blue, violet, then the horizon's rose */
         const int t = (y - 90) * 256 / (SCENE_BASE - 90);
@@ -200,34 +188,40 @@ static void scene(void)
 
 /* ---- the screen ---- */
 
-void bar_draw(int page, int cur)
+void side_draw(int page, int cur)
 {
     const Lang *l = L;
-    fill_alpha(0, 0, SCREEN_W, BAR_H, C_BG, 235);
-    fill(0, BAR_H - 1, SCREEN_W, 1, C_RULE);
-    art_icon(3, 3);
-    text(TITLE_X, 3, 1, C_GOLD, APP_NAME);
-    text(TITLE_X, 14, 1, C_SOFT, l->s[S_TAGLINE]);
-    for (int i = 0; i < 4; i++) {
-        const SDL_Rect t = nav_rect(l, PAGES[i]);
+    fill_alpha(0, 0, SIDE_W, SCREEN_H, C_BG, 225);
+    fill(SIDE_W - 1, 0, 1, SCREEN_H, C_RULE);
+    art_icon(8, 8);
+    text(NAME_X, 15, 1, C_GOLD, APP_NAME);
+    text(8, 33, 1, C_SOFT, l->s[S_TAGLINE]);
+    fill(8, 46, SIDE_W - 16, 1, C_RULE);
+    for (int i = 0; i < 5; i++) {
+        const SDL_Rect t = menu_rect(i);
         const bool sel = PAGES[i] == cur, here = PAGES[i] == page;
+        if (i == 4) {
+            fill(8, t.y - QUIT_GAP / 2 - 1, SIDE_W - 16, 1, C_RULE);
+        }
         if (sel) {
             fill(t.x, t.y, t.w, t.h, C_SELECT);
         }
-        text(t.x + NAV_PAD, t.y + 5, 1, sel ? C_GOLD : here ? C_TEXT : C_SOFT, l->s[PAGES[i]]);
         if (here) {
-            fill(t.x + 3, BAR_H - 5, t.w - 6, 2, C_GOLD);
+            fill(t.x, t.y, 3, t.h, C_GOLD);
         }
+        text(14, t.y + 2, 1, sel ? C_GOLD : here ? C_TEXT : C_SOFT, l->s[PAGES[i]]);
     }
+    text(8, SCREEN_H - 36, 1, C_FAINT, LAUNCHER_VERSION);
+    text(8, SCREEN_H - 24, 1, C_FAINT, "by alosoygetsu");
 }
 
 static void draw_chips(const Lang *l, int cur)
 {
     const char *tag = release_tag();
-    for (int i = 0; i < (tag ? 3 : 2); i++) {
+    for (int i = 0; i < (tag ? 2 : 1); i++) {
         char s[96];
         const SDL_Rect c = chip_rect(l, i, tag ? tag : "");
-        const bool news = i == 2, sel = news && cur == S_RELEASE;
+        const bool news = i == 1, sel = news && cur == S_RELEASE;
         chip_text(l, i, tag ? tag : "", s, sizeof s);
         fill_alpha(c.x, c.y, c.w, c.h, sel ? C_SELECT : C_PANEL, 225);
         outline(c.x, c.y, c.w, c.h, news ? C_GOLD : C_EDGE);
@@ -235,10 +229,9 @@ static void draw_chips(const Lang *l, int cur)
     }
 }
 
-static void draw_buttons(const Lang *l, int cur)
+static void draw_play(const Lang *l, bool play)
 {
-    const SDL_Rect p = play_rect(l), q = quit_rect(l);
-    const bool play = cur == S_PLAY, quit = cur == S_QUIT;
+    const SDL_Rect p = play_rect(l);
     fill_alpha(p.x, p.y + 3, p.w, p.h, 0x000000, 120);
     fill(p.x, p.y, p.w, p.h, play ? C_GOLD_HI : C_GOLD);
     fill_alpha(p.x, p.y + p.h - 3, p.w, 3, 0x000000, 50);
@@ -247,43 +240,30 @@ static void draw_buttons(const Lang *l, int cur)
     }
     triangle(p.x + 14, p.y + BTN_H / 2, 6, 1, C_BG);
     text(p.x + 34, p.y + (BTN_H - 2 * LINE_H) / 2 + 1, 2, C_BG, l->s[S_PLAY]);
-    fill_alpha(q.x, q.y, q.w, q.h, quit ? C_SELECT : C_PANEL, 225);
-    outline(q.x, q.y, q.w, q.h, quit ? C_GOLD : C_EDGE);
-    text(q.x + 14, q.y + (BTN_H - LINE_H) / 2, 1, quit ? C_GOLD : C_TEXT, l->s[S_QUIT]);
 }
 
-/* the party, as cards: a coloured square with the partner's initial, the name and the level */
+/* the party, as cards: a coloured square with the partner's initial, the name and the level; the last save under them */
 static void draw_team(const Lang *l)
 {
     const Team *t = team_get();
-    const int head = text_width(l->s[S_TEAM], 1);
     char info[96];
-    text(MARGIN, TEAM_Y, 1, C_GOLD, l->s[S_TEAM]);
     if (!t) {
-        fill(MARGIN + head + 8, TEAM_Y + 8, SCREEN_W - 2 * MARGIN - head - 8, 1, C_RULE);
-        text(MARGIN, CARD_Y + 9, 1, C_SOFT, l->s[S_NO_TEAM]);
+        wrap(MAIN_X, CARD_Y + 2, MAIN_W, C_SOFT, l->s[S_NO_TEAM]);
         return;
     }
-    team_info(l, t, info, sizeof info);
-    text_right(SCREEN_W - MARGIN, TEAM_Y, C_SOFT, info);
-    fill(MARGIN + head + 8, TEAM_Y + 8, SCREEN_W - MARGIN - text_width(info, 1) - 8 - (MARGIN + head + 8) - 8, 1, C_RULE);
     for (int i = 0; i < t->count; i++) {
-        const int x = MARGIN + i * (CARD_W + CARD_GAP);
+        const int x = MAIN_X + i * (card_w() + CARD_GAP);
         char level[32], initial[2] = {team_name(t->partner[i])[0], 0};
-        fill_alpha(x, CARD_Y, CARD_W, CARD_H, C_PANEL, 225);
-        outline(x, CARD_Y, CARD_W, CARD_H, C_EDGE);
-        fill(x + 4, CARD_Y + 4, 22, 22, team_colour(t->partner[i]));
-        text(x + 4 + (22 - text_width(initial, 1)) / 2, CARD_Y + 9, 1, C_BG, initial);
+        fill_alpha(x, CARD_Y, card_w(), CARD_H, C_PANEL, 225);
+        outline(x, CARD_Y, card_w(), CARD_H, C_EDGE);
+        fill(x + 3, CARD_Y + 3, 20, 20, team_colour(t->partner[i]));
+        text(x + 3 + (20 - text_width(initial, 1)) / 2, CARD_Y + 7, 1, C_BG, initial);
         SDL_snprintf(level, sizeof level, "%s %d", l->s[S_LEVEL], t->level[i]);
-        text(x + 32, CARD_Y + 3, 1, C_TEXT, team_name(t->partner[i]));
-        text(x + 32, CARD_Y + 15, 1, C_SOFT, level);
+        text(x + 28, CARD_Y + 1, 1, C_TEXT, team_name(t->partner[i]));
+        text(x + 28, CARD_Y + 13, 1, C_SOFT, level);
     }
-}
-
-bool home_on_bar(void)
-{
-    const Row *r = &rows()[g_app.sel[SC_HOME]];
-    return r->kind == R_LANGUAGE || (r->kind == R_ACTION && (r->id == S_SETTINGS || r->id == S_SAVES || r->id == S_TOOLS || (r->id == S_PLAY && g_app.playtab)));
+    team_info(l, t, info, sizeof info);
+    text(MAIN_X, INFO_Y, 1, C_SOFT, info);
 }
 
 void home_draw(void)
@@ -291,12 +271,12 @@ void home_draw(void)
     const Lang *l = L;
     const Row *r = &rows()[g_app.sel[SC_HOME]];
     const int cur = r->kind == R_ACTION ? r->id : -1;
-    const bool bar = home_on_bar();
     scene();
-    bar_draw(S_PLAY, bar ? cur : -1);
-    text(MARGIN, TITLE_Y, 2, C_TEXT, l->s[S_READY]);
-    text(MARGIN, SUB_Y, 1, C_SOFT, GAME_NAME);
-    draw_chips(l, bar ? -1 : cur);
-    draw_buttons(l, bar ? -1 : cur);
+    side_draw(S_PLAY, cur == S_PLAY || cur == S_RELEASE ? -1 : cur);
+    sala_draw(r->kind == R_PEER ? r->id : -1);
+    draw_chips(l, cur);
+    text(MAIN_X, TITLE_Y, 2, C_TEXT, l->s[S_READY]);
+    text(MAIN_X, SUB_Y, 1, C_SOFT, GAME_NAME);
     draw_team(l);
+    draw_play(l, cur == S_PLAY);
 }

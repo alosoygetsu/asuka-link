@@ -145,6 +145,12 @@ const Lang LANG_FR = {
         [S_COOP_MINE] = "Ton IP",
         [S_COOP_MINE_D] = "Donne aux autres l'une de celles-ci :",
         [S_COOP_NO_IP] = "aucune trouvée",
+        [S_SALA] = "Salon",
+        [S_SALA_YOU] = "Toi",
+        [S_SALA_ADD] = "+ Ajouter par IP",
+        [S_SALA_ADD_D] = "Pour jouer avec quelqu'un hors de ton réseau (Tailscale, ZeroTier, Internet) : tape son IP et Entrée.",
+        [S_SALA_MEMBER_D] = "Un joueur de ton salon. Entrée deux fois le retire.",
+        [S_SALA_OUT_SURE] = "Appuie encore sur Entrée pour le retirer du salon.",
     },
     .option = {
         [O_FPS] = {"Images par seconde", "50 est l'original européen, 60 le mode 60 Hz du jeu lui-même. La vitesse de marche suit à la zone suivante."},

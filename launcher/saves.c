@@ -252,16 +252,16 @@ bool saves_fits(const Lang *l, int width)
 void saves_draw(void)
 {
     refresh(false);
-    panel(PAD, PANEL_Y, SCREEN_W - 2 * PAD, SAVE_SLOTS * LINE + 8);
+    panel(MAIN_X, PANEL_Y, MAIN_W, SAVE_SLOTS * LINE + 8);
     if (!s_has) {
-        text(PAD + 8, PANEL_Y + 4 + LINE, 1, C_SOFT, L->s[S_SV_NOCARD]);
+        text(MAIN_X + 8, PANEL_Y + 4 + LINE, 1, C_SOFT, L->s[S_SV_NOCARD]);
         return;
     }
     for (int k = 0; k < SAVE_SLOTS; k++) {
         char line[200];
         Uint32 colour;
         slot_line(L, k, &s_card.slot[k], line, sizeof line, &colour);
-        text(PAD + 8, PANEL_Y + 4 + k * LINE, 1, colour, line);
+        text(MAIN_X + 8, PANEL_Y + 4 + k * LINE, 1, colour, line);
     }
 }
 
