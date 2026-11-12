@@ -35,9 +35,13 @@ static s32 coopTeamValid(const CoopTeam *t) {
             return 0;
         }
         any = 1;
+        /* a slot holds a form's id (setPartnerSlots copies entries[i].id), not its index in entries[], or -1 */
         for (k = 0; k < 4; k++) {
-            if (p->slots[k] < -1 || p->slots[k] >= PARTNER_ENTRY_COUNT) {
-                native_coop_note("A party from the network was refused: a slot out of range");
+            s32 id = p->slots[k];
+
+            if (id < -1 || id >= NATIVE_MOD_FIRST_ID + 4 ||
+                (id >= NATIVE_MOD_FIRST_ID && native_mod_at(id - NATIVE_MOD_FIRST_ID) == NULL)) {
+                native_coop_note("A party from the network was refused: slot %d holds form %d, out of range", k, id);
                 return 0;
             }
         }

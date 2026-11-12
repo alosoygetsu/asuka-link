@@ -8,6 +8,11 @@ port `v0.18.9` más la versión 1 del cooperativo.
 ## v1.2.2
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.1.
 
+- **Arreglado: "Intercambio cancelado" al empezar un combate PvP o una raid.** La comprobación del equipo que llega
+  por la red (v1.1.0) tomaba los huecos de combate de cada compañero por posiciones de su lista, cuando el juego guarda
+  ahí el número de la forma; cualquier compañero con una digievolución avanzada en esos huecos se rechazaba ("a slot
+  out of range" en coop.log). No tenía que ver con la conexión.
+
 - **Todas las misiones del Digilog tienen pasos.** Las 19 que quedaban (las 4 armas viejas, la Bruja de Hielo, los
   Caballeros de Fuego y Oscuro, los 3 Maestros, Kenny, la Bolsa de Carpetas, los 6 Black Kings y los 2 de la Base
   Submarina) dicen ahora dónde está el rival y **hasta cuándo** se puede hacer, sacado del código del juego:
