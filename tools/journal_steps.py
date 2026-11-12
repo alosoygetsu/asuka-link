@@ -24,6 +24,8 @@ def F(group, n): return group << 8 | n
 def ITEM(n): return 0x8000 | n
 def PARTY(n): return 0x7200 | n
 def AFTER(p): return 0xF000 | p  # el Digilog: GAME.progress > p
+def CARD(n): return 0x9200 | n  # tener esa carta (checkCard)
+ALL = 0xE000  # el Digilog: una misión hecha cuando se cumplen todos sus pasos, en cualquier orden
 def M(mode): return ("m", mode)
 def S(stage): return ("s", stage)
 
@@ -352,6 +354,46 @@ QUEST_STEPS[0x02A] = [
      "Beat BK WarGreymon in the Control Room, before the satellite."),
 ]
 
+# las misiones de cartas: sin objeto que les dé el título (su clave, 0x200 en adelante, no es un objeto), con un título
+# nuestro; hechas al tener todas sus cartas, en cualquier orden (ALL). (clave, mapa, objeto que piden, título, texto)
+TITLED_QUESTS = [
+    (0x200, M(0x228), 0x012, "Cartas épicas", "Epic Cards",
+     "Con el Trofeo Asuka, cinco domadores te dan una carta épica cada uno.",
+     "With the Asuka Trophy, five tamers give you an epic card each."),
+    (0x201, M(0x2EA), 0x014, "Cartas de los BK", "BK Cards",
+     "Con el Trofeo Sol, los BK Agumon y Numemon de la Placa dan cartas raras.",
+     "Sun Trophy: the Circuit Board's BK Agumon and Numemon give rare cards."),
+]
+NEW_QUESTS += [(key, where, ALL, es, en) for key, where, _, _, _, es, en in TITLED_QUESTS]
+# cada domador: primero un combate y luego un duelo, que pide carisma (los umbrales 13 y 14 de PARTY_STAT_THRESHOLDS)
+QUEST_STEPS[0x200] = [
+    (CARD(1), M(0x25B), "Nakano, Salón Delirios: combate, duelo y la Javalina Sagrada.",
+     "Nakano, Mirage Hall: a battle, a duel and the Sacred Spear."),
+    (CARD(7), M(0x22A), "Bob, Bosque de las Patadas: combate, duelo y la Onda Tidal.",
+     "Bob, Kicking Forest: a battle, a duel and the Tidal Wave."),
+    (CARD(13), M(0x21E), "Mitch, Entrada del Bosque Alambre: combate, duelo y Aura Wield.",
+     "Mitch, Wire Forest Entrance: a battle, a duel and Wield Aura."),
+    (CARD(19), M(0x237), "Jessica, Pantano Tranquilo: combate, duelo y el Cañón Volcánico.",
+     "Jessica, Tranquil Swamp: a battle, a duel and the Volcanic Cannon."),
+    (CARD(25), M(0x268), "Mitaka, Agujero Kulon: combate, duelo y Gale Oscuro. Carisma 2472.",
+     "Mitaka, Kulon Pit: a battle, a duel and Darkness Gale. Charisma 2472."),
+]
+QUEST_STEPS[0x201] = [
+    (CARD(card), M(mode), f"Un {who} de la Placa de Circuitos: {es}.", f"A {who} of the Circuit Board: {en}.")
+    for card, mode, who, es, en in [
+        (31, 0x2EA, "BK Agumon", "Borrar Matriz", "Delete Matrix"),
+        (32, 0x2EA, "BK Agumon", "Puerta de Fortuna", "Fortune Gate"),
+        (34, 0x2EA, "BK Agumon", "Acceso a Deseo", "Desire Access"),
+        (33, 0x2EC, "BK Agumon", "Puerta de Miseria", "Misery Gate"),
+        (35, 0x2EC, "BK Agumon", "Antipoder", "Anti-Power"),
+        (69, 0x2EA, "Numemon", "RosemonII", "RosemonII"),
+        (112, 0x2EA, "Numemon", "MarineAngemon", "MarineAngemon"),
+        (241, 0x2EA, "Numemon", "Creepymon", "Creepymon"),
+        (155, 0x2EC, "Numemon", "SaberLeomon", "SaberLeomon"),
+        (198, 0x2EC, "Numemon", "Gryphonmon", "Gryphonmon"),
+    ]
+]
+
 # las 8 DDNA: el mismo patrón (docs/MISIONES.md)
 DDNA = [  # DDNA, DRI y su mapa, su marca, la de su encargo, el Digimon y su mapa, la de su combate
     (0x006, "Johann", M(0x22B), 0x2D, 0, "MetalGreymon", M(0x233), 0x12),
@@ -396,24 +438,55 @@ def texts():
     for _, steps in STORY:
         out += [(wrap(es), wrap(en)) for _, _, es, en in steps]
     out += [(wrap(es), wrap(en)) for _, _, _, es, en in NEW_QUESTS]
+    out += [(wrap(es), wrap(en)) for _, _, _, es, en, _, _ in TITLED_QUESTS]
     for item in sorted(QUEST_STEPS):
         out += [(wrap(es), wrap(en)) for _, _, es, en in QUEST_STEPS[item]]
     return out
 
 
 # los textos del Digilog (platform/journal_text.h): "Paso ", " de ", las cifras 0-9 y luego el de cada paso
-JOURNAL_WORDS = {"eng": ["Step ", " of "], "fra": ["Étape ", " sur "], "ita": ["Passo ", " di "], "ger": ["Schritt ", " von "],
-                 "spn": ["Paso ", " de "]}
+JOURNAL_WORDS = ["Step ", " of "]
 FIRST_STEP_TEXT = 12
+# francés, italiano y alemán: tools/journal_text/<idioma>.toml, cada texto inglés con su traducción (lo que falte, en inglés)
+TRANSLATED = ["fra", "ita", "ger"]
+
+
+def translations(lang):
+    """{texto inglés en una línea: su traducción} de tools/journal_text/<lang>.toml"""
+    import tomllib
+    return tomllib.loads((Path(__file__).parent / "journal_text" / f"{lang}.toml").read_text(encoding="utf-8"))["texts"]
 
 
 def write_texts():
-    """platform/journal_text.h: en español, el español; en los demás, el inglés hasta que se traduzcan"""
+    """platform/journal_text.h: el español y el inglés de aquí; los demás, de sus traducciones. Para si alguna no cabe
+    (todas de una vez) y avisa de las que faltan"""
     sys.path.insert(0, str(Path(__file__).parent))
     import game_text
     steps = texts()
-    by_lang = {lang: JOURNAL_WORDS[lang] + [str(d) for d in range(10)] + [es if lang == "spn" else en for es, en in steps]
-               for lang in game_text.LANGUAGES}
+    english = JOURNAL_WORDS + [en for _, en in steps]
+    by_lang = {"eng": english, "spn": ["Paso ", " de "] + [es for es, _ in steps]}
+    bad = []
+    for lang in TRANSLATED:
+        table = translations(lang)
+        out = []
+        for en in english:
+            tr = table.get(en.replace("\n", " "))
+            if tr is None:
+                out.append(en)
+                continue
+            try:
+                out.append(tr if en in JOURNAL_WORDS else wrap(tr))
+            except SystemExit:
+                bad.append(f"{lang}: {tr!r} ({len(tr)})")
+                out.append(en)
+        missing = [en for en in english if en.replace("\n", " ") not in table]
+        if missing:
+            print(f"{lang}: {len(missing)} sin traducir (salen en inglés): {missing[:3]}")
+        by_lang[lang] = out
+    if bad:
+        sys.exit("no caben en dos líneas de 39:\n" + "\n".join(bad))
+    for lang in by_lang:
+        by_lang[lang] = by_lang[lang][:2] + [str(d) for d in range(10)] + by_lang[lang][2:]
     game_text.write_header("platform/journal_text.h", "tools/journal_steps.py", "JOURNAL_TEXT", by_lang)
 
 
@@ -430,7 +503,11 @@ def main(first_text=FIRST_STEP_TEXT):
             groups.append((p, start, len(steps)))
     new_text = t
     for item, where, done, _, _ in NEW_QUESTS:
-        new.append((item, mode_of(where), done, t))
+        new.append([item, mode_of(where), done, t, 0, 0])
+        t += 1
+    for key, _, req, _, _, _, _ in TITLED_QUESTS:  # their titles, and the item they need
+        row = next(r for r in new if r[0] == key)
+        row[4], row[5] = t, req
         t += 1
     for item in sorted(QUEST_STEPS):
         start = len(rows)
@@ -448,7 +525,9 @@ def main(first_text=FIRST_STEP_TEXT):
          "",
          "typedef struct JournalStep { unsigned short code, mode, text; } JournalStep; /* code: checkCondition's, or 0xF000 | p: past step p */",
          "typedef struct JournalSteps { unsigned short key, first, count; } JournalSteps; /* a story step's or a side quest's, its item */",
-         "typedef struct JournalQuest { unsigned short item, mode, done, text; } JournalQuest; /* a side quest the port's list hasn't */",
+         "typedef struct JournalQuest { unsigned short item, mode, done, text, title; } JournalQuest; /* a side quest the port's list hasn't; title: its own, for one without an item (item >= JOURNAL_TITLED) */",
+         "#define JOURNAL_TITLED 0x200 /* a quest's key from here on is no item: its title is its own */",
+         "#define JOURNAL_ALL 0xE000 /* a quest's done: when all its steps hold, in any order */",
          "",
          "static const JournalStep JOURNAL_STEPS[] = {"]
     h += [f"    {{0x{c:04X}, 0x{m:03X}, {x}}}," for c, m, x in rows]
@@ -457,10 +536,10 @@ def main(first_text=FIRST_STEP_TEXT):
     h += ["};", "static const JournalSteps JOURNAL_QUEST_STEPS[] = {"]
     h += [f"    {{0x{i:03X}, {a}, {n}}}," for i, a, n in quests]
     h += ["};", "static const JournalQuest JOURNAL_NEW_QUESTS[] = {"]
-    h += [f"    {{0x{i:03X}, 0x{m:03X}, 0x{d:04X}, {x}}}," for i, m, d, x in new]
+    h += [f"    {{0x{i:03X}, 0x{m:03X}, 0x{d:04X}, {x}, {ti}}}," for i, m, d, x, ti, _ in new]
     h += ["};", "/* the new side quests as rows of the port's SIDE_QUESTS, item, field, done, last step, item needed */",
           "#define JOURNAL_NEW_SIDE_QUESTS \\"]
-    h += [f"    {{ 0x{i:03X}, 0x{m:03X}, 0x{d:04X}, 0, 0 }}, \\" for i, m, d, x in new]
+    h += [f"    {{ 0x{i:03X}, 0x{m:03X}, 0x{d:04X}, 0, 0x{r:03X} }}, \\" for i, m, d, x, _, r in new]
     h += ["", ""]
     (NATIVE / "include" / "journal_steps.h").write_text("\n".join(h), encoding="utf-8", newline="\n")
     print(f"include/journal_steps.h: {len(rows)} pasos, {len(groups)} pasos de historia con lista, {len(quests)} misiones con pasos")

@@ -20,6 +20,7 @@ extern uint8_t game_vars_begin[], ovl_sub_end[];
 extern uint32_t HEAP_BASE[];
 extern uint8_t OVERLAY_VRAM[], STAGE_VRAM[];
 extern uint8_t GAME[];  /* the game's GameState */
+extern int32_t LANGUAGE; /* the game's: 2 English, 3 French, 4 Italian, 5 German, 6 Spanish */
 int getMode(void);      /* main/game/state.c */
 void requestMode(int mode, int arg);
 int VSync(int mode);    /* etc.c */
@@ -175,6 +176,9 @@ void state_frame(void) {
             loadFont(); /* as F1: the language select wipes the font */
         }
         native_coop_test_save(GAME); /* DW3_COOP_SAVE (the co-op's tests) */
+        if (SDL_getenv("DW3_LANGUAGE") != NULL) { /* tests: the field in another language (2-6) */
+            LANGUAGE = SDL_clamp(SDL_atoi(SDL_getenv("DW3_LANGUAGE")), 2, 6);
+        }
         if (g_field_progress >= 0) {
             memcpy(GAME + GAME_PROGRESS, &g_field_progress, 4);
         }

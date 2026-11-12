@@ -306,16 +306,24 @@ Los herreros, por compañero:
   6. Te da las Botas Árbol (`+0x004`). Con ellas se patean árboles para encontrar Cardmon.
 - **ID Compinche** (Kenny, ya en el Digilog): Kenny el Valiente, en la Posada del Bosque de Amaterasu, al llegar al
   servidor Amaterasu: hace que los soldados de la A.o.A te tomen por uno de ellos.
-- **Cartas épicas** (misión nueva posible): diez cartas.
-  - **Cinco domadores**, con el **Trofeo Asuka** y carisma alto (2277; la quinta, 2472; son los umbrales 13 y 14 de
-    `PARTY_STAT_THRESHOLDS`, que el juego ya comprueba):
-    - Nakano en el Salón Delirios (Jabalina Sagrada);
-    - Bob en el Bosque de las Patadas (Onda Tidal);
-    - Mitch en la Entrada del Bosque Alambre (Aura Wield);
-    - Jessica en el Pantano Tranquilo (Cañón Volcánico);
-    - Mitaka en el Agujero Kulon (Gale Oscuro).
-  - **Los BK Agumon de la Placa de Circuitos** (Borrar Matriz, Puerta de la Fortuna, Puerta de la Miseria, Acceso al
-    Deseo…), cada uno por un agujero distinto. Cada paso: tener la carta (`CARD(id)`).
+- **Cartas épicas** (hecha en la v1.2.2, clave 0x200): cinco domadores, con el **Trofeo Asuka**, de 0x04 a 0x26.
+  Cada uno pide antes un combate de Digimon (`F0e:xx`) y luego un duelo con carisma alto (`equipo13`, 2277; Mitaka,
+  2472):
+  - Nakano en el Salón Delirios (Javalina Sagrada, carta 1);
+  - Bob en el Bosque de las Patadas (Onda Tidal, 7);
+  - Mitch en la Entrada del Bosque Alambre (Aura Wield, 13);
+  - Jessica en el Pantano Tranquilo (Cañón Volcánico, 19);
+  - Mitaka en el Agujero Kulon (Gale Oscuro, 25).
+
+  Tras el final, MetalEtemon las da en la Placa de Circuitos (`wstag972`).
+- **Cartas de los BK** (hecha en la v1.2.2, clave 0x201): con el **Trofeo Sol**, en la Placa de Circuitos (0x2EA y
+  0x2EC; cada rival sale según el agujero por el que se entra, condiciones `0x7exx`): BK Agumon con Borrar Matriz (31),
+  Puerta de Fortuna (32), Puerta de Miseria (33), Acceso a Deseo (34) y Antipoder (35); Numemon con RosemonII (69),
+  MarineAngemon (112), SaberLeomon (155), Gryphonmon (198) y Creepymon (241).
+- **Cómo van en el Digilog:** una carta es la condición `0x9200 | id` (`checkCard`). Su clave no es un objeto
+  (`JOURNAL_TITLED`, 0x200 en adelante), así que llevan título propio y no tienen caja de recompensa; están hechas
+  cuando se tienen todas (`JOURNAL_ALL`), y su paso actual es la primera carta que falta, porque se consiguen en
+  cualquier orden.
 
 ### Para la historia
 - **0x0E:** tras el muro del Chip TNT, en el Punto Fiable, se coge el **Digihuevo de la Seriedad**, que abre la Isla

@@ -17,6 +17,15 @@ Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.1.
     antes del Satélite Espía).
   - Kenny, solo antes de vencer al Jefe Qing Long.
   - Cinco Black Kings, hasta cruzar el Puente Amaterasu; WarGreymon BK, después.
+- **Dos misiones nuevas de cartas:**
+  - **Cartas épicas:** con el Trofeo Asuka, cinco domadores dan cada uno una carta épica tras un combate y un duelo
+    (Nakano, Bob, Mitch, Jessica y Mitaka).
+  - **Cartas de los BK:** con el Trofeo Sol, los BK Agumon y Numemon de la Placa de Circuitos dan diez cartas raras.
+
+  Se consiguen en cualquier orden: el paso que sale es la primera carta que te falta, y la misión está hecha al
+  tenerlas todas.
+- **El Digilog, en francés, italiano y alemán:** todos sus pasos y misiones, con los nombres de lugares, objetos y
+  cartas de cada versión del juego (antes salían en inglés).
 - **Por dentro, cada cosa en su sitio** (no cambia nada al jugar):
   - Los textos del Digilog tienen su propio archivo, aparte de los del cooperativo.
   - Los del cooperativo van en bloques por función (equipo, aspecto, intercambio, Guardromon, raid) y cada frase
