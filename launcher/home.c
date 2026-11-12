@@ -158,8 +158,68 @@ static SDL_Point antenna(int x, int w, int h)
     return (SDL_Point){x + w / 2, top - 16};
 }
 
+/* where the link's arc is at t (0 one antenna, 1 the other) */
+static SDL_FPoint arc_at(SDL_Point a, SDL_Point b, float t)
+{
+    return (SDL_FPoint){a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t - 34 * 4 * t * (1 - t)};
+}
+
+/* the scene moves (home is awake 20 times a second, screens_tick): the stars twinkle, now and then one falls, the
+   antennas' lights blink, and on the link one packet goes for each player in the room, yellow when all are ready;
+   with a room, the antennas send out their signal's rings */
+static void scene_moves(SDL_Point a, SDL_Point b)
+{
+    const Uint64 now = SDL_GetTicks();
+    s_seed = 77;
+    for (int i = 0; i < 12; i++) { /* twinkling stars, over the still ones */
+        const int x = 130 + rnd(SCREEN_W - 130), y = 6 + rnd(80), period = 900 + rnd(1400);
+        const int phase = (int)((now + (Uint64)i * 311) % (Uint64)period);
+        if (phase < period / 3) {
+            fill(x, y, 1, 1, C_TEXT);
+            if (phase < period / 8) {
+                fill_alpha(x - 1, y, 3, 1, C_SOFT, 120), fill_alpha(x, y - 1, 1, 3, C_SOFT, 120);
+            }
+        }
+    }
+    const Uint64 fall = now % 14000; /* a falling star every 14 s, for half a second */
+    if (fall < 500) {
+        const int x0 = 180 + (int)(now / 14000 % 5) * 50, y0 = 12 + (int)(now / 14000 % 3) * 14, k = (int)(fall * 60 / 500);
+        for (int j = 0; j < 8; j++) {
+            fill_alpha(x0 + k - j * 2, y0 + (k - j * 2) / 3, 1, 1, C_TEXT, (Uint8)(255 - j * 30));
+        }
+    }
+    const bool lit = now % 1600 < 800;
+    fill_alpha(a.x - 1, a.y - 1, 3, 3, lit ? C_GOLD : C_LINK, lit ? 220 : 90);
+    fill_alpha(b.x - 1, b.y - 1, 3, 3, !lit ? C_GOLD : C_LINK, !lit ? 220 : 90);
+    const int players = net_room_size();
+    const Uint32 packet = net_all_ready() ? C_GOLD : C_TEXT;
+    for (int k = 0; k < SDL_max(players, 1); k++) {
+        const float t = (float)((now + (Uint64)k * 3000 / SDL_max(players, 1)) % 3000) / 3000.0f;
+        const SDL_FPoint q = arc_at(a, b, k % 2 ? 1 - t : t); /* both ways */
+        fill_alpha((int)q.x - 2, (int)q.y - 2, 5, 5, packet, 50);
+        fill((int)q.x - 1, (int)q.y - 1, 3, 3, packet);
+    }
+    if (players > 1) { /* the rings: a quarter of a circle each way, growing and fading */
+        for (int ring = 0; ring < 2; ring++) {
+            const int age = (int)((now + (Uint64)ring * 1000) % 2000), r = 4 + age * 18 / 2000;
+            const Uint8 alpha = (Uint8)(160 - age * 160 / 2000);
+            for (int d = 0; d < 24; d++) {
+                const float ang = d * 3.14159f / 23;
+                fill_alpha(a.x + (int)(SDL_cosf(ang) * r), a.y - (int)(SDL_sinf(ang) * r), 1, 1, C_LINK, alpha);
+                fill_alpha(b.x + (int)(SDL_cosf(ang) * r), b.y - (int)(SDL_sinf(ang) * r), 1, 1, C_LINK, alpha);
+            }
+        }
+    }
+}
+
 static void scene(void)
 {
+    const SDL_Point a = {286 + 13 / 2, SCENE_BASE - 74 - 16}, b = {446 + 15 / 2, SCENE_BASE - 92 - 16}; /* antenna()'s tips */
+    if (!cache_begin()) {
+        cache_end();
+        scene_moves(a, b);
+        return;
+    }
     s_seed = 2003;
     for (int i = 0; i < 30; i++) {
         fill(150 + rnd(SCREEN_W - 150), 6 + rnd(84), 1, 1, i % 4 ? C_FAINT : C_SOFT);
@@ -177,7 +237,7 @@ static void scene(void)
         fill_alpha(sx - 31, y, 63, 1 + gap / 3, C_DUSK, 255);
     }
     towers(0);
-    const SDL_Point a = antenna(286, 13, 74), b = antenna(446, 15, 92);
+    antenna(286, 13, 74), antenna(446, 15, 92);
     towers(1);
     for (int i = 0; i <= 64; i++) { /* the link: an arc of dots from one antenna to the other */
         const float t = i / 64.0f, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t - 34 * 4 * t * (1 - t);
@@ -185,10 +245,9 @@ static void scene(void)
         if (i % 2 == 0) {
             fill((int)x, (int)y, 1, 1, C_LINK);
         }
-        if (i == 21 || i == 43) { /* two packets on their way */
-            fill((int)x - 1, (int)y - 1, 3, 3, C_TEXT);
-        }
     }
+    cache_end();
+    scene_moves(a, b);
 }
 
 /* ---- the screen ---- */

@@ -36,6 +36,9 @@ void background(int w, int h); /* in window pixels */
 int text_width(const char *s, int scale);
 void text(int x, int y, int scale, Uint32 colour, const char *s); /* with a shadow */
 void text_flat(int x, int y, Uint32 colour, const char *s);
+bool cache_begin(void); /* draw.c: the home scene's still part, drawn once (true: draw it now, then cache_end) */
+void cache_end(void);
+void cache_lost(void);
 void text_sel(int x, int y, bool sel, Uint32 colour, const char *s); /* on a selected fill: dark and flat; else colour, shadowed */
 void text_right(int right, int y, Uint32 colour, const char *s);
 void text_centre(int y, int scale, Uint32 colour, const char *s);

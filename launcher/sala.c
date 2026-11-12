@@ -25,7 +25,8 @@ static NetPlayer s_mem[ROOM_MAX], s_av[16];
 static int s_nmem, s_nav;
 static int s_line[32], s_lines;
 
-static void refresh(void)
+/* the room's lists, once a frame at most (rows() asks many times a frame); force after an action */
+static void refresh_now(void)
 {
     s_nmem = net_members(s_mem, ROOM_MAX);
     s_nav = net_available(s_av, 16);
@@ -48,6 +49,16 @@ static void refresh(void)
     }
     if (s_nmem < ROOM_MAX) {
         s_line[s_lines++] = SALA_ADD;
+    }
+}
+
+static Uint64 s_refreshed;
+
+static void refresh(void)
+{
+    if (SDL_GetTicks() - s_refreshed >= 40 || s_refreshed == 0) {
+        s_refreshed = SDL_GetTicks();
+        refresh_now();
     }
 }
 
@@ -93,7 +104,7 @@ static void open_firewall(void)
 
 void sala_activate(int id)
 {
-    refresh();
+    refresh_now();
     if (id == SALA_INVITE) {
         net_answer(g_app.btn == 0);
         g_app.btn = 0;
@@ -142,6 +153,7 @@ void sala_tick(void)
 {
     static int pairing;
     net_poll();
+    s_refreshed = 0; /* what came may change the lists */
     if (net_all_ready() && !s_all_ready_said) {
         s_all_ready_said = true;
         g_app.note = L->s[S_SALA_ALL_READY];

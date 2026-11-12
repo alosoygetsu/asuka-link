@@ -23,6 +23,48 @@ void fill_alpha(int x, int y, int w, int h, Uint32 colour, Uint8 alpha)
 
 void fill(int x, int y, int w, int h, Uint32 colour) { fill_alpha(x, y, w, h, colour, s_alpha); }
 
+/* A still picture (the home scene's city), drawn once into a texture and copied every frame after: cache_begin says
+   whether to draw it now (true: draw, then cache_end), cache_end puts it on screen. Without a renderer (--check) or a
+   texture, it's drawn straight every time */
+static SDL_Texture *s_cache;
+static bool s_cache_ok;
+
+bool cache_begin(void)
+{
+    if (!s_r) {
+        return true;
+    }
+    if (s_cache && s_cache_ok) {
+        return false;
+    }
+    if (!s_cache) {
+        s_cache = SDL_CreateTexture(s_r, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, SCREEN_W, SCREEN_H);
+        if (!s_cache) {
+            return true;
+        }
+        SDL_SetTextureBlendMode(s_cache, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureScaleMode(s_cache, SDL_SCALEMODE_NEAREST);
+    }
+    SDL_SetRenderTarget(s_r, s_cache);
+    SDL_SetRenderDrawColor(s_r, 0, 0, 0, 0);
+    SDL_RenderClear(s_r);
+    return true;
+}
+
+void cache_end(void)
+{
+    if (!s_r || !s_cache) {
+        return;
+    }
+    if (SDL_GetRenderTarget(s_r) == s_cache) {
+        SDL_SetRenderTarget(s_r, NULL);
+        s_cache_ok = true;
+    }
+    SDL_RenderTexture(s_r, s_cache, NULL, NULL);
+}
+
+void cache_lost(void) { s_cache_ok = false; } /* the device lost its textures: drawn again next time */
+
 void outline(int x, int y, int w, int h, Uint32 colour)
 {
     fill(x, y, w, 1, colour);
@@ -65,19 +107,35 @@ static int glyph(Uint32 cp)
     return index[cp < 0x180 ? cp : '?'];
 }
 
+/* a line of text: each glyph row's runs of pixels as one rectangle, all of the line sent at once (one pixel a
+   rectangle was most of the launcher's time, now that home redraws 20 times a second) */
 static int line(int x, int y, int scale, Uint32 colour, const char *s, const char *end)
 {
-    int start = x;
+    static SDL_FRect rects[2048];
+    int start = x, n = 0;
     while (s < end && *s) {
         const int g = glyph(SDL_StepUTF8(&s, NULL));
-        for (int row = 0; row < FONT_H; row++) {
-            for (int bits = FONT[g].rows[row], column = 0; bits; bits >>= 1, column++) {
-                if (bits & 1) {
-                    fill(x + column * scale, y + row * scale, scale, scale, colour);
+        for (int row = 0; s_r && row < FONT_H; row++) {
+            int bits = FONT[g].rows[row], column = 0;
+            while (bits) {
+                if (!(bits & 1)) {
+                    bits >>= 1, column++;
+                    continue;
+                }
+                const int from = column;
+                while (bits & 1) {
+                    bits >>= 1, column++;
+                }
+                if (n < (int)SDL_arraysize(rects)) {
+                    rects[n++] = (SDL_FRect){(float)(x + from * scale), (float)(y + row * scale), (float)((column - from) * scale), (float)scale};
                 }
             }
         }
         x += FONT[g].advance * scale;
+    }
+    if (s_r && n) {
+        SDL_SetRenderDrawColor(s_r, colour >> 16 & 255, colour >> 8 & 255, colour & 255, s_alpha);
+        SDL_RenderFillRects(s_r, rects, n);
     }
     return x - start;
 }

@@ -6,11 +6,16 @@
 void art_icon(int x, int y)
 {
     for (int j = 0; j < 32; j++) {
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < 32;) { /* a run of one colour at a time */
             const char c = ICON[j][i];
-            if (c != ' ') {
-                fill(x + i, y + j, 1, 1, c == 'e' ? C_EDGE : c == 'c' ? C_LINK : c == 'y' ? C_GOLD : C_BG);
+            int run = 1;
+            while (i + run < 32 && ICON[j][i + run] == c) {
+                run++;
             }
+            if (c != ' ') {
+                fill(x + i, y + j, run, 1, c == 'e' ? C_EDGE : c == 'c' ? C_LINK : c == 'y' ? C_GOLD : C_BG);
+            }
+            i += run;
         }
     }
 }

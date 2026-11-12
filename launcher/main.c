@@ -65,6 +65,9 @@ static void handle_event(SDL_Renderer *r, SDL_Event *e)
     if (sala_event(e)) {
         return;
     }
+    if (e->type == SDL_EVENT_RENDER_TARGETS_RESET || e->type == SDL_EVENT_RENDER_DEVICE_RESET) {
+        cache_lost();
+    }
     switch (e->type) {
     case SDL_EVENT_MOUSE_WHEEL:
         if (e->wheel.y != 0) {
@@ -269,8 +272,10 @@ int main(int argc, char **argv)
     SDL_Event e;
     bool closing = false, busy = screens_tick(), was_running = false;
     while (!closing && !g_app.quit) {
-        /* nothing to do: asleep until an event; while the game runs, a look now and then and no drawing */
-        if (SDL_WaitEventTimeout(&e, game_running() ? 250 : busy ? 50 : -1)) {
+        /* nothing to do: asleep until an event; while the game runs or minimised, a look now and then (the room's
+           network) and no drawing; home moves at about 12 frames a second */
+        const bool hidden = (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0;
+        if (SDL_WaitEventTimeout(&e, game_running() || hidden ? 250 : busy ? 80 : -1)) {
             do {
                 if (e.type == SDL_EVENT_QUIT) {
                     closing = true;
@@ -289,7 +294,7 @@ int main(int argc, char **argv)
                 SDL_RaiseWindow(window);
             }
         }
-        if (!was_running) {
+        if (!was_running && !hidden) {
             redraw(r);
             SDL_RenderPresent(r);
         }

@@ -155,8 +155,12 @@ static void me(Packet *p)
     if (t && t->name[0]) {
         SDL_strlcpy(p->name, t->name, sizeof p->name);
     } else {
-        n = sizeof pc;
-        SDL_strlcpy(p->name, GetComputerNameA(pc, &n) ? pc : "?", sizeof p->name);
+        static char computer[MAX_COMPUTERNAME_LENGTH + 1];
+        if (!computer[0]) {
+            n = sizeof pc;
+            SDL_strlcpy(computer, GetComputerNameA(pc, &n) ? pc : "?", sizeof computer);
+        }
+        SDL_strlcpy(p->name, computer, sizeof p->name);
     }
     p->model = (Sint8)(t ? t->model : -1);
     p->tone = (Sint8)(t ? t->tone : -1);
@@ -399,6 +403,11 @@ static void take_room(const Packet *p, Uint32 ip, Uint16 port)
     }
     const bool joined = p->room != s_room;
     if (!joined && p->rev <= s_rev) {
+        return;
+    }
+    /* two rooms that took each other in at once (both asked back at start): the lower room's id wins, so both end
+       in the same one instead of each in the other's */
+    if (joined && member_index(p->from) > 0 && p->room > s_room) {
         return;
     }
     if (joined) {
