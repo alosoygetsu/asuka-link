@@ -273,3 +273,35 @@ Los herreros, por compañero:
 - **Castigo (Monmon):** Shurimon en el Lago SB Zhu Que; Sagitarimon en el Desierto Mobius (Amaterasu).
 - **Muramasa (Kotemon):** Kabukimon en una zona escondida de la Jungla de Éter (Amaterasu), buceando desde la Bahía
   Fénix; Yashamon en la Sala Secreta (Amaterasu).
+
+### Más misiones que salen de la guía
+- **Botas Árbol** (ya en el Digilog; sus pasos):
+  1. Un chico pateando un árbol en la Capa de Conexión (Plug Cape) quiere su **carta de Gabumon** (`F1a:22`).
+  2. Está en la Posada de Asuka, abajo, junto a la niña (`F1a:23`).
+  3. Dásela: te manda a hablar con Veemon (`F1a:24`, `F1c:08`).
+  4. La señora de traje de la taberna Chuleta Cordero (al oeste de Asuka, junto a la armería) lo vio cerca de la
+     Llanura del Viento (`F1a:25`).
+  5. Veemon te reta a encontrarlo en el Bosque de las Patadas: patea los árboles de la entrada (`F1a:26`, `F1a:27`).
+  6. Te da las Botas Árbol (`+0x004`). Con ellas se patean árboles para encontrar Cardmon.
+- **ID Compinche** (Kenny, ya en el Digilog): Kenny el Valiente, en la Posada del Bosque de Amaterasu, al llegar al
+  servidor Amaterasu: hace que los soldados de la A.o.A te tomen por uno de ellos.
+- **Cartas épicas** (misión nueva posible): diez cartas.
+  - **Cinco domadores**, con el **Trofeo Asuka** y carisma alto (2277; la quinta, 2472; son los umbrales 13 y 14 de
+    `PARTY_STAT_THRESHOLDS`, que el juego ya comprueba):
+    - Nakano en el Salón Delirios (Jabalina Sagrada);
+    - Bob en el Bosque de las Patadas (Onda Tidal);
+    - Mitch en la Entrada del Bosque Alambre (Aura Wield);
+    - Jessica en el Pantano Tranquilo (Cañón Volcánico);
+    - Mitaka en el Agujero Kulon (Gale Oscuro).
+  - **Los BK Agumon de la Placa de Circuitos** (Borrar Matriz, Puerta de la Fortuna, Puerta de la Miseria, Acceso al
+    Deseo…), cada uno por un agujero distinto. Cada paso: tener la carta (`CARD(id)`).
+
+### Para la historia
+- **0x0E:** tras el muro del Chip TNT, en el Punto Fiable, se coge el **Digihuevo de la Seriedad**, que abre la Isla
+  del Duelo (el Trofeo Asuka).
+- **Punto sin retorno:** al entrar en la Sala Maestra de Amaterasu, tras los Oinkmon (historia 0x26-0x27), ya no se
+  pueden conseguir los artículos épicos ni las subastas. Un aviso en el Digilog antes de ese paso.
+- **Subastas de El Dorado:** hay una nueva en muchos puntos de la historia (la guía las marca); la última, con la
+  Armadura Valor de Agumon (32000 BIT), justo antes del punto sin retorno.
+- **Para entrar al servidor Amaterasu por otro lado:** con Digmon, desde el Desierto Norte 0 (North Badland W), por la
+  Placa de Circuitos.
