@@ -5,6 +5,19 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta. Hasta la v0.18.918, el número iba pegado al del port: `v0.18.901` era el
 port `v0.18.9` más la versión 1 del cooperativo.
 
+## v1.3.0
+Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.0.
+
+- **Las 5 cadenas de armas, en el Digilog** (Muramasa, Super Nova, Castigo, Eternamente e Invencible): del jefe que
+  da el arma vieja a la forja final de MetalEtemon. Cada paso dice qué comprar y dónde (la Torre Delirios de
+  Amaterasu, Bai Hu o Xuan Wu, Ciudad Amaterasu), a qué herrero ir y cuándo subir al compañero a nivel 45.
+- **Pasos de las Botas Árbol:** la carta de Gabumon del chico de la Capa de Conexión, la taberna de Asuka y Veemon en el
+  Bosque de las Patadas.
+- **Correcciones con la guía de PhalX:** dónde están la Tela de Araña (los Dokugumon del Bosque Protocolo), la
+  Jabalina de Bambú (se compra en Ciudad Asuka) y la Bola TNT (los Triceramon); el ID El Dorado pide 210 de carisma.
+- **Aviso de última ocasión** en la historia, antes del punto sin retorno: después ya no hay armas épicas ni
+  subastas.
+
 ## v1.2.0
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.1.0.
 
