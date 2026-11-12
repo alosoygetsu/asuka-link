@@ -1,4 +1,11 @@
-# Copy to native.ini, next to dw2003.exe. Every line is optional.
+# Copy to native.ini, next to dw2003.exe. Every line is optional, and the
+# launcher writes this file for you: you only need it to set things by hand.
+#
+# Asuka Link (v1.3.0) keeps only these as options. The port's mods and the rest
+# of its graphics options are fixed at their best values (fast travel, Digilog,
+# fast text, full EXP share, training without luck, BladeGarurumon, your own
+# effects, sounds and scripts on; the map's objective off; 60 fps, vsync, true
+# colour...); their old lines here are skipped.
 
 # Where the game read from your disc is (the first run writes it); relative to
 # the exe's folder
@@ -11,128 +18,53 @@ fullscreen = 0
 # fits the screen (4 = 1280x960 on a 1080p one)
 #scale = 3
 
-# 1: battles in 16:9, the 3D seeing a third wider (the battle's menus and
-# numbers stretched to it); the fields stay 4:3. The window is 16:9 then
+# 1-8: the game drawn on the graphics card (OpenGL 3.3) that many times
+# finer than the PSX's 320x240. Unset: as the window's size, up to 4
+#render_scale = 4
+
+# 1: battles in 16:9, the 3D seeing a third wider; the fields stay 4:3. The
+# window is 16:9 then
 widescreen = 0
 
-# 1: the 3D's textures in perspective, without the PlayStation's warping
-# (needs the options menu's Sub-pixel 3D)
-perspective = 1
-
-# 1: the 3D models' textures smoothed when enlarged, rather than in blocks;
-# sprites and text stay sharp (needs Sub-pixel 3D)
-smooth_3d = 1
-
-# 1: the colours at 8 bits a channel, without the PlayStation's 5-bit banding;
-# dithering is then left out
-true_color = 1
-
-# 0: no dithering (the PlayStation's, on shaded and blended polygons)
-dither = 1
-
-# 1: the Digimon in battle cast their shape on the ground (needs Sub-pixel 3D
-# and the Depth buffer, both on by default)
-battle_shadows = 1
-
-# 1: battles get a sky, darker toward the top, and their stage's far side
-# fades into it with distance (the painted horizon kept clear); 0: the
-# original's flat background
-battle_sky = 0
-
-# 1: the shadows under the characters on the field darken the ground they
-# fall on, with smooth edges at any resolution, instead of the original's grey
-# disc (0)
-soft_shadows = 0
-
-# 0: no vsync: frames shown at once, which can tear in fullscreen
-vsync = 1
-
-# 0: the movies with sharp pixels instead of smoothed when scaled up
-smooth_movies = 1
-
-# The gamepad (the first one plugged; an Xbox 360 pad or any SDL knows).
-# deadzone: how far the sticks and triggers move before they count, 0-32767
-deadzone = 3277
-# 0: no vibration
+# 0: no gamepad vibration
 rumble = 1
 
-# The options menu's icons: ps1 (the game's own),
-# ps3, ps4, ps5, xbox360, xboxone, xboxseries,
-# switch, keyboard, or auto (the device used last)
+# The buttons' icons: ps1 (the game's own), ps3, ps4, ps5, xbox360, xboxone,
+# xboxseries, switch, keyboard, or auto (the device used last)
 icons = ps5
 # Each button's keys (SDL's names, two at most) and gamepad button (SDL's:
-# a b x y by place, leftshoulder, lefttrigger, leftstick, dpup, start...),
-# or none; the options menu's Controls writes them. The buttons: cross,
-# circle, square, triangle, l1, r1, l2, r2, l3, r3, start, select, up, down,
-# left, right
+# a b x y by place, leftshoulder, lefttrigger, leftstick, dpup, back, start...),
+# or none; the in-game options' Controls and the launcher write them. The
+# buttons: cross, circle, square, triangle, l1, r1, l2, r2, l3, r3, start,
+# select, up, down, left, right
 #keys_cross = Z, Space
 #pad_cross = a
 
-# 1-8: the game drawn on the graphics card (OpenGL 3.3) that many times
-# finer than the PSX's 320x240, the 3D vertices with their fractions.
-# Unset: as the window's size, up to 4
-#render_scale = 4
+# The in-game options (fullscreen, window, resolution, widescreen battles,
+# icons, vibration, buttons) open from the field's pause menu: Start, OPTIONS.
 
-# 50 as the European original, or 60: the game's own 60 Hz mode (its NTSC
-# timing). Esc in game opens the options menu, which writes this file back
-fps = 50
+# --- The co-op ---
 
-# 1: holding X advances the texts (outside battles and card games, where X
-# confirms commands). Tab or R3 cycles fast forward (x2, x3, x5), not saved
-fast_text = 1
+# 0: the co-op off. On by default: without other players it opens no socket
+coop = 1
 
-# 1: on the map screen, X on a visited area takes you there as the menu closes
-# (through a door into it that is open at that point of the story)
-fast_travel = 0
+# The other players' game, host or host:port (27500 without). The launcher's
+# room writes it, and the game follows its changes while you play
+#coop_peers = 192.168.1.20, 100.64.1.2:27500
 
-# 1: the map screen blinks the area where the story's next step happens
-map_objective = 0
+# This game's port (UDP), if 27500 is taken
+#coop_port = 27500
 
-# 1: a journal row in the field menu (work in progress)
-journal = 0
+# The EXP and the money a battle gives, times this (1-5). The launcher's
+# Settings, Game tab
+#exp_multiplier = 1
+#money_multiplier = 1
 
-# 1: partners can learn BladeGarurumon, a 45th Digimon (Growlmon and Grizzmon
-# at level 40), with its signature Solar Laser
-bladegarurumon = 1
-
-# What the game does while its window is not the one in front (minimised, or
-# another window has the focus): 0 nothing, 1 mute the sound, 2 pause it all.
-inactive_window = 0
-
-# 1: each party partner still above 0 HP at battle end gets the full partner
-# EXP, and its selected or used digivolutions get full Digimon EXP. Knocked-out
-# partners get neither. The report uses the setting it had when it began.
-full_exp_share = 0
-
-# 1: a menu's cursor goes round at its ends: up from the first row to the last,
-# down from the last to the first (the field menu, the item lists and shops, the
-# techniques list). The other menus keep stopping at their ends.
-menu_wrap = 0
-
-# 1: in fast forward (Tab / R3) a menu's cursor keeps moving at its normal pace
-# when a direction is held, instead of racing at the game's speed.
-ff_menu_speed = 0
-
-# 1: the title screen shows New game / Continue at once, without waiting for
-# Start on PRESS START (the ten seconds' timeout goes with it).
-skip_press_start = 0
-
-
-# 0: the battle effects' own images (data/mods/effects/<id>/*.png) are left
-# out and the game's play. Switches in game, from the Mods tab.
-custom_effects = 1
-
-# 0: the effects' own sounds (the "sound" of data/mods/effects/<id>/effect.json)
-# are left out. Switches in game, from the Mods tab.
-custom_sounds = 1
-
-# 0: the battle scripts of data/mods/scripts/<fighter>/<script>.json are left
-# out and the game's own run. Switches in game, from the Mods tab.
-custom_scripts = 1
+# --- For developers ---
 
 # 1: debug keys. F1 the developers' stage select (stages, sound test, test
-# battles), F3 the sound test, F4 the vibration test, F2 the game state to game_<n>.bin, F5 / F9 save / load a state
-# (saves/quick.state, only for this same build)
+# battles), F3 the sound test, F4 the vibration test, F2 the game state to
+# game_<n>.bin, F5 / F9 save / load a state (saves/quick.state, this build only)
 debug = 0
 
 # Logs to the console, per subsystem: cd, snd, pad, mc, ovl, gpu or all
