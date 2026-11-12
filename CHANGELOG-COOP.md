@@ -17,6 +17,15 @@ Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.1.
     antes del Satélite Espía).
   - Kenny, solo antes de vencer al Jefe Qing Long.
   - Cinco Black Kings, hasta cruzar el Puente Amaterasu; WarGreymon BK, después.
+- **Por dentro, cada cosa en su sitio** (no cambia nada al jugar):
+  - Los textos del Digilog tienen su propio archivo, aparte de los del cooperativo.
+  - Los del cooperativo van en bloques por función (equipo, aspecto, intercambio, Guardromon, raid) y cada frase
+    tiene su nombre: ya no hay números de texto escritos a mano, y añadir una frase no mueve las demás.
+  - `platform/coop.c` se parte en cinco: lo básico, el aspecto, las etiquetas, los combates en lockstep y las ayudas
+    de las pruebas.
+  - El código del cooperativo en el mapa sale del parche de `field.c` (de 1.662 a 49 líneas) a seis archivos propios
+    en `coop/src/fieldstg/`: los fantasmas, el intercambio, la ventana del Guardromon, PvP y duelo, la sala de la
+    raid y el menú.
 
 ## v1.2.1
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.0.

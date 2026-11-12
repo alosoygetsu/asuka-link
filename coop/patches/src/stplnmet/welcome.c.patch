@@ -12,7 +12,7 @@
 +static void *STPLNMET_teamIntro(u8 *texts) {
 +    const s32 *own = native_packs_text(LANGUAGE);
 +    const s32 *coop = native_coop_text(LANGUAGE);
-+    const u8 *from = texts + ((s32 *)texts)[2], *word = (const u8 *)own + own[13], *ours = (const u8 *)coop + coop[COOP_TEXT_INTRO + 1];
++    const u8 *from = texts + ((s32 *)texts)[2], *word = (const u8 *)own + own[13], *ours = (const u8 *)coop + coop[COOP_TEXT_TEAM_INTRO + 1];
 +    const u8 *page = NULL, *body = NULL, *end = NULL, *p, *w;
 +    u8 *to = (u8 *)&STPLNMET_introText[3], *limit = to + 1500;
 +

@@ -432,7 +432,7 @@
 +}
 +
 +static const u8 *coopRaidString(s32 n) {
-+    return (const u8 *)getString((s32 *)native_coop_text(LANGUAGE), COOP_TEXT_TRADE + n);
++    return (const u8 *)getString((s32 *)native_coop_text(LANGUAGE), n); /* n: a COOP_TEXT_RAID_* */
 +}
 +
 +/* a seat's player's name (the game's text): its own the save's */
@@ -474,10 +474,10 @@
 +    if (coopRaid.goneFrames > 0) {
 +        coopRaid.goneFrames--;
 +        coopRaidName(coopRaid.gone, name, sizeof name);
-+        coopRaidLine((const u8 *)"", name, coopRaidString(31)); /* " disconnected." */
++        coopRaidLine((const u8 *)"", name, coopRaidString(COOP_TEXT_RAID_GONE));
 +    } else if (coopRaid.waiting >= 0 && coopRaid.waiting != coopRaid.me) {
 +        coopRaidName(coopRaid.waiting, name, sizeof name);
-+        coopRaidLine(coopRaidString(8), name, coopRaidString(30)); /* "Waiting for " <name> "..." */
++        coopRaidLine(coopRaidString(COOP_TEXT_RAID_WAITING), name, coopRaidString(COOP_TEXT_RAID_DOTS)); /* "Waiting for " <name> "..." */
 +    }
 +}
 +

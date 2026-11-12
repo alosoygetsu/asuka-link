@@ -18,7 +18,7 @@
 -        if (task->choice >= 3) { /* an extra pack's name (native.h) */
 -            windows->pack->setString(windows->pack, (void *)native_packs_text(LANGUAGE), task->choice - 2);
 +        if (task->choice >= 3) { /* a picked team: "Your team" (platform/team.c) */
-+            windows->pack->setString(windows->pack, (void *)native_coop_text(LANGUAGE), COOP_TEXT_TEAM);
++            windows->pack->setString(windows->pack, (void *)native_coop_text(LANGUAGE), COOP_TEXT_TEAM_YOURS);
          } else
  #endif
          windows->pack->setString(windows->pack, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), task->choice + 10);

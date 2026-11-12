@@ -192,7 +192,7 @@
      return entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode;
  }
  
-@@ -566,30 +657,187 @@
+@@ -566,30 +657,186 @@
      return mode >= 0x200 && mode <= 0x2D6;
  }
  
@@ -252,27 +252,26 @@
 +    return now;
 +}
 +
-+/* "Step k of n", made in a one-string text file of the co-op's words and digits */
++/* "Step k of n", made in a one-string text file of the Digilog's words and digits: a word, a number, a word, a number */
 +static void *journalStepCount(s32 k, s32 n) {
++    static const s32 WORDS[2] = {JOURNAL_TEXT_STEP, JOURNAL_TEXT_OF}; /* "Step ", " of " */
 +    static u32 file[16];
-+    s32 *texts = (s32 *)native_coop_text(LANGUAGE);
++    s32 *texts = (s32 *)native_journal_text(LANGUAGE);
 +    u8 *out = (u8 *)&file[2];
 +    u8 *end = (u8 *)&file[16] - 1;
-+    s32 part[4];
++    s32 numbers[2];
 +    s32 i;
 +
-+    part[0] = COOP_TEXT_JOURNAL; /* "Step " */
-+    part[1] = -k;
-+    part[2] = COOP_TEXT_JOURNAL + 1; /* " of " */
-+    part[3] = -n;
++    numbers[0] = k;
++    numbers[1] = n;
 +    for (i = 0; i < 4; i++) {
 +        char digits[4];
 +        s32 d = 0;
-+        s32 v = -part[i];
++        s32 v = numbers[i / 2];
 +        const u8 *src;
 +
-+        if (part[i] > 0) {
-+            for (src = (const u8 *)getString(texts, part[i]); *src != 0 && out < end; src++) {
++        if ((i & 1) == 0) {
++            for (src = (const u8 *)getString(texts, WORDS[i / 2]); *src != 0 && out < end; src++) {
 +                *out++ = *src;
 +            }
 +            continue;
@@ -282,7 +281,7 @@
 +            v /= 10;
 +        } while (v != 0 && d < 3);
 +        while (d > 0) {
-+            for (src = (const u8 *)getString(texts, COOP_TEXT_JOURNAL + 2 + digits[--d]); *src != 0 && out < end; src++) {
++            for (src = (const u8 *)getString(texts, JOURNAL_TEXT_DIGIT + digits[--d]); *src != 0 && out < end; src++) {
 +                *out++ = *src;
 +            }
 +        }
@@ -370,9 +369,9 @@
 +        windows->reward->setPalette(windows->reward, PALETTE_GREEN);
 +    }
 +    if (journalStepShown) { /* the step's text */
-+        windows->help->setString(windows->help, native_coop_text(LANGUAGE), journalStepText);
++        windows->help->setString(windows->help, native_journal_text(LANGUAGE), journalStepText);
 +    } else if (entry < 0 && -1 - entry >= PORT_SIDE_QUESTS) {
-+        windows->help->setString(windows->help, native_coop_text(LANGUAGE), JOURNAL_NEW_QUESTS[-1 - entry - PORT_SIDE_QUESTS].text);
++        windows->help->setString(windows->help, native_journal_text(LANGUAGE), JOURNAL_NEW_QUESTS[-1 - entry - PORT_SIDE_QUESTS].text);
      } else {
 -        windows->area->setVisible(windows->area, 0);
 +        windows->help->setString(windows->help, journalTexts(), entry >= 0 ? TEXT_STEP(entry) + 1 : TEXT_SIDE_QUEST(-1 - entry));
@@ -387,7 +386,7 @@
  static void showJournalPage(Journal *journal, JournalWindows *windows) {
      TextWindow *window;
      s32 i;
-@@ -604,28 +852,18 @@
+@@ -604,28 +851,18 @@
              window->setString(window, journalTexts(), TEXT_STEP(journal->entries[n]));
              window->setPalette(window, journal->tab == TAB_ACTIVE ? PALETTE_BLUE : PALETTE_WHITE);
          } else {
@@ -418,7 +417,7 @@
      windows->cursor->setVisible(windows->cursor, journal->count != 0);
  }
  
-@@ -633,66 +871,186 @@
+@@ -633,66 +870,186 @@
      s32 i;
  
      if (show) {
@@ -646,7 +645,7 @@
      }
  }
  
-@@ -705,6 +1063,7 @@
+@@ -705,6 +1062,7 @@
      if (PAD_PRESSED(PAD_LEFT) || PAD_PRESSED(PAD_RIGHT)) {
          SOUND.playSound(SOUND_MENU_MOVE);
          journal->tab ^= 1;
@@ -654,7 +653,7 @@
          journal->cursor = 0;
          journal->page = 0;
          fillJournal(journal);
-@@ -723,14 +1082,24 @@
+@@ -723,14 +1081,24 @@
          journal->cursor = journal->cursor < journal->count - 1 ? journal->cursor + 1 : cursor;
      }
      if (cursor == journal->cursor) {
@@ -680,7 +679,7 @@
      showJournalEntry(journal, windows);
      return 1;
  }
-@@ -799,21 +1168,36 @@
+@@ -799,21 +1167,36 @@
          if (FILE_CACHE.isLoading(TEXT_FILE(TEXT_STAGE_NAMES)) || FILE_CACHE.isLoading(TEXT_FILE(TEXT_ITEM_NAMES))) {
              break;
          }
@@ -729,7 +728,7 @@
          windows->cursor->setVisible(windows->cursor, 0);
          journal->nextState(journal);
          break;
-@@ -833,8 +1217,9 @@
+@@ -833,8 +1216,9 @@
      Journal *journal = createTask(updateJournal, sizeof(Journal), sizeof(JournalWindows));
  
      journal->layer = SCREEN_LAYER;

@@ -75,7 +75,7 @@
 +    s32 partner;
 +    s32 i;
 +
-+    windows->title->setString(windows->title, (void *)coop, COOP_TEXT_TITLE);
++    windows->title->setString(windows->title, (void *)coop, COOP_TEXT_TEAM_TITLE);
 +    windows->name->setVisible(windows->name, 1);
 +    for (i = 0; i < 3; i++) {
 +        windows->labels[i]->setPos(windows->labels[i], TEAM_PICK_X(i) - 4, 0x63);
@@ -91,7 +91,7 @@
 +            windows->labels[i]->setString(windows->labels[i], (void *)coop, 0);
 +        }
 +    }
-+    windows->partners[0].name->setString(windows->partners[0].name, (void *)coop, COOP_TEXT_ACCEPT);
++    windows->partners[0].name->setString(windows->partners[0].name, (void *)coop, COOP_TEXT_TEAM_ACCEPT);
 +    for (i = 0; i < 3; i++) {
 +        windows->partners[i].text->setVisible(windows->partners[i].text, 0);
 +        if (i > 0) {
@@ -107,7 +107,7 @@
 +    } else if (partner >= 0) {
 +        windows->text->setString(windows->text, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), partner + 13);
 +    } else {
-+        windows->text->setString(windows->text, (void *)coop, COOP_TEXT_HELP);
++        windows->text->setString(windows->text, (void *)coop, COOP_TEXT_TEAM_HELP);
 +    }
 +}
 +
@@ -421,7 +421,7 @@
 +        windows->labels[i]->setString(windows->labels[i], (void *)coop, COOP_TEXT_LOOK_NAME + i);
 +    }
 +    windows->partners[0].name->setPos(windows->partners[0].name, TEAM_ACCEPT_X, LOOK_PANEL_Y + 0x15);
-+    windows->partners[0].name->setString(windows->partners[0].name, (void *)coop, COOP_TEXT_ACCEPT);
++    windows->partners[0].name->setString(windows->partners[0].name, (void *)coop, COOP_TEXT_TEAM_ACCEPT);
 +    for (i = 0; i < 3; i++) {
 +        windows->partners[i].text->setVisible(windows->partners[i].text, 0);
 +        if (i > 0) {

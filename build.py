@@ -72,6 +72,8 @@ GAME_CFLAGS = [
     "-Wno-error=incompatible-function-pointer-types", "-Wno-error=incompatible-pointer-types",
     f"-I{NATIVE / 'include'}", f"-I{PATCHED / 'include'}",
     f"-I{DECOMP / 'external/psyq_headers/psyq_lib47/include'}", f"-I{DECOMP / 'src/stages'}",
+    # the co-op's parts of a game file, which its patch includes (coop/src/fieldstg/coop_*.inc.c)
+    f"-I{NATIVE / 'coop' / 'src'}",
     "-DVERSION_EU", "-D_LANGUAGE_C", "-DLANGUAGE_C", "-DSKIP_ASM", '-DASM_DIR="asm/eu"', *SAN_FLAGS,
 ]
 PLATFORM_CFLAGS = ["-std=c11", "-c", "-O2", "-g", "-Wall", "-Wno-unused-parameter", f"-I{SDL / 'include'}", *SAN_FLAGS]

@@ -79,7 +79,7 @@ Todo lo del juego y del port, con su estado y las ideas, está en la [hoja de ru
 |---|---|---|
 | **Juego decompilado** | [ReGame-Labs/dw3_decomp](https://github.com/ReGame-Labs/dw3_decomp): el código del juego, sacado del disco | la que usa el port |
 | **Port nativo** | [Feerdus](https://github.com/Feerdus95/dw3-native-port): que el juego funcione en PC, los gráficos mejorados, el launcher, las opciones y sus mods | la suya (v0.18.9, v0.19.0…) |
-| **Cooperativo: Asuka Link** | alosoygetsu: todo lo de las tablas de arriba, en una capa aparte (`coop/patches/` y los ficheros `coop*`) | la propia: v1.0.0, v1.1.0… |
+| **Cooperativo: Asuka Link** | alosoygetsu: todo lo de las tablas de arriba, en una capa aparte (`coop/patches/`, `coop/src/` y los ficheros `coop*`) | la propia: v1.0.0, v1.1.0… |
 
 Cada release del cooperativo dice en qué versión del port está hecha, por ejemplo *"Asuka Link v1.0.0 (port
 v0.18.9)"*, y cuál es su versión de red: todos los que jugáis juntos tenéis que tener la misma.

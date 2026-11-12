@@ -1,4 +1,5 @@
-/* The co-op: the other player on the field (platform/coop.c, coop_net.c; patches in coop/patches/) */
+/* The co-op: the other players (platform/coop.c, coop_look.c, coop_tags.c, coop_battle.c, coop_test.c, coop_net.c;
+   patches in coop/patches/, and their parts in coop/src/: fieldstg/coop_*.inc.c, which field.c includes) */
 #ifndef NATIVE_COOP_H
 #define NATIVE_COOP_H
 
@@ -175,18 +176,6 @@ int native_team_set(const int team[3]);
 int native_team_look(int partner); /* the lobby: its look (FIELDSTG_fileEntries) */
 void native_team_greeting(int partner, int *sub, int *line); /* and its greeting: sub 0xFF the port's own text */
 const void *native_coop_text(int language); /* tools/coop_text.py's texts, as a text file of the language */
-#define COOP_TEXT_TITLE 1
-#define COOP_TEXT_HELP 2
-#define COOP_TEXT_TEAM 3
-#define COOP_TEXT_INTRO 4
-#define COOP_TEXT_MARK 5 /* 5-7: "1" "2" "3" */
-#define COOP_TEXT_SEPARATOR 8
-#define COOP_TEXT_NO_TEAM 9
-#define COOP_TEXT_ACCEPT 10
-#define COOP_TEXT_LOOK_TITLE 11
-#define COOP_TEXT_LOOK_HELP 12
-#define COOP_TEXT_LOOK_NAME 13 /* 13-15: Junior, the boy, the girl */
-#define COOP_TEXT_TRADE 16 /* 16-43 (40-41 the PvP battle's, 42 the raid's, 43 the Guardromon's exit, 44 the raid list's level, 45 the room's " of 4", 46-47 the raid's wait and a player gone): the card trade's (fieldstg/field.c), in tools/coop_text.py's order */
-#define COOP_TEXT_JOURNAL 49 /* the Digilog's steps (tools/coop_text.py, journal_steps.py): "Step ", " of ", the digits 0-9, the steps' texts */
+#include "coop_text_ids.h" /* their indices, by block and name (COOP_TEXT_TRADE_TITLE...) */
 
 #endif /* NATIVE_COOP_H */
