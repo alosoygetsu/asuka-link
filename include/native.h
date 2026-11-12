@@ -101,6 +101,7 @@ const void *native_packs_text(int language);
    primitive of its own, three words: 0x1B000000 | mode, the place (y << 16 | x) and the size (h << 16 | w) */
 int native_postcard(int mode);
 void native_quit(void); /* the field menu's Quit: saves the options menu's changes, then exits as closing the window does */
+void native_options_open(void); /* the field menu's OPTIONS: opens the options (platform/menu.c), the game waits */
 #define NATIVE_PACK_SCENE(pack) ((pack) >= 3 ? 1 : (pack))
 
 /* BladeGarurumon as a partner's Digimon: model 471 and the texts of its

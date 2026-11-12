@@ -82,7 +82,7 @@ static int texel(int u, int v, int clut) {
 
 /* The GPU's 4x4 dither, added to 8-bit colors before they drop to 5 bits */
 static const int8_t DITHER[4][4] = {{-4, 0, -3, 1}, {2, -2, 3, -1}, {-3, 1, -4, 0}, {3, -1, 2, -2}};
-int g_dither_on = 1; /* native.ini: dither = 0 turns it off */
+int g_dither_on = 0; /* fixed off (main.c fixed_option): true colour needs none */
 
 static int to5(int v, int d) {
     v += d;

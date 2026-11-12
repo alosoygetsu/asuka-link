@@ -34,10 +34,8 @@ int native_coop_ini(const char *key, const char *value) {
         g_exp_mult = SDL_clamp(SDL_atoi(value), 1, 5);
     } else if (SDL_strcasecmp(key, "money_multiplier") == 0) {
         g_money_mult = SDL_clamp(SDL_atoi(value), 1, 5);
-    } else if (SDL_strcasecmp(key, "sure_training") == 0) {
-        g_sure_training = SDL_atoi(value) != 0;
-    } else if (SDL_strcasecmp(key, "heal_on_levelup") == 0 || SDL_strcasecmp(key, "save_anywhere") == 0 ||
-               SDL_strcasecmp(key, "extra_packs") == 0) { /* removed options: an old native.ini's lines are skipped */
+    } else if (SDL_strcasecmp(key, "sure_training") == 0 || SDL_strcasecmp(key, "heal_on_levelup") == 0 || SDL_strcasecmp(key, "save_anywhere") == 0 ||
+               SDL_strcasecmp(key, "extra_packs") == 0) { /* removed or fixed (v1.3.0) options: an old native.ini's lines are skipped */
         /* options this build takes out: taken here, so they stay off whatever the file says */
     } else {
         return 0;

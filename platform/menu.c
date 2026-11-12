@@ -1,5 +1,5 @@
-/* The options menu: Esc, or Back on the gamepad. The game stops
-   while it is open; what changes there goes to native.ini when it closes.
+/* The options menu: the field menu's OPTIONS opens it (native_options_open), and Esc, Back or Circle closes it. The
+   game stops while it is open; what changes there goes to native.ini when it closes.
    Its options in tabs, L1 / R1 (Q / E, Page Up / Down) between them, with
    the battle menu's page arrows. */
 #include <SDL3/SDL.h>
@@ -19,14 +19,14 @@ static const char *LABELS[ITEMS] = {
 };
 
 /* the tabs and their options, each list ending with -1 */
-#define TABS 4
-#define ROWS 12 /* the longest tab's: the box stays the same size */
-static const char *TAB_NAMES[TABS] = {"Display", "Graphics", "Input", "Mods"};
+/* Asuka Link (v1.3.0) shows only these: the rest is fixed (platform/main.c read_ini, the defaults), and the field
+   menu has Quit. The other items stay for the tests and a later change of mind */
+#define TABS 2
+#define ROWS 12 /* the controls' page (controls.c) shows this many: the box stays the same size */
+static const char *TAB_NAMES[TABS] = {"Display", "Input"};
 static const int TAB_ITEMS[TABS][ROWS + 1] = {
-    {FPS, FULLSCREEN, WINDOW, WIDESCREEN, VSYNC, MOVIES, INACTIVE, QUIT_GAME, -1},
-    {SCALE, SUBPIXEL, DEPTH, PERSPECTIVE, SMOOTH_3D, TRUE_COLOR, DITHER, SOFT_SHADOWS, BATTLE_SHADOWS, BATTLE_SKY, -1},
-    {ICONS, CONTROLS, FAST_FORWARD, FF_MENUS, SKIP_START, MENU_WRAP, RUMBLE, DEADZONE, -1},
-    {FAST_TEXT, FAST_TRAVEL, MAP_OBJECTIVE, JOURNAL, BLADEGARURUMON, FULL_EXP_SHARE, SURE_TRAINING, CUSTOM_EFFECTS, CUSTOM_SOUNDS, CUSTOM_SCRIPTS, -1},
+    {FULLSCREEN, WINDOW, SCALE, WIDESCREEN, -1},
+    {ICONS, RUMBLE, CONTROLS, -1},
 };
 
 static int s_open, s_tab, s_cursor[TABS], s_changed;
@@ -180,7 +180,7 @@ static void change(int item, int dir) {
 /* native.ini's "key = value" lines get the new values; missing keys are
    added, the bindings' only when not the default */
 static void save(void) {
-    static const char *KEYS[] = {"fps", "render_scale", "dither", "smooth_movies", "fullscreen", "scale", "rumble", "deadzone", "fast_text", "bladegarurumon", "soft_shadows", "true_color", "perspective", "smooth_3d", "battle_shadows", "widescreen", "vsync", "fast_travel", "map_objective", "journal", "icons", "battle_sky", "full_exp_share", "custom_effects", "custom_sounds", "custom_scripts", "inactive_window", "skip_press_start", "ff_menu_speed", "menu_wrap", "sure_training"};
+    static const char *KEYS[] = {"render_scale", "fullscreen", "scale", "rumble", "widescreen", "icons"}; /* the ones it shows */
     enum { FIXED = SDL_arraysize(KEYS), ALL = FIXED + 32 };
     char path[1100], line[1200], key[32], names[ALL][32], vals[ALL][64];
     int done[ALL] = {0}, i, n = ALL;
@@ -188,37 +188,12 @@ static void save(void) {
     char *out = SDL_malloc(65536);
     FILE *f;
 
-    SDL_snprintf(vals[0], 16, "%d", NTSC_MODE ? 60 : 50);
-    SDL_snprintf(vals[1], 16, "%d", g_res_scale);
-    SDL_snprintf(vals[2], 16, "%d", g_dither_on);
-    SDL_snprintf(vals[3], 16, "%d", g_smooth_movies);
-    SDL_snprintf(vals[4], 16, "%d", (SDL_GetWindowFlags(video_window()) & SDL_WINDOW_FULLSCREEN) != 0);
-    SDL_snprintf(vals[5], 16, "%d", window_scale());
-    SDL_snprintf(vals[6], 16, "%d", g_rumble);
-    SDL_snprintf(vals[7], 16, "%d", g_deadzone);
-    SDL_snprintf(vals[8], 16, "%d", g_fast_text);
-    SDL_snprintf(vals[9], 16, "%d", g_bladegarurumon);
-    SDL_snprintf(vals[10], 16, "%d", g_soft_shadows);
-    SDL_snprintf(vals[11], 16, "%d", g_true_color);
-    SDL_snprintf(vals[12], 16, "%d", g_perspective);
-    SDL_snprintf(vals[13], 16, "%d", g_smooth_3d);
-    SDL_snprintf(vals[14], 16, "%d", g_battle_shadows);
-    SDL_snprintf(vals[15], 16, "%d", g_widescreen);
-    SDL_snprintf(vals[16], 16, "%d", g_vsync);
-    SDL_snprintf(vals[17], 16, "%d", g_fast_travel);
-    SDL_snprintf(vals[18], 16, "%d", g_map_objective);
-    SDL_snprintf(vals[19], 16, "%d", g_journal);
-    SDL_snprintf(vals[20], 16, "%s", ICON_NAMES[g_icons]);
-    SDL_snprintf(vals[21], 16, "%d", g_battle_sky);
-    SDL_snprintf(vals[22], 16, "%d", g_full_exp_share);
-    SDL_snprintf(vals[23], 16, "%d", g_custom_effects);
-    SDL_snprintf(vals[24], 16, "%d", g_custom_sounds);
-    SDL_snprintf(vals[25], 16, "%d", g_custom_scripts);
-    SDL_snprintf(vals[26], 16, "%d", g_inactive_window);
-    SDL_snprintf(vals[27], 16, "%d", g_skip_press_start);
-    SDL_snprintf(vals[28], 16, "%d", g_ff_menu_speed);
-    SDL_snprintf(vals[29], 16, "%d", g_menu_wrap);
-    SDL_snprintf(vals[30], 16, "%d", g_sure_training);
+    SDL_snprintf(vals[0], 16, "%d", g_res_scale);
+    SDL_snprintf(vals[1], 16, "%d", (SDL_GetWindowFlags(video_window()) & SDL_WINDOW_FULLSCREEN) != 0);
+    SDL_snprintf(vals[2], 16, "%d", window_scale());
+    SDL_snprintf(vals[3], 16, "%d", g_rumble);
+    SDL_snprintf(vals[4], 16, "%d", g_widescreen);
+    SDL_snprintf(vals[5], 16, "%s", ICON_NAMES[g_icons]);
     for (i = 0; i < ALL; i++) {
         if (i < FIXED) {
             SDL_strlcpy(names[i], KEYS[i], sizeof names[i]);
@@ -270,6 +245,13 @@ void menu_toggle(void) {
     }
 }
 
+/* the field menu's OPTIONS (main/menu/field_menu.c): the only way in */
+void native_options_open(void) {
+    if (!s_open) {
+        menu_toggle();
+    }
+}
+
 static void move(int up, int down, int left, int right, int ok, int tab) {
     int n = tab_count(s_tab), *c = &s_cursor[s_tab];
 
@@ -291,14 +273,14 @@ int menu_event(const SDL_Event *e) {
         return e->type == SDL_EVENT_KEY_DOWN || e->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN || e->type == SDL_EVENT_MOUSE_WHEEL ||
                e->type == SDL_EVENT_GAMEPAD_AXIS_MOTION;
     }
-    if (e->type == SDL_EVENT_KEY_DOWN && e->key.key == SDLK_ESCAPE && !e->key.repeat) {
+    if (s_open && e->type == SDL_EVENT_KEY_DOWN && e->key.key == SDLK_ESCAPE && !e->key.repeat) {
         menu_toggle();
         return 1;
     }
     if (e->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
         int b = e->gbutton.button;
 
-        if (b == SDL_GAMEPAD_BUTTON_BACK || (s_open && b == SDL_GAMEPAD_BUTTON_EAST)) {
+        if (s_open && (b == SDL_GAMEPAD_BUTTON_BACK || b == SDL_GAMEPAD_BUTTON_EAST)) {
             menu_toggle();
             return 1;
         }
@@ -444,7 +426,7 @@ void menu_draw(SDL_Renderer *r) {
         return;
     }
 
-    /* the tab bar: "<L1  Display Graphics Controls Mods  R1>" */
+    /* the tab bar: "<L1  Display Input  R1>" */
     for (i = 0; i < 2; i++) {
         SDL_FRect a = {i ? box.x + box.w - 14 : box.x + 6, box.y + 8, 8, 8};
 

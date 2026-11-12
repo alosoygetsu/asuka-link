@@ -73,14 +73,10 @@ static int load_boot_image(void) {
 }
 
 /* native.ini next to the exe, all optional: data = <path>, fullscreen = 0/1,
-   scale = <window size in 320x240 steps>, dither = 0/1, smooth_movies = 0/1,
-   debug = 0/1, perf = 0/1 (the battle's performance meter; F10), log = <subsystems>, deadzone = <0..32767>, rumble = 0/1, fps = 50/60,
-   render_scale = 1-8, fast_text = 0/1, fast_travel = 0/1, map_objective = 0/1, journal = 0/1,
-   bladegarurumon = 0/1, full_exp_share = 0/1, skip_press_start = 0/1, ff_menu_speed = 0/1, menu_wrap = 0/1, soft_shadows = 0/1, true_color = 0/1, perspective = 0/1,
-   smooth_3d = 0/1, battle_shadows = 0/1, battle_sky = 0/1, widescreen = 0/1,
-   vsync = 0/1, inactive_window = 0 nothing / 1 mute / 2 pause;
-   the options menu (menu.c) writes them back */
-static int s_fullscreen, s_scale, s_fps60, s_res_set; /* s_scale 0: from the screen */
+   scale = <window size in 320x240 steps>, render_scale = 1-8, widescreen = 0/1, rumble = 0/1, icons = <name>,
+   debug = 0/1, perf = 0/1 (the battle's performance meter; F10), log = <subsystems>, the buttons, and the co-op's
+   (platform/coop.c); the options menu (menu.c) writes its own back. The rest is fixed (fixed_option) */
+static int s_fullscreen, s_scale, s_fps60 = 1, s_res_set; /* s_scale 0: from the screen */
 extern int NTSC_MODE;
 int g_debug, g_smooth_movies = 1, g_log;
 
@@ -95,6 +91,22 @@ static int log_bits(const char *names) {
         }
     }
     return bits;
+}
+
+/* The options Asuka Link fixes since v1.3.0, at their defaults (where each is defined): no menu shows them, and an
+   old native.ini's lines are skipped */
+static int fixed_option(const char *key) {
+    static const char *const FIXED[] = {"fps", "vsync", "smooth_movies", "inactive_window", "dither", "true_color", "perspective", "smooth_3d",
+                                        "soft_shadows", "battle_shadows", "battle_sky", "deadzone", "ff_menu_speed", "skip_press_start", "menu_wrap",
+                                        "fast_text", "fast_travel", "map_objective", "journal", "bladegarurumon", "full_exp_share",
+                                        "custom_effects", "custom_sounds", "custom_scripts"};
+
+    for (size_t i = 0; i < SDL_arraysize(FIXED); i++) {
+        if (SDL_strcasecmp(key, FIXED[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /* data_only: just the data folder, before the game's tables are filled in */
@@ -121,71 +133,24 @@ static void read_ini(int data_only) {
         } else if (data_only) {
             continue;
         } else if (native_coop_ini(key, value)) { /* the co-op's keys, and the options it takes out */
+        } else if (fixed_option(key)) { /* Asuka Link fixes it (v1.3.0): an old native.ini's line is skipped */
         } else if (SDL_strcasecmp(key, "fullscreen") == 0) {
             s_fullscreen = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "scale") == 0 && atoi(value) >= 1) {
             s_scale = atoi(value);
-        } else if (SDL_strcasecmp(key, "dither") == 0) {
-            g_dither_on = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "true_color") == 0) {
-            g_true_color = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "vsync") == 0) {
-            g_vsync = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "widescreen") == 0) {
             g_widescreen = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "battle_shadows") == 0) {
-            g_battle_shadows = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "battle_sky") == 0) {
-            g_battle_sky = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "smooth_3d") == 0) {
-            g_smooth_3d = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "perspective") == 0) {
-            g_perspective = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "soft_shadows") == 0) {
-            g_soft_shadows = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "smooth_movies") == 0) {
-            g_smooth_movies = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "debug") == 0) {
             g_debug = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "perf") == 0) {
             g_perf = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "log") == 0) {
             g_log = log_bits(value);
-        } else if (SDL_strcasecmp(key, "deadzone") == 0) {
-            g_deadzone = SDL_clamp(atoi(value), 0, 32767);
         } else if (SDL_strcasecmp(key, "rumble") == 0) {
             g_rumble = atoi(value) != 0;
         } else if (SDL_strcasecmp(key, "render_scale") == 0) {
             g_res_scale = SDL_clamp(atoi(value), 1, 8);
             s_res_set = 1;
-        } else if (SDL_strcasecmp(key, "inactive_window") == 0) {
-            g_inactive_window = SDL_clamp(atoi(value), 0, 2);
-        } else if (SDL_strcasecmp(key, "fast_text") == 0) {
-            g_fast_text = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "fast_travel") == 0) {
-            g_fast_travel = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "map_objective") == 0) {
-            g_map_objective = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "journal") == 0) {
-            g_journal = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "bladegarurumon") == 0) {
-            g_bladegarurumon = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "full_exp_share") == 0) {
-            g_full_exp_share = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "menu_wrap") == 0) {
-            g_menu_wrap = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "ff_menu_speed") == 0) {
-            g_ff_menu_speed = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "skip_press_start") == 0) {
-            g_skip_press_start = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "custom_effects") == 0) {
-            g_custom_effects = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "custom_sounds") == 0) {
-            g_custom_sounds = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "custom_scripts") == 0) {
-            g_custom_scripts = atoi(value) != 0;
-        } else if (SDL_strcasecmp(key, "fps") == 0) {
-            s_fps60 = atoi(value) == 60;
         } else if (SDL_strcasecmp(key, "icons") == 0) {
             for (int i = 0; i < ICONS_COUNT; i++) {
                 if (SDL_strcasecmp(value, ICON_NAMES[i]) == 0) {

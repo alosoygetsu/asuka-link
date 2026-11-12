@@ -1,14 +1,14 @@
 --- a/src/main/menu/field_menu.c
 +++ b/src/main/menu/field_menu.c
-@@ -142,13 +142,9 @@
+@@ -142,13 +142,10 @@
  s32 FIELD_MENU_SPRITES[6] = { 29, 30, 31, 32, 33, 34 };
  
  #ifdef NATIVE
 -/* SAVE (native.h, save_anywhere), the row before Quit: it opens the memory
 -   card screen for saving, from where the player stands (GAME.fieldMode,
 -   fieldPos and fieldDir, kept when this menu opens, are in the save).
--   Quit, the last row, asks in the title's banner, with three answers in place
-+/* Quit, the last row, asks in the title's banner, with three answers in place
++/* OPTIONS, the row before Quit, opens the options (platform/menu.c, native_options_open) over this menu.
+    Quit, the last row, asks in the title's banner, with three answers in place
     of the rows (the title screen, the desktop, cancel).
 -   packs_text: 142 Quit's row, 143 the question, 144-146 the answers, 147 SAVE */
 -#define SAVE_TEXT 147
@@ -16,14 +16,14 @@
  #define QUIT_TEXT 142
  #define QUIT_ASK_TEXT 143
  #define QUIT_ANSWER_TEXT 144
-@@ -156,16 +152,13 @@
+@@ -156,16 +153,15 @@
  static s32 quitAsk;
  static s32 quitRows; /* the rows the menu had, while it asks */
  static s32 quitToTitle;
 -static s32 saveNow;
  
 -/* A row's text: the game's, the journal's, SAVE's or Quit's */
-+/* A row's text: the game's, the journal's or Quit's */
++/* A row's text: the game's, the journal's, OPTIONS' or Quit's */
  static void setFieldRow(FieldMenu *task, FieldMenuWindows *win, s32 i) {
      void *own = (void *)native_packs_text(LANGUAGE);
  
@@ -31,10 +31,12 @@
          win->options[i]->setString(win->options[i], own, QUIT_TEXT);
 -    } else if (g_save_anywhere && i == task->count - 2) {
 -        win->options[i]->setString(win->options[i], own, SAVE_TEXT);
++    } else if (i == task->count - 2) {
++        win->options[i]->setString(win->options[i], (void *)native_coop_text(LANGUAGE), COOP_TEXT_MENU_OPTIONS);
      } else if (i == task->extraOption + 5) {
          win->options[i]->setString(win->options[i], own, 15);
      } else {
-@@ -261,14 +254,10 @@
+@@ -261,14 +257,10 @@
      if (g_journal) {
          task->count++;
      }
@@ -42,23 +44,28 @@
 -    if (g_save_anywhere) {
 -        task->count++;
 -    }
-+    /* then Quit (native.h) */
-     task->count++;
+-    task->count++;
++    /* then OPTIONS and Quit (native.h) */
++    task->count += 2;
      quitAsk = 0;
      quitToTitle = 0;
 -    saveNow = 0;
      if (task->cursor > task->count - 1) {
          task->cursor = task->count - 1;
      }
-@@ -358,7 +347,6 @@
+@@ -358,7 +350,10 @@
              showQuitAsk(task, win, 1);
              return;
          }
 -        saveNow = g_save_anywhere && task->cursor == task->count - 2;
++        if (task->cursor == task->count - 2) {
++            native_options_open(); /* the game waits while they are open, then this menu goes on */
++            return;
++        }
  #endif
          done = 1;
          if (GAME.funcs.getMode() == MODE_STATUS) {
-@@ -367,11 +355,6 @@
+@@ -367,11 +362,6 @@
              task->step = 0;
          }
          FIELD_MENU_CHOICE.option = task->cursor;
@@ -70,7 +77,7 @@
      } else if (PAD_PRESSED(PAD_TRIANGLE)) {
          SOUND.playSound(SOUND_MENU_CANCEL);
          done = 1;
-@@ -440,12 +423,6 @@
+@@ -440,12 +430,6 @@
              task->substate++;
              break;
          }

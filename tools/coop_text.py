@@ -12,7 +12,8 @@ import game_text  # noqa: E402
 
 # (block, its strings' names, {language: its strings}):
 # TEAM the partners' choice at a new game (stplnmet), LOOK the look's page, TRADE the card trade's window,
-# GUARD the Guardromon's menu and its waits (fieldstg/field.c), RAID the raid's list, room and battle (wfightmn/menu.c)
+# GUARD the Guardromon's menu and its waits (fieldstg/field.c), RAID the raid's list, room and battle (wfightmn/menu.c),
+# MENU the field menu's rows of our own (main/menu/field_menu.c: OPTIONS opens platform/menu.c's options)
 BLOCKS = [
     ('TEAM', ['TITLE', 'HELP', 'YOURS', 'INTRO', 'MARK', 'MARK_2', 'MARK_3', 'SEPARATOR', 'NONE', 'ACCEPT'], {
         'eng': ['Choose your Partners', 'Pick 3 partners; pick one again\nto drop it. Then Accept.', 'Your Team', 'Please choose three partner\nDigimon, any three you like.', '1', '2', '3', ', ', 'No partners yet', 'Accept'],
@@ -48,6 +49,13 @@ BLOCKS = [
         'ita': ['Lv', ' su 4', 'In attesa di ', '...', ' ha perso la connessione.'],
         'ger': ['Lv', ' von 4', 'Warte auf ', '...', ' hat die Verbindung verloren.'],
         'spn': ['Nv', ' de 4', 'Esperando a ', '...', ' se ha desconectado.'],
+    }),
+    ('MENU', ['OPTIONS'], {
+        'eng': ['OPTIONS'],
+        'fra': ['OPTIONS'],
+        'ita': ['OPZIONI'],
+        'ger': ['OPTIONEN'],
+        'spn': ['OPCIONES'],
     }),
 ]
 

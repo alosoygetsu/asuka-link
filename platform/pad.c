@@ -22,7 +22,7 @@ static const char *NAMES[16] = {"select", "l3", "r3", "start", "up", "right", "d
 /* Each button's two keys and gamepad button, the options menu's Controls
    (controls.c). By default: arrows, Z/Space cross, X circle, A square, S
    triangle, Q/W L1/R1, E/R L2/R2, Enter start, Backspace select; on the pad
-   its own places, the triggers L2/R2, nothing Select (Back opens the menu) */
+   its own places, the triggers L2/R2, Back Select (the options open from the field menu) */
 static const int DEFAULT_KEYS[16][2] = {
     {SDL_SCANCODE_BACKSPACE}, {0}, {0}, {SDL_SCANCODE_RETURN},
     {SDL_SCANCODE_UP}, {SDL_SCANCODE_RIGHT}, {SDL_SCANCODE_DOWN}, {SDL_SCANCODE_LEFT},
@@ -30,7 +30,7 @@ static const int DEFAULT_KEYS[16][2] = {
     {SDL_SCANCODE_S}, {SDL_SCANCODE_X}, {SDL_SCANCODE_Z, SDL_SCANCODE_SPACE}, {SDL_SCANCODE_A},
 };
 static const int DEFAULT_PAD[16] = {
-    PAD_NONE, SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK, SDL_GAMEPAD_BUTTON_START,
+    SDL_GAMEPAD_BUTTON_BACK, SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK, SDL_GAMEPAD_BUTTON_START,
     SDL_GAMEPAD_BUTTON_DPAD_UP, SDL_GAMEPAD_BUTTON_DPAD_RIGHT, SDL_GAMEPAD_BUTTON_DPAD_DOWN, SDL_GAMEPAD_BUTTON_DPAD_LEFT,
     PAD_LT, PAD_RT, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER,
     SDL_GAMEPAD_BUTTON_NORTH, SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_BUTTON_WEST,

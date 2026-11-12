@@ -399,11 +399,11 @@ static GLuint s_fbo, s_fbo_tex;      /* the copy, render_scale times bigger */
 static GLuint s_fbo_depth;           /* its depth buffer, for the 3D models (g_depth) */
 int g_depth = 1;
 int g_true_color = 1, g_perspective = 1, g_smooth_3d = 1; /* true_color, perspective, smooth_3d, the menu */
-int g_soft_shadows;
+int g_soft_shadows = 1; /* fixed (main.c fixed_option), as the ones below */
 int g_vsync = 1; /* vsync, the menu */
 int g_battle_shadows = 1; /* battle_shadows, the menu (native.h) */ /* soft_shadows = 1, the menu (native.h) */
 static int s_deep;                   /* the batch is by the depth buffer */
-int g_battle_sky;                    /* battle_sky, the menu (native.h) */
+int g_battle_sky = 1;                /* battle_sky (native.h) */
 static float s_bg[3];                /* the battle's background colour this frame, 5 bits; s_fog_on: drawn */
 static float s_fog[3], s_fog_amount, s_fog_from; /* the fog shown: colour (5 bits), at the far side, where it starts */
 static int s_fog_on, s_fog_shown;

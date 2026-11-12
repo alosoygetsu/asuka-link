@@ -187,7 +187,7 @@ float controls_hint(SDL_Renderer *r, float x, float y, int draw) {
     float x0 = x;
 
     if (s_open && s_capture) {
-        const char *text = s_slot < 2 ? "Press a key (Esc: cancel)" : "Press a button (Back: cancel)";
+        const char *text = s_slot < 2 ? "Press a key (Esc: cancel)" : "Press a button (Guide: cancel)";
 
         if (draw) {
             SDL_RenderDebugText(r, x, y, text);
@@ -321,7 +321,7 @@ static void set_button(int bit, int src) {
     *pad_source(bit) = src;
 }
 
-/* Waiting for a key (Esc cancels) or a pad's button (Back cancels): 1 when set */
+/* Waiting for a key (Esc cancels) or a pad's button (Guide cancels): 1 when set */
 static int capture(const SDL_Event *e, int bit) {
     if (e->type == SDL_EVENT_KEY_DOWN && !e->key.repeat) {
         if (e->key.key == SDLK_ESCAPE) {
@@ -334,7 +334,7 @@ static int capture(const SDL_Event *e, int bit) {
     } else if (e->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
         int b = e->gbutton.button;
 
-        if (b == SDL_GAMEPAD_BUTTON_BACK || b == SDL_GAMEPAD_BUTTON_GUIDE) {
+        if (b == SDL_GAMEPAD_BUTTON_GUIDE) { /* Back is a button to give: the game's Select */
             s_capture = 0;
         } else if (s_slot == 2) {
             s_capture = 0;

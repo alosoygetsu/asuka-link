@@ -20,8 +20,32 @@ responsabilidad nuestra.
   cooperativo activado por defecto. Es la última que sube además el `dw2003-native-<versión>.zip` de los launchers
   anteriores.
 - **v1.3.0, la versión base:** a partir de su lanzamiento es el punto de partida del proyecto.
-  - **El cooperativo, integrado en el launcher** (por definir con detalle): hoy son unas filas en Ajustes → Mods.
-  - **Cambios en el launcher** (por definir).
+  - **Opciones dentro del juego, en el menú de pausa del mapa:** una fila "Opciones" antes de "Salir". Select/Back y
+    Esc ya no abren nada.
+  - **Mods fijos:**
+    - Desaparece la pestaña Mods (en el launcher y en el juego).
+    - Activados: Digilog, viaje rápido, texto rápido, EXP compartida, entrenamiento sin azar, BladeGarurumon, efectos,
+      sonidos y scripts propios y el cooperativo. El objetivo en el mapa va apagado.
+    - Las líneas de esas opciones en un `native.ini` viejo se ignoran.
+  - **Menos opciones:**
+    - Se pueden cambiar: pantalla completa, tamaño de ventana, resolución interna, pantalla ancha en combates, idioma,
+      iconos de botones, vibración y botones. EXP y dinero (x1–x5) solo se cambian en el launcher.
+    - Fijo: 60 fps, VSync, vídeos suaves, sigue funcionando sin foco, sub-píxel, profundidad, perspectiva, texturas
+      suaves, color real, sin tramado, sombras suaves, sombras y cielo en combate, zona muerta 10 %, menús en avance
+      rápido, saltar PRESS START y cursor que da la vuelta.
+  - **Launcher rehecho:** el cooperativo en la pantalla principal, sin pasar por Ajustes.
+  - **Conectarse sin Tailscale:**
+    - **Código de sala:**
+      - El anfitrión pulsa "Crear sala". Se abre el puerto en su router (UPnP, con NATUPnP de Windows) y sale un
+        código con su dirección, su puerto y una clave.
+      - Los demás lo pegan en "Unirse".
+      - El anfitrión acepta a quien llega con esa clave (hasta 4).
+      - Cambia en cada sesión.
+    - **Red local:** el juego se anuncia por difusión y los de la misma red se encuentran solos.
+    - Tailscale, ZeroTier y las IP a mano siguen valiendo (el código lleva la IP que toque).
+    - Si el router no tiene UPnP, se avisa (abrir el puerto a mano o usar una VPN).
+    - Red: versión 8.
+    - Más adelante, quizá: un código de amigo fijo, con un servidor pequeño nuestro.
   - **Una sola descarga:** solo `asuka-link-<versión>.zip` y su `.sha256` (release.ps1 deja de subir el nombre viejo
     a partir de la 1.3.0).
   - Al publicarla: decidir qué hacer con las releases y el historial anteriores.
