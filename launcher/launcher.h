@@ -4,7 +4,8 @@
 #include <SDL3/SDL.h>
 #include <stdbool.h>
 
-enum { SCREEN_W = 480, SCREEN_H = 270, LANGS = 5, LINE_H = 12, ROW_H_PIXELS = 13 };
+enum { SCREEN_W = 480, SCREEN_H = 270, LANGS = 5, LINE_H = 12, ROW_H_PIXELS = 13, TAB_COUNT = 3 };
+extern const short TAB_NAME[TAB_COUNT]; /* the settings' tabs (screens.c) */
 
 /* every colour on screen comes from here: Asuka Link's, a city night going to dusk, with a sunset orange for the
    accent (C_GOLD keeps the port's name for it; the port's own was blue and gold) */

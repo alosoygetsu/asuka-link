@@ -271,7 +271,7 @@ void screens_action(int a)
     case A_PREV:
     case A_NEXT:
         if (g_app.screen == SC_SETTINGS) {
-            g_app.tab = (g_app.tab + (a == A_NEXT ? 1 : 3)) % 4;
+            g_app.tab = (g_app.tab + (a == A_NEXT ? 1 : TAB_COUNT - 1)) % TAB_COUNT;
             g_app.sel[SC_SETTINGS] = 0;
         }
         break;
@@ -359,7 +359,7 @@ void screens_mouse(int x, int y, bool clicked)
         return;
     }
     if (g_app.screen == SC_SETTINGS && clicked) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < TAB_COUNT; i++) {
             const SDL_Rect t = tab_rect(i);
             if (x >= t.x && x < t.x + t.w && y >= t.y && y < t.y + t.h) {
                 g_app.tab = i;

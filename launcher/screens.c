@@ -13,16 +13,16 @@ static const Row SAVES[] = {ACT(S_EXPORT), ACT(S_IMPORT), ACT(S_UNDO), ACT(S_SV_
 static const Row FIRST_RUN[] = {ACT(S_BROWSE), {R_LANGUAGE}, {R_END}};
 static const Row TOOLS[] = {ACT(S_VIEWER), ACT(S_EDITOR), ACT(S_FOLDER), ACT(S_LOG), ACT(S_CHECK), ACT(S_CREDITS), ACT(S_BACK), {R_END}};
 /* the Input tab's buttons in the order of the game's Controls page */
-static const Row TABS[4][27] = {
-    {OPT(O_FPS), OPT(O_FULLSCREEN), OPT(O_WINDOW), OPT(O_WIDESCREEN), OPT(O_VSYNC), OPT(O_MOVIES), OPT(O_INACTIVE), ACT(S_RESET), ACT(S_BACK), {R_END}},
-    {OPT(O_RESOLUTION), OPT(O_PERSPECTIVE), OPT(O_SMOOTH_3D), OPT(O_TRUE_COLOR), OPT(O_DITHER), OPT(O_SOFT_SHADOWS), OPT(O_BATTLE_SHADOWS), OPT(O_BATTLE_SKY), ACT(S_RESET), ACT(S_BACK), {R_END}},
-    {OPT(O_ICONS), OPT(O_RUMBLE), OPT(O_DEADZONE), OPT(O_FF_MENUS), OPT(O_SKIP_START), OPT(O_MENU_WRAP), ACT(S_SWAP), {R_HEADING, S_BUTTONS},
+/* Asuka Link (v1.3.0) shows only these: the mods and the rest of the options are fixed (the game's platform/main.c
+   fixed_option); EXP and money only here */
+static const Row TABS[TAB_COUNT][27] = {
+    {OPT(O_FULLSCREEN), OPT(O_WINDOW), OPT(O_RESOLUTION), OPT(O_WIDESCREEN), ACT(S_RESET), ACT(S_BACK), {R_END}},
+    {OPT(O_ICONS), OPT(O_RUMBLE), ACT(S_SWAP), {R_HEADING, S_BUTTONS},
      BIND(14), BIND(13), BIND(15), BIND(12), BIND(10), BIND(11), BIND(8), BIND(9), BIND(1), BIND(2), BIND(3), BIND(0), BIND(4), BIND(6), BIND(7), BIND(5),
      ACT(S_RESET), ACT(S_BACK), {R_END}},
-    {OPT(O_FAST_TEXT), OPT(O_FAST_TRAVEL), OPT(O_OBJECTIVE), OPT(O_JOURNAL), OPT(O_FULL_EXP_SHARE), OPT(O_SURE_TRAINING), OPT(O_EXP_MULT), OPT(O_MONEY_MULT), OPT(O_CUSTOM_EFFECTS), OPT(O_CUSTOM_SOUNDS), OPT(O_CUSTOM_SCRIPTS), {R_HEADING, S_PLAYABLE}, OPT(O_BLADEGARURUMON),
-     {R_HEADING, S_COOP}, OPT(O_COOP), {R_TEXT, 0}, {R_TEXT, 1}, {R_TEXT, 2}, {R_TEXT, 3}, ACT(S_RESET), ACT(S_BACK), {R_END}},
+    {OPT(O_EXP_MULT), OPT(O_MONEY_MULT), {R_HEADING, S_COOP}, {R_TEXT, 0}, {R_TEXT, 1}, {R_TEXT, 2}, {R_TEXT, 3}, ACT(S_RESET), ACT(S_BACK), {R_END}},
 };
-static const short TAB_NAME[4] = {S_DISPLAY, S_GRAPHICS, S_INPUT, S_MODS};
+const short TAB_NAME[TAB_COUNT] = {S_DISPLAY, S_INPUT, S_MODS};
 const Lang *const LANG_TABLE[LANGS] = {&LANG_EN, &LANG_ES, &LANG_FR, &LANG_DE, &LANG_IT};
 
 const char *const LANG_CODES[LANGS] = {"en", "es", "fr", "de", "it"};
@@ -253,7 +253,7 @@ SDL_Rect tab_rect(int tab)
 
 static void draw_tabs(void)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < TAB_COUNT; i++) {
         const SDL_Rect t = tab_rect(i);
         const bool sel = i == s_tab;
         fill(t.x, t.y, t.w, t.h, sel && g_app.tabfocus ? C_GOLD : C_EDGE);

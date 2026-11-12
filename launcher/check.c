@@ -97,8 +97,8 @@ static void check_lang(const Lang *l)
         fail(l, "home screen", l->s[S_READY]);
     }
     int tabs = 0;
-    for (int i = S_DISPLAY; i <= S_MODS; i++) {
-        tabs += text_width(l->s[i], 1) + 18;
+    for (int i = 0; i < TAB_COUNT; i++) {
+        tabs += text_width(l->s[TAB_NAME[i]], 1) + 18;
     }
     if (tabs > DESC_W) {
         fail(l, "tabs", l->s[S_DISPLAY]);
