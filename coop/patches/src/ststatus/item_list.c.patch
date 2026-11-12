@@ -223,11 +223,12 @@
  /* The tab's entries */
  static void fillJournal(Journal *journal) {
      s32 i;
-@@ -545,7 +671,13 @@
+@@ -545,7 +671,14 @@
  }
  
  /* An entry's field */
 +static s32 journalStepMode; /* the shown step's field, 0 for the entry's (showJournalEntry) */
++static s32 journalTabsX, journalTabsW; /* the foot's tabs key: where it goes after "select", and its width */
 +static s32 journalStepShown, journalStepIndex, journalStepTotal, journalStepIsDone, journalStepText;
 +
  static s32 journalMode(s32 entry) {
@@ -237,7 +238,7 @@
      return entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode;
  }
  
-@@ -566,30 +698,184 @@
+@@ -566,30 +699,191 @@
      return mode >= 0x200 && mode <= 0x2D6;
  }
  
@@ -389,11 +390,18 @@
 +    windows->state->setString(windows->state, journalTexts(), done ? TEXT_DONE : entry >= 0 ? TEXT_MAIN : TEXT_SIDE);
 +    windows->state->setPalette(windows->state, done ? PALETTE_GREEN : PALETTE_WHITE);
 +    centerJournalText(windows->state, INNER_X + INNER_W - BADGE_W / 2, TITLE_Y);
++    windows->keys[0]->setVisible(windows->keys[0], 1);
++    windows->keys[1]->setPos(windows->keys[1], journalTabsX, FOOT_Y + 1);
 +    if (journalOnMap(journalMode(entry))) {
-+        /* left of "back", whatever its width */
++        /* left of "back", whatever its width; where the four keys don't fit (French, Italian, German), "select" goes
++           and the tabs take its place */
 +        setJournalLabel(windows->keys[3], TEXT_KEY(3));
 +        windows->keys[3]->setRightAlign(windows->keys[3], 1);
 +        windows->keys[3]->setPos(windows->keys[3], windows->keys[2]->x - windows->keys[2]->alignWidth - 8, FOOT_Y + 1);
++        if (journalTabsX + journalTabsW + 8 > windows->keys[3]->x - windows->keys[3]->alignWidth) {
++            windows->keys[0]->setVisible(windows->keys[0], 0);
++            windows->keys[1]->setPos(windows->keys[1], windows->keys[0]->x, FOOT_Y + 1);
++        }
 +    }
 +    if (journalStepShown && need == 0) { /* "Step k of n", green once done */
 +        windows->record->setString(windows->record, journalStepCount(journalStepIndex + 1, journalStepTotal), 0);
@@ -429,7 +437,7 @@
  static void showJournalPage(Journal *journal, JournalWindows *windows) {
      TextWindow *window;
      s32 i;
-@@ -600,32 +886,19 @@
+@@ -600,32 +894,19 @@
          window = windows->entries[i];
          if (n >= journal->count) {
              window->setVisible(window, 0);
@@ -465,7 +473,7 @@
      windows->cursor->setVisible(windows->cursor, journal->count != 0);
  }
  
-@@ -633,66 +906,186 @@
+@@ -633,66 +914,190 @@
      s32 i;
  
      if (show) {
@@ -486,8 +494,12 @@
 +        windows->keys[2]->setRightAlign(windows->keys[2], 1);
 +        /* the tabs' after "select", whatever its width */
 +        windows->keys[0]->setRightAlign(windows->keys[0], 1);
-+        windows->keys[1]->setPos(windows->keys[1], windows->keys[0]->x + windows->keys[0]->alignWidth + 8, FOOT_Y + 1);
++        journalTabsX = windows->keys[0]->x + windows->keys[0]->alignWidth + 8;
++        windows->keys[1]->setPos(windows->keys[1], journalTabsX, FOOT_Y + 1);
 +        windows->keys[0]->setRightAlign(windows->keys[0], 0);
++        windows->keys[1]->setRightAlign(windows->keys[1], 1);
++        journalTabsW = windows->keys[1]->alignWidth;
++        windows->keys[1]->setRightAlign(windows->keys[1], 0);
          showJournalPage(journal, windows);
          showJournalEntry(journal, windows);
          return;
@@ -693,7 +705,7 @@
      }
  }
  
-@@ -705,6 +1098,7 @@
+@@ -705,6 +1110,7 @@
      if (PAD_PRESSED(PAD_LEFT) || PAD_PRESSED(PAD_RIGHT)) {
          SOUND.playSound(SOUND_MENU_MOVE);
          journal->tab ^= 1;
@@ -701,7 +713,7 @@
          journal->cursor = 0;
          journal->page = 0;
          fillJournal(journal);
-@@ -723,14 +1117,24 @@
+@@ -723,14 +1129,24 @@
          journal->cursor = journal->cursor < journal->count - 1 ? journal->cursor + 1 : cursor;
      }
      if (cursor == journal->cursor) {
@@ -727,7 +739,7 @@
      showJournalEntry(journal, windows);
      return 1;
  }
-@@ -799,21 +1203,36 @@
+@@ -799,21 +1215,36 @@
          if (FILE_CACHE.isLoading(TEXT_FILE(TEXT_STAGE_NAMES)) || FILE_CACHE.isLoading(TEXT_FILE(TEXT_ITEM_NAMES))) {
              break;
          }
@@ -776,7 +788,7 @@
          windows->cursor->setVisible(windows->cursor, 0);
          journal->nextState(journal);
          break;
-@@ -833,8 +1252,9 @@
+@@ -833,8 +1264,9 @@
      Journal *journal = createTask(updateJournal, sizeof(Journal), sizeof(JournalWindows));
  
      journal->layer = SCREEN_LAYER;
