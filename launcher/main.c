@@ -272,10 +272,10 @@ int main(int argc, char **argv)
     SDL_Event e;
     bool closing = false, busy = screens_tick(), was_running = false;
     while (!closing && !g_app.quit) {
-        /* nothing to do: asleep until an event; while the game runs or minimised, a look now and then (the room's
-           network) and no drawing; home moves at about 12 frames a second */
+        /* home moves at about 12 frames a second; elsewhere, while the game runs or minimised, a look every 250 ms
+           (the room's network listens on every page), and no drawing while the game runs or minimised */
         const bool hidden = (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0;
-        if (SDL_WaitEventTimeout(&e, game_running() || hidden ? 250 : busy ? 80 : -1)) {
+        if (SDL_WaitEventTimeout(&e, game_running() || hidden || !busy ? 250 : 80)) { /* never asleep for good: the room listens */
             do {
                 if (e.type == SDL_EVENT_QUIT) {
                     closing = true;
