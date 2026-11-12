@@ -1,7 +1,9 @@
 /* --check: every string of every language exists and fits where it is drawn. */
 #include "launcher.h"
 
-enum { DESC_W = SCREEN_W - 48, DESC_LINES = 4, ZONE_W = 340, BUTTON_W = 120, PICKER_W = 60, BOTTOM_W = SCREEN_W - 16, MENU_W = 160, STATUS_W = 224, LABEL_W = 270, TOOL_VALUE_W = 200, BIND_NAME_W = 100, UPDATE_W = 150 };
+/* the v1.3.0 layout: the pages right of the menu (MAIN_X, MAIN_W) */
+enum { DESC_W = MAIN_W - 16, DESC_LINES = 4, ZONE_W = MAIN_W - 20, BUTTON_W = 120, PICKER_W = 70, MENU_W = 160, STATUS_W = 224, LABEL_W = MAIN_W - 110,
+       TOOL_VALUE_W = 200, BIND_NAME_W = 96, UPDATE_W = 150 };
 
 static const short DESCRIPTIONS[] = {S_PLAY_D, S_SETTINGS_D, S_TOOLS_D, S_LANGUAGE_D, S_QUIT_D, S_RELEASE_D,
                                      S_RESET_D, S_BACK_D, S_CREDITS_D, S_FOLDER_D, S_LOG_D, S_VIEWER_D, S_EDITOR_D, S_CHECK_D,
@@ -13,7 +15,11 @@ static const short TOOL_VALUES[] = {S_T_GET, S_T_OPEN, S_T_SETUP, S_T_DOWNLOADIN
 static const short BUTTON_NAMES[] = {S_B_UP, S_B_RIGHT, S_B_DOWN, S_B_LEFT, S_B_TRIANGLE, S_B_CIRCLE, S_B_CROSS, S_B_SQUARE};
 static const short MENU[] = {S_PLAY, S_SETTINGS, S_TOOLS, S_RELEASE, S_QUIT, S_VIEWER, S_EDITOR, S_FOLDER, S_LOG, S_BACK, S_CHECK, S_CREDITS, S_SAVES, S_EXPORT, S_IMPORT, S_UNDO, S_SV_FOLDER, S_T_UPDATE};
 static const short STATUS[] = {S_READY, S_DISC_OK, S_VERSION, S_RELEASE, S_TAGLINE};
+/* the first run's lines, up to two each (first_run.c) */
 static const short CENTRED[] = {S_NEED, S_ONCE, S_ISO, S_E_OPEN, S_E_GAME, S_E_BAD, S_E_WRITE, S_E_READ, S_E_TRUNCATED, S_E_CUE, S_E_SPACE, S_SEE_LOG, S_READING, S_NO_EXE, S_SAVE_FAILED, S_GAME_RUNNING};
+/* the room's, under Play on home: two lines */
+static const short ROOM_TEXTS[] = {S_SALA_ADD_D, S_SALA_READY_D, S_SALA_ALL_READY, S_SALA_INVITE_D, S_SALA_INVITED, S_SALA_DECLINED, S_SALA_TEST_NONE,
+                                   S_SALA_FIREWALL, S_SALA_NO_ANSWER, S_SALA_LEAVE_D, S_SALA_OUT_SURE, S_SALA_TEST_OK, S_COOP_TYPING};
 
 static int s_bad;
 
@@ -63,7 +69,10 @@ static void check_lang(const Lang *l)
         check_width(l, "status", l->s[STATUS[i]], STATUS_W);
     }
     for (int i = 0; i < (int)SDL_arraysize(CENTRED); i++) {
-        check_width(l, "first-run line", l->s[CENTRED[i]], BOTTOM_W);
+        check_lines(l, "first-run line", l->s[CENTRED[i]], MAIN_W, 2);
+    }
+    for (int i = 0; i < (int)SDL_arraysize(ROOM_TEXTS); i++) {
+        check_lines(l, "room's line", l->s[ROOM_TEXTS[i]], MAIN_W, 2);
     }
     for (int i = 0; i < (int)SDL_arraysize(TOOL_VALUES); i++) {
         check_width(l, "tool's state", l->s[TOOL_VALUES[i]], TOOL_VALUE_W);
@@ -81,16 +90,15 @@ static void check_lang(const Lang *l)
     check_width(l, "button", l->s[S_BROWSE], BUTTON_W);
     check_width(l, "button", l->s[S_CANCEL], BUTTON_W);
     check_width(l, "picker", l->name, PICKER_W);
-    /* a hint shares its line with the credit */
-    check_width(l, "hint", l->s[S_KEYS], DESC_W + 16 - 6 - text_width(CREDIT, 1));
-    check_width(l, "hint", l->s[S_HINT_MENU], DESC_W + 16 - 6 - text_width(CREDIT, 1));
-    check_width(l, "hint", l->s[S_HINT_SETTINGS], DESC_W + 16 - 6 - text_width(CREDIT, 1));
-    check_width(l, "fan line", l->s[S_FAN], DESC_W + 16);
+    check_width(l, "hint", l->s[S_KEYS], MAIN_W);
+    check_width(l, "hint", l->s[S_HINT_MENU], MAIN_W);
+    check_width(l, "hint", l->s[S_HINT_SETTINGS], MAIN_W);
+    check_width(l, "fan line", l->s[S_FAN], MAIN_W);
     for (int i = 0; i < 7; i++) { /* what the home screen's two lines hold */
         static const short HOME_TEXTS[7] = {S_PLAY_D, S_SETTINGS_D, S_SAVES_D, S_TOOLS_D, S_LANGUAGE_D, S_QUIT_D, S_RELEASE_D};
-        check_lines(l, "home description", l->s[HOME_TEXTS[i]], DESC_W, 2);
+        check_lines(l, "home description", l->s[HOME_TEXTS[i]], MAIN_W, 2);
     }
-    if (!saves_fits(l, SCREEN_W - 2 * 16 - 16)) {
+    if (!saves_fits(l, MAIN_W - 16)) {
         fail(l, "saves page", l->s[S_SV_NOCARD]);
     }
     if (!home_fits(l)) {

@@ -80,7 +80,7 @@ enum {
     S_SALA_OF, S_SALA_DECLINED, S_SALA_READY, S_SALA_READY_D, S_SALA_ALL_READY, S_SALA_INVITES, S_SALA_ACCEPT, S_SALA_DECLINE,
     S_SALA_INVITE, S_SALA_INVITE_D, S_SALA_INVITED, S_SALA_FULL, S_SALA_OTHER_VERSION, S_SALA_OFFLINE, S_SALA_RECENT, S_SALA_TEST,
     S_SALA_KICK, S_SALA_TEST_OK, S_SALA_TEST_NONE, S_SALA_FIREWALL, S_SALA_PAIRING, S_SALA_NO_ANSWER, S_SALA_LEAVE, S_SALA_LEAVE_D,
-    S_SALA_NO_PORT,
+    S_SALA_NO_PORT, S_STEP_DISC, S_STEP_ROOM, S_STEP_PLAY, S_WELCOME,
     S_COUNT
 };
 typedef struct { const char *name, *desc; } Text;
@@ -306,6 +306,8 @@ int saves_selftest(void);
 
 /* home.c: the home screen once the disc is read, and the bar on top of the others */
 void home_draw(void);
+void home_scene(void); /* Asuka City, moving: home's and the first run's */
+void side_steps(void); /* the first run's left: the three steps */
 void side_draw(int page, int selected); /* the menu on the left. page: S_PLAY (home), S_SETTINGS, S_SAVES or S_TOOLS */
 int side_hit(int x, int y);             /* its entry under the mouse (S_PLAY... S_QUIT), or -1 */
 int home_hit(int x, int y); /* the row under the mouse, or -1 */

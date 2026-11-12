@@ -7,7 +7,7 @@ enum { W = 96, H = 14, SIDE_Y = SCREEN_H - 58 };
 static bool s_open;
 static int s_hover = PICKER_NONE;
 
-static bool side(void) { return !first_run_screen(); }
+static bool side(void) { return true; } /* at the menu's foot, on the first run too */
 static int list_x(void) { return side() ? 8 : SCREEN_W - 104; }
 static SDL_Rect button(void) { return side() ? (SDL_Rect){8, SIDE_Y, W, H} : (SDL_Rect){SCREEN_W - 96, 8, W - 8, H}; }
 static int row_y(int row) { return (side() ? SIDE_Y - 2 - LANGS * H : 8 + H + 2) + row * H; }

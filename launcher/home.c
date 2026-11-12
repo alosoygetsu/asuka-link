@@ -81,6 +81,9 @@ bool home_fits(const Lang *l)
     const int right = SCREEN_W - 8 - info_x(l);
     char disc[64];
     SDL_snprintf(disc, sizeof disc, "%s SLES-03936", l->s[S_DISC_OK]);
+    for (int i = 0; i < 3; i++) {
+        menu &= text_width(l->s[S_STEP_DISC + i], 1) <= SIDE_W - 30;
+    }
     return menu && text_width(l->s[S_TAGLINE], 1) <= SIDE_W - 16 && text_width(l->s[S_READY], 2) <= MAIN_W &&
            chip.x + chip.w <= SCREEN_W - 8 && text_width(info, 1) <= right && text_width(disc, 1) <= right && chip.x + chip.w <= SCREEN_W - 208 - 2 && text_width(l->s[S_NO_TEAM], 1) <= 2 * MAIN_W - 60 &&
            text_width(l->s[S_SALA_ADD], 1) <= 130 && text_width(l->s[S_SALA], 1) + 30 <= 130;
@@ -212,7 +215,7 @@ static void scene_moves(SDL_Point a, SDL_Point b)
     }
 }
 
-static void scene(void)
+void home_scene(void)
 {
     const SDL_Point a = {286 + 13 / 2, SCENE_BASE - 74 - 16}, b = {446 + 15 / 2, SCENE_BASE - 92 - 16}; /* antenna()'s tips */
     if (!cache_begin()) {
@@ -268,6 +271,31 @@ static void ips_box(void)
     if (!n) {
         text_flat(10, y + 11, C_FAINT, "-");
     }
+}
+
+/* the menu's place on the first run: the three steps (the disc, the room, play), the first one lit */
+void side_steps(void)
+{
+    fill_alpha(0, 0, SIDE_W, SCREEN_H, C_BG, 225);
+    fill(SIDE_W - 1, 0, 1, SCREEN_H, C_RULE);
+    art_icon(8, 8);
+    text(NAME_X, 19, 1, C_GOLD, APP_NAME);
+    text(8, 45, 1, C_SOFT, L->s[S_TAGLINE]);
+    fill(8, 58, SIDE_W - 16, 1, C_RULE);
+    for (int i = 0; i < 3; i++) {
+        const SDL_Rect t = menu_rect(i);
+        char n[4];
+        SDL_snprintf(n, sizeof n, "%d", i + 1);
+        if (i == 0) {
+            outline(t.x + 6, t.y, t.w - 12, t.h, C_LINK);
+            outline(t.x + 7, t.y + 1, t.w - 14, t.h - 2, C_LINK);
+        }
+        fill(t.x + 10, t.y + 3, 10, 10, i == 0 ? C_LINK : C_RULE);
+        text_flat(t.x + 13, t.y + 4, i == 0 ? C_ON_SELECT : C_SOFT, n);
+        text(t.x + 25, t.y + 4, 1, i == 0 ? C_LINK : C_DIM, L->s[S_STEP_DISC + i]);
+    }
+    text(8, SCREEN_H - 36, 1, C_FAINT, LAUNCHER_VERSION);
+    text(8, SCREEN_H - 24, 1, C_FAINT, "by alosoygetsu");
 }
 
 void side_draw(int page, int cur)
@@ -356,7 +384,7 @@ void home_draw(void)
     const Lang *l = L;
     const Row *r = &rows()[g_app.sel[SC_HOME]];
     const int cur = r->kind == R_ACTION ? r->id : -1;
-    scene();
+    home_scene();
     side_draw(S_PLAY, cur == S_PLAY || cur == S_RELEASE ? -1 : cur);
     sala_draw(r->kind == R_PEER ? r->id : -1);
     draw_chips(l, cur);

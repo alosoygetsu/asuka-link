@@ -30,6 +30,8 @@ La versión base de Asuka Link: a partir de aquí, el punto de partida del proye
   - Asuka City en movimiento: estrellas, antenas, ondas y un paquete por cada jugador de tu sala viajando por el enlace;
   - colores propios (azul tinta, cian y amarillo), una letra nueva (Silkscreen, de licencia libre) y un icono nuevo:
     "AL" con ondas de señal, también en los `.exe`.
+  - el primer arranque, también nuevo: la bienvenida, los tres pasos (leer el disco, formar la sala, jugar) y un
+    panel para soltar el disco, que gira mientras se lee.
 - **Opciones dentro del juego, en el menú de pausa:** OPCIONES, antes de SALIR (Start en el mapa). Select/Back y Esc ya
   no las abren. Back es ahora el Select del juego.
 - **Menos opciones, los mods fijos:**

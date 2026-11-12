@@ -296,14 +296,6 @@ static void page_title(int id)
     fill(MAIN_X + text_width(L->s[id], 1) + 8, 18, MAIN_W - text_width(L->s[id], 1) - 8, 1, C_RULE);
 }
 
-/* the old screen's heading: the title, what this is, a thin line */
-static void draw_title(void)
-{
-    text_centre(4, 2, C_GOLD, APP_NAME);
-    text_centre(28, 1, C_SOFT, L->s[S_TAGLINE]);
-    fill(SCREEN_W / 2 - 120, 44, 240, 1, C_RULE);
-}
-
 void screens_draw(void)
 {
     const bool home = s_screen == SC_HOME && !first_run_screen();
@@ -320,12 +312,13 @@ void screens_draw(void)
         side_draw(S_SAVES, -1);
         page_title(S_SAVES);
         saves_draw();
-    } else {
-        draw_title();
+    } else { /* the first run: the city, the steps on the left, the disc's panel */
+        home_scene();
+        side_steps();
     }
     if (first_run_screen()) {
         first_run_draw();
-        text(PAD, HINT_Y, 1, C_FAINT, L->s[S_KEYS]);
+        text(MAIN_X, HINT_Y, 1, C_DIM, L->s[S_KEYS]);
     } else {
         if (!home) {
             draw_list();
@@ -334,9 +327,6 @@ void screens_draw(void)
         if (!home) {
             text(MAIN_X, HINT_Y, 1, C_DIM, L->s[s_screen == SC_SETTINGS ? S_HINT_SETTINGS : S_HINT_MENU]);
         }
-    }
-    if (first_run_screen()) {
-        text_right(SCREEN_W - PAD, HINT_Y, C_FAINT, CREDIT);
     }
     text_right(SCREEN_W - 8, BOTTOM_Y, C_FAINT, L->s[S_FAN]);
     if (s_screen == SC_HOME && !first_run_reading()) {

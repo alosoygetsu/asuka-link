@@ -425,16 +425,9 @@ static const char *detail(const NetPlayer *p)
 
 const char *sala_desc(int id)
 {
-    static char d[400];
     refresh();
     if (id == SALA_ADD) {
-        char mine[200];
-        if (s_editing) {
-            return L->s[S_COOP_TYPING];
-        }
-        net_my_addresses(mine, sizeof mine);
-        SDL_snprintf(d, sizeof d, "%s %s %s", L->s[S_SALA_ADD_D], L->s[S_COOP_MINE_D], mine[0] ? mine : L->s[S_COOP_NO_IP]);
-        return d;
+        return L->s[s_editing ? S_COOP_TYPING : S_SALA_ADD_D]; /* your IPs: the menu's box */
     }
     if (id == SALA_READY) {
         return L->s[S_SALA_READY_D];
