@@ -62,6 +62,10 @@ static void home_move(int a)
                 to = i;
             }
         }
+    } else if ((a == A_LEFT || a == A_RIGHT) && col == 2 && r[at].kind == R_PEER && sala_btn_count(r[at].id) == 2 &&
+               (a == A_RIGHT ? g_app.btn == 0 : g_app.btn == 1)) { /* between a room row's two buttons */
+        g_app.btn = a == A_RIGHT;
+        return;
     } else if (a == A_LEFT && col > 0) {
         to = col == 2 ? find_row(R_ACTION, S_PLAY) : find_row(R_ACTION, S_SETTINGS);
     } else if (a == A_RIGHT && col == 0) {
@@ -77,7 +81,6 @@ static void home_move(int a)
         g_app.sel[SC_HOME] = to;
         sala_moved();
     }
-    g_app.btn = 0;
 }
 
 static void move_selection(int dir)
@@ -403,6 +406,7 @@ bool screens_tick(void)
     static char failed[160];
     int code = 0;
     first_run_poll();
+    sala_tick();
     tools_poll();
     port_update_poll();
     saves_poll();
@@ -414,7 +418,8 @@ bool screens_tick(void)
     if (message >= 0) {
         g_app.note = L->s[message];
     }
-    return first_run_reading() || game_running() || release_busy() || tools_busy() || port_updating() || saves_busy() || bind_capturing() >= 0;
+    /* the room's network and the home screen's animations: awake 20 times a second there */
+    return (g_app.screen == SC_HOME && g_app.state == ST_READY) || first_run_reading() || game_running() || release_busy() || tools_busy() || port_updating() || saves_busy() || bind_capturing() >= 0;
 }
 
 /* the settings kept, the disc's reading stopped cleanly; the game, if running, goes on */

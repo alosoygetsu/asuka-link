@@ -256,7 +256,7 @@ static void draw_description(void)
                   : row_tool(r) >= 0 && g_app.btn && tool_update_has(row_tool(r)) ? L->s[S_T_UPDATE_D]
                   : L->s[r->id + 1];
     if (s_screen == SC_HOME) { /* two lines under Play, on the scene */
-        wrap(MAIN_X, 218, MAIN_W, C_SOFT, s);
+        wrap(MAIN_X, 228, MAIN_W, C_SOFT, s);
         return;
     }
     panel(MAIN_X, DESC_Y, MAIN_W, DESC_H);

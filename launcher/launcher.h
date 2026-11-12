@@ -74,6 +74,10 @@ enum {
     S_SV_EXPORTED, S_SV_IMPORTED, S_SV_WARN, S_SV_REJECT, S_SV_RESTORED, S_SV_NO_BACKUP, S_SV_FAILED,
     S_COOP, S_COOP_PEER, S_COOP_PEER_D, S_COOP_TYPING, S_COOP_EMPTY, S_COOP_MINE, S_COOP_MINE_D, S_COOP_NO_IP, /* the co-op's */
     S_SALA, S_SALA_YOU, S_SALA_ADD, S_SALA_ADD_D, S_SALA_MEMBER_D, S_SALA_OUT_SURE, /* the room (sala.c) */
+    S_SALA_OF, S_SALA_DECLINED, S_SALA_READY, S_SALA_READY_D, S_SALA_ALL_READY, S_SALA_INVITES, S_SALA_ACCEPT, S_SALA_DECLINE,
+    S_SALA_INVITE, S_SALA_INVITE_D, S_SALA_INVITED, S_SALA_FULL, S_SALA_OTHER_VERSION, S_SALA_OFFLINE, S_SALA_RECENT, S_SALA_TEST,
+    S_SALA_KICK, S_SALA_TEST_OK, S_SALA_TEST_NONE, S_SALA_FIREWALL, S_SALA_PAIRING, S_SALA_NO_ANSWER, S_SALA_LEAVE, S_SALA_LEAVE_D,
+    S_SALA_NO_PORT,
     S_COUNT
 };
 typedef struct { const char *name, *desc; } Text;
@@ -209,9 +213,41 @@ void screens_draw(void);
 /* input.c: what's done with it */
 enum { A_NONE, A_UP, A_DOWN, A_LEFT, A_RIGHT, A_OK, A_BACK, A_PREV, A_NEXT, A_CLEAR };
 void screens_action(int action);
-/* sala.c: the room on the home screen (R_PEER rows): your group, saved as native.ini's coop_peers */
-enum { SALA_MEMBER = 0x100, SALA_ADD = 0x300 };
+/* sala_net.c: the room's network (the launchers' own UDP port, 27499) */
+enum { ROOM_MAX = 4 };
+typedef struct {
+    Uint32 id;
+    char name[16];
+    int model, tone, count, partner[3], level[3]; /* model/tone -1: none */
+    int rtt, room_size, game_port; /* rtt -1: not measured */
+    Uint32 room;
+    bool ready, online, other_version, recent, member, you;
+} NetPlayer;
+void net_init(void);
+void net_poll(void);
+bool net_up(void); /* false: the port was taken (another launcher open) */
+int net_members(NetPlayer *out, int max);   /* you first */
+int net_available(NetPlayer *out, int max); /* heard here, then the recent ones */
+bool net_can_invite(const NetPlayer *p);
+void net_invite(Uint32 id);
+bool net_pair(const char *addr);
+int net_pair_state(void); /* 0 nothing, 1 waiting for an answer, 2 no answer */
+const NetPlayer *net_invitation(void);
+void net_answer(bool yes);
+void net_kick(Uint32 id);
+void net_leave(void);
+void net_set_ready(bool ready);
+bool net_ready(void);
+bool net_all_ready(void);
+void net_room_name(char *out, int size);
+int net_room_size(void);
+void net_my_addresses(char *out, int size);
+
+/* sala.c: the room on the home screen (R_PEER rows) */
+enum { SALA_MEMBER = 0x100, SALA_NEAR = 0x200, SALA_ADD = 0x300, SALA_INVITE = 0x400, SALA_READY = 0x500, SALA_LEAVE = 0x600 };
 void sala_load(void);
+void sala_tick(void);
+int sala_btn_count(int id); /* a row's buttons (Left/Right between them, g_app.btn): 0 or 1 a plain row */
 int sala_rows(Row *out, int max); /* its rows, in order */
 bool sala_editing(void);
 void sala_activate(int id);
@@ -239,7 +275,8 @@ int picker_hit(int x, int y);
 void picker_hover(int row);
 
 /* team.c: the party in the save on the memory card, read only */
-typedef struct { int partner[3], level[3], count, hours, minutes; char when[20]; } Team;
+/* name: the tamer's, in ASCII ("" if it has none); model 0-2 (Junior, boy, girl) and tone 0-7 the character creator's, -1 none */
+typedef struct { int partner[3], level[3], count, hours, minutes, model, tone; char when[20], name[16]; } Team;
 const Team *team_get(void); /* NULL without a save that has a team; read again when the card changes */
 const char *team_name(int partner);
 Uint32 team_colour(int partner);

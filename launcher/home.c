@@ -6,12 +6,11 @@
 #define LAUNCHER_VERSION "dev"
 #endif
 
-#define GAME_NAME "Digimon World 2003 (Europe)"
 
 enum {
     MENU_Y = 66, MENU_H = 16, MENU_GAP = 2, QUIT_GAP = 10, NAME_X = 46,
-    CHIPS_Y = 84, CHIP_H = 14, CHIP_GAP = 6, TITLE_Y = 100, SUB_Y = 126, CARD_Y = 142, CARD_H = 26, CARD_GAP = 8,
-    INFO_Y = 172, BTN_Y = 186, BTN_H = 28, SCENE_BASE = 200
+    CHIPS_Y = 110, CHIP_H = 14, CHIP_GAP = 6, TITLE_Y = 128, CARD_Y = 156, CARD_H = 26, CARD_GAP = 8,
+    BTN_Y = 192, BTN_H = 28, SCENE_BASE = 200
 };
 
 static bool inside(SDL_Rect r, int x, int y) { return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h; }
@@ -39,7 +38,7 @@ static SDL_Rect chip_rect(const Lang *l, int i, const char *tag)
 {
     char s[96];
     int x = MAIN_X;
-    for (int k = 0; k < i; k++) {
+    for (int k = 1; k < i; k++) {
         chip_text(l, k, tag, s, sizeof s);
         x += text_width(s, 1) + 12 + CHIP_GAP;
     }
@@ -53,8 +52,11 @@ static int card_w(void) { return (MAIN_W - 2 * CARD_GAP) / 3; }
 
 static void team_info(const Lang *l, const Team *t, char *out, int size)
 {
-    SDL_snprintf(out, size, "%s %s  -  %d:%02d", l->s[S_LAST_SAVE], t->when, t->hours, t->minutes);
+    SDL_snprintf(out, size, "%s %s", l->s[S_LAST_SAVE], t->when);
 }
+
+/* right of Play, two lines: the disc, the last save */
+static int info_x(const Lang *l) { const SDL_Rect p = play_rect(l); return p.x + p.w + 10; }
 
 int side_hit(int x, int y)
 {
@@ -76,8 +78,11 @@ bool home_fits(const Lang *l)
     }
     team_info(l, &worst, info, sizeof info);
     const SDL_Rect chip = chip_rect(l, 1, "v99.99.99");
+    const int right = SCREEN_W - 8 - info_x(l);
+    char disc[64];
+    SDL_snprintf(disc, sizeof disc, "%s SLES-03936", l->s[S_DISC_OK]);
     return menu && text_width(l->s[S_TAGLINE], 1) <= SIDE_W - 16 && text_width(l->s[S_READY], 2) <= MAIN_W &&
-           chip.x + chip.w <= SCREEN_W - 8 && text_width(info, 1) <= MAIN_W && text_width(l->s[S_NO_TEAM], 1) <= 2 * MAIN_W - 60 &&
+           chip.x + chip.w <= SCREEN_W - 8 && text_width(info, 1) <= right && text_width(disc, 1) <= right && chip.x + chip.w <= SCREEN_W - 208 - 2 && text_width(l->s[S_NO_TEAM], 1) <= 2 * MAIN_W - 60 &&
            text_width(l->s[S_SALA_ADD], 1) <= 130 && text_width(l->s[S_SALA], 1) + 30 <= 130;
 }
 
@@ -218,7 +223,7 @@ void side_draw(int page, int cur)
 static void draw_chips(const Lang *l, int cur)
 {
     const char *tag = release_tag();
-    for (int i = 0; i < (tag ? 2 : 1); i++) {
+    for (int i = 1; i < (tag ? 2 : 1); i++) { /* the release's only: the disc goes by Play */
         char s[96];
         const SDL_Rect c = chip_rect(l, i, tag ? tag : "");
         const bool news = i == 1, sel = news && cur == S_RELEASE;
@@ -263,7 +268,9 @@ static void draw_team(const Lang *l)
         text(x + 28, CARD_Y + 13, 1, C_SOFT, level);
     }
     team_info(l, t, info, sizeof info);
-    text(MAIN_X, INFO_Y, 1, C_SOFT, info);
+    text(info_x(l), BTN_Y + 10, 1, C_SOFT, info);
+    SDL_snprintf(info, sizeof info, "%d:%02d", t->hours, t->minutes);
+    text(info_x(l), BTN_Y + 20, 1, C_SOFT, info);
 }
 
 void home_draw(void)
@@ -276,7 +283,9 @@ void home_draw(void)
     sala_draw(r->kind == R_PEER ? r->id : -1);
     draw_chips(l, cur);
     text(MAIN_X, TITLE_Y, 2, C_TEXT, l->s[S_READY]);
-    text(MAIN_X, SUB_Y, 1, C_SOFT, GAME_NAME);
+    char disc[64];
+    SDL_snprintf(disc, sizeof disc, "%s SLES-03936", l->s[S_DISC_OK]);
+    text(info_x(l), BTN_Y, 1, C_DIM, disc);
     draw_team(l);
     draw_play(l, cur == S_PLAY);
 }
