@@ -4,7 +4,7 @@ ASUKA LINK - COOPERATIVO ONLINE PARA DIGIMON WORLD 2003
 Hasta 4 jugadores. Cada uno juega con su propia partida, pero cuando estáis en el
 mismo mapa veis a los demás moverse por él, con el aspecto que eligió cada uno y su
 nombre encima. En los Guardromon podéis intercambiar cartas, combatir entre vosotros,
-hacer raids contra jefes y jugar duelos de cartas (más abajo, en el punto 4).
+hacer raids contra jefes y jugar duelos de cartas (más abajo, en el punto 3).
 
 De quién es cada cosa: el juego nativo para PC y el launcher son el port de Feerdus
 (github.com/Feerdus95/dw3-native-port); el cooperativo, Asuka Link, es de alosoygetsu, con sus
@@ -16,63 +16,64 @@ Lo que necesita cada uno
 - Windows 10 u 11.
 - Tu propia imagen del disco: Digimon World 2003 europeo (SLES-03936), mejor en
   .cue/.bin. Tiene que ser la misma versión para todos.
-- Estar en una misma red. Lo más fácil es Tailscale (gratis), que os pone en una
-  red privada como si estuvierais en la misma casa, sin abrir puertos del router.
-  También vale una red local de verdad, ZeroTier, Radmin, etc.
+- Estar en una misma red:
+  - En la misma casa (o la misma red local): no hace falta nada más.
+  - Desde lejos: una red privada como Tailscale (gratis, sin abrir puertos del
+    router), ZeroTier o Radmin. También vale Internet con el puerto abierto.
 
 
-1. TAILSCALE (todos; saltáoslo si usáis otra red)
-----------------------
-1. Descargad e instalad Tailscale desde https://tailscale.com/download
-2. Abridlo e iniciad sesión (con Google, Microsoft o GitHub).
-3. Uno invita al otro a su red: en https://login.tailscale.com/admin/users,
-   botón "Invite users", y pone el correo del colega. El colega acepta la
-   invitación desde el correo. (El plan gratis deja hasta 3 personas; para un
-   cuarto, otro de vosotros comparte su PC con él desde "Share" en la lista de
-   máquinas.)
-4. Cada uno mira su IP de Tailscale: el launcher la enseña en Ajustes -> Mods ->
-   Tu IP (la marcada "Tailscale"), o en el icono de Tailscale junto al reloj.
-   Empieza por 100. (por ejemplo 100.101.102.103). Pasádosla entre todos.
-5. Comprobad que os veis: abrid una terminal (PowerShell) y escribid
-       tailscale ping 100.x.y.z
-   con la IP del otro. Si contesta "pong", está bien.
-
-
-2. EL JUEGO (la primera vez)
+1. EL JUEGO (la primera vez)
 ---------------------------------------
 1. Descomprime asuka-link-<versión>.zip en una carpeta tuya, por ejemplo
-   C:\Juegos\dw2003-coop  (no en "Archivos de programa").
+   C:\Juegos\asuka-link  (no en "Archivos de programa").
 2. Abre dw3launcher.exe. La primera vez pide la imagen del disco: arrastra el
    .cue (o el .bin) a la ventana o usa "Browse...". Lee el disco una sola vez
    (unos minutos).
-3. Desde entonces, el botón Play del launcher o dw2003.exe arrancan el juego.
+3. Desde entonces, el botón JUGAR del launcher (o dw2003.exe) arranca el juego.
 
-ACTUALIZAR: el launcher busca las versiones de Asuka Link. Cuando hay una nueva la anuncia en su pantalla de inicio, y se instala
-con un clic; también en Herramientas -> "Buscar actualizaciones". Tus ajustes y
-tus partidas no se tocan. Las versiones están en
-https://github.com/alosoygetsu/asuka-link/releases
+ACTUALIZAR: el launcher busca las versiones de Asuka Link. Cuando hay una nueva la
+anuncia en su pantalla principal y se instala con un clic; también en
+Herramientas -> "Buscar actualizaciones". Tus ajustes y tus partidas no se tocan.
+Las versiones están en https://github.com/alosoygetsu/asuka-link/releases
 Para jugar juntos, todos necesitáis la misma "versión de red", que sale en las
-notas de cada versión. Si no coincide, coop.log dice "another version of the co-op".
+notas de cada versión; en la sala, quien tenga otra sale como "Otra versión".
 Las versiones van v1.0.0, v1.1.0... (cosas nuevas) y v1.1.1... (arreglos).
 
 
-3. CONFIGURAR EL COOPERATIVO (todos)
-------------------------------------
-En el launcher: Ajustes -> pestaña Mods -> sección Cooperativo.
-1. "Cooperativo": Sí (viene activado).
-2. "IP del jugador 2", "3" y "4": las IP de los DEMÁS (no la tuya). Selecciona la
-   fila, Enter, escribe la IP y Enter otra vez. Las que no uséis, vacías.
-   Si alguien usa un puerto que no es el 27500, ponlo detrás: 100.1.2.3:27600.
-3. Sal de Ajustes (se guarda solo).
+2. LA SALA (en la pantalla principal del launcher, arriba a la derecha)
+-----------------------------------------------------------------------
+Con las flechas: izquierda y derecha pasan del menú a JUGAR y a la sala; arriba
+y abajo, por sus filas. También con el ratón.
+- Arriba, el nombre de la sala, cuántos sois (máximo 4) y el botón LISTO.
+- Tú y tu grupo, uno por línea: su personaje, su nombre y sus barras de señal.
+  Al seleccionar a alguien, abajo sale su equipo y su ping, y a la derecha
+  PROBAR y SACAR (izquierda y derecha para elegir).
+- Debajo, los que puedes invitar:
+  - los que tienen el launcher abierto en tu misma red: salen solos;
+  - los recientes (marcados con *): con quien ya jugaste.
+  INVITAR les manda una invitación; les sale "X te invita" con SÍ y NO. Al
+  aceptar, entran en tu grupo (y dejan el suyo).
+- + AÑADIR POR IP (para jugar desde lejos): escribe la IP del otro y Enter. Entra
+  directamente en tu sala, sin que tenga que hacer nada. Ahí mismo, abajo, salen
+  tus IP para pasárselas a quien te quiera añadir (la de Tailscale, si la hay,
+  la primera).
+- SALIR DE LA SALA: vuelves a jugar solo.
+- LISTO: marca que estás preparado; cuando lo estáis todos, os avisa.
+- La sala se recuerda: al abrir el launcher otro día, os volvéis a juntar solos.
+- Si sois más de 4 en la misma red, cada grupo invita a los suyos: los grupos no
+  se mezclan.
 
-(A mano: en native.ini, coop_peers = 100.1.2.3, 100.4.5.6; coop = 0 lo apaga)
+(El juego usa la sala por su cuenta: la escribe en native.ini como coop_peers.
+coop = 0 en native.ini apaga el cooperativo.)
 
 
-4. JUGAR
+3. JUGAR
 --------
-1. Arrancad el juego todos y cargad vuestra partida.
-2. La primera vez, Windows pregunta si dejas a dw2003.exe usar la red: marca las
-   dos casillas (redes privadas y públicas) y dale a "Permitir".
+1. Formad la sala, dadle a JUGAR todos y cargad vuestra partida. Si alguien
+   entra o sale de la sala mientras jugáis, el juego lo sigue solo.
+2. La primera vez, Windows pregunta si dejas a dw3launcher.exe y a dw2003.exe
+   usar la red: marca las dos casillas (redes privadas y públicas) y dale a
+   "Permitir".
 3. Id al mismo mapa. A los 1-2 segundos os veréis, cada uno con su personaje
    (Junior, Chico o Chica) y su tono, y su nombre encima. Quien aún no tiene
    aspecto (partida antigua, o antes de entrar al Mundo Digital) sale como Junior
@@ -98,6 +99,8 @@ En el launcher: Ajustes -> pestaña Mods -> sección Cooperativo.
    - DIGILOG (en el menú del mapa): cada misión dice en qué paso vas ("Paso 2 de
      5") y qué toca hacer; con □ (Cuadrado) ves todos sus pasos. Las que solo
      se pueden hacer en un tramo de la historia lo avisan.
+   - OPCIONES (pantalla completa, ventana, resolución, botones...): en el menú de
+     pausa del mapa (Start), antes de SALIR.
    - Si uno entra en combate, un menú o una cinemática, desaparece para los demás
      y vuelve cuando sale.
    - Fuera de los mapas normales (combates, menús) no se ve nada.
@@ -105,23 +108,31 @@ En el launcher: Ajustes -> pestaña Mods -> sección Cooperativo.
 
 SI NO OS VEIS
 -------------
-Junto a dw2003.exe hay un archivo coop.log que dice lo que pasa:
+Primero, en la sala: selecciona al otro y pulsa PROBAR.
+- "te llega bien: 45 ms": la conexión va. Si en el juego no os veis, comprobad
+  que estáis en el mismo mapa.
+- "No llega nada": suele ser el cortafuegos de Windows. Pulsa PROBAR otra vez y
+  acepta el aviso de administrador: Asuka Link crea su regla (para dw2003.exe y
+  dw3launcher.exe). Haced lo mismo en el otro PC si sigue sin llegar.
+- Si alguien no sale en "En tu red" estando en la misma casa, añadidlo por IP.
+- "Puerto 27499 ocupado": hay otro launcher abierto.
 
-- "player 2 (100.x.y.z) is here": ese jugador está conectado. Si aun así no lo
-  ves, comprobad que estáis en el mismo mapa.
-- "player 2: ping 45 ms, ... 0% of their packets lost": la calidad de la conexión,
-  cada minuto. Cualquier ping por debajo de 150 ms va bien.
-- "a packet from ... which isn't in coop_peers ... ignored": te llegan datos de
-  alguien cuya IP o puerto no has puesto bien. Revisa las IP en el launcher.
-- "another version of the co-op": tenéis versiones distintas. Actualizad todos.
-- "can't find ...": una IP está mal escrita.
-- "no other players' addresses yet": no has puesto ninguna IP.
-- "port 27500 is taken": hay otra copia del juego abierta.
-- Solo sale "listening on port...": no llega nada del otro. Suele ser el
-  cortafuegos de Windows. Para permitirlo a mano, abrid PowerShell como
-  administrador y escribid:
-      netsh advfirewall firewall add rule name="DW2003 coop" dir=in action=allow protocol=UDP localport=27500
-  Comprobad también que Tailscale está encendido en todos los PCs.
+Junto a dw2003.exe hay dos registros que dicen lo que pasa:
+- sala.log (el launcher): invitaciones, quién entra y sale de la sala.
+- coop.log (el juego):
+  - "player 2 (100.x.y.z) is here": ese jugador está conectado.
+  - "player 2: ping 45 ms, ... 0% of their packets lost": la calidad de la
+    conexión, cada minuto. Cualquier ping por debajo de 150 ms va bien.
+  - "the room changed": el juego ha seguido un cambio de la sala.
+  - "another version of the co-op": tenéis versiones distintas. Actualizad todos.
+  - "port 27500 is taken": hay otra copia del juego abierta.
+  - Solo sale "listening on port...": no llega nada del otro (el cortafuegos,
+    como arriba).
+
+Para abrir el cortafuegos a mano: PowerShell como administrador y
+    netsh advfirewall firewall add rule name="Asuka Link" dir=in action=allow protocol=UDP localport=27499-27500
+Desde lejos sin Tailscale ni ZeroTier, quien recibe tiene que abrir en su router
+los puertos UDP 27499 (la sala) y 27500 (el juego).
 
 Vuestras partidas no se tocan: el cooperativo solo dibuja a los demás, no cambia
 nada de la memory card.

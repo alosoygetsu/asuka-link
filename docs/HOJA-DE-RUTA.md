@@ -19,7 +19,7 @@ responsabilidad nuestra.
 - **v1.2.3, transición:** un solo zip por release (`asuka-link-<versión>.zip`, también para actualizar), el
   cooperativo activado por defecto. Es la última que sube además el `dw2003-native-<versión>.zip` de los launchers
   anteriores.
-- **v1.3.0, la versión base:** a partir de su lanzamiento es el punto de partida del proyecto.
+- **v1.3.0, la versión base** (hecha, falta publicarla): a partir de su lanzamiento es el punto de partida del proyecto.
   - **Opciones dentro del juego, en el menú de pausa del mapa:** una fila "Opciones" antes de "Salir". Select/Back y
     Esc ya no abren nada.
   - **Mods fijos:**

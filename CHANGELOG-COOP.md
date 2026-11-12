@@ -4,6 +4,41 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.3.0
+Basado en el port v0.18.9. **Red: versión 8**: no se conecta con las 1.2.x. Actualizad todos.
+
+La versión base de Asuka Link: a partir de aquí, el punto de partida del proyecto.
+- **La sala**, en la pantalla principal del launcher, arriba a la derecha. Sustituye a las IP de Ajustes.
+  - **Los de tu red salen solos.** Cada launcher se anuncia en la red local, así que en la misma casa no hace falta
+    Tailscale ni escribir IP. Eliges a uno y **Invitar**; el otro ve "X te invita" y acepta o rechaza.
+  - **Añadir por IP**, para jugar desde lejos (Tailscale, ZeroTier, Internet): escribes la IP del otro y entra
+    directamente en tu sala, sin que tenga que escribir la tuya.
+  - Hasta 4 por sala. Si en una red sois más, cada grupo invita a los suyos y no se mezclan.
+  - Cada jugador sale con su **nombre de domador**, su **personaje** (Junior, Chico o Chica, en su tono) y sus **barras
+    de señal**. Al seleccionarlo se ven su equipo con niveles y su ping.
+  - **Probar** mide la conexión. Si no llega nada, una segunda pulsación abre el cortafuegos de Windows para el juego
+    y el launcher (pide permiso de administrador).
+  - **Listo:** cuando lo estáis todos, os avisa (también con el launcher minimizado).
+  - **Recientes y reconexión:** los que ya jugaron contigo salen para invitarlos aunque estén lejos, y al abrir el
+    launcher se rehace la sala de la última vez.
+  - **El juego sigue la sala:** si alguien entra o sale mientras jugáis, aparece o se va sin reiniciar.
+  - `sala.log`, junto al launcher, dice qué invitaciones y cambios de sala hubo.
+- **Launcher nuevo, con aspecto propio** (ya no se parece al del port):
+  - menú lateral (Jugar, Ajustes, Partidas, Herramientas, Salir) en todas las pantallas;
+  - Asuka City en movimiento: estrellas, antenas, ondas y un paquete por cada jugador de tu sala viajando por el enlace;
+  - colores propios (azul tinta, cian y amarillo), una letra nueva (Silkscreen, de licencia libre) y un icono nuevo:
+    "AL" con ondas de señal, también en los `.exe`.
+- **Opciones dentro del juego, en el menú de pausa:** OPCIONES, antes de SALIR (Start en el mapa). Select/Back y Esc ya
+  no las abren. Back es ahora el Select del juego.
+- **Menos opciones, los mods fijos:**
+  - Se pueden cambiar pantalla completa, ventana, resolución, pantalla ancha en combates, iconos, vibración, botones
+    e idioma. EXP y dinero, en el launcher (Ajustes → Partida).
+  - Lo demás va fijo: viaje rápido, Digilog, texto rápido, EXP compartida completa, entrenamiento sin azar,
+    BladeGarurumon y los efectos, sonidos y scripts propios, activados; el objetivo en el mapa, apagado; y los
+    gráficos con sus mejores valores (60 fps…).
+  - Las líneas de esas opciones en un `native.ini` viejo se ignoran.
+- **Una sola descarga:** `asuka-link-<versión>.zip`.
+
 ## v1.2.3
 Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.2.
 
