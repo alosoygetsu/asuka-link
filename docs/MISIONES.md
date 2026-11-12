@@ -224,6 +224,10 @@ Cada jefe pone una marca al encontrarlo (y empieza el combate) y otra al vencerl
 en un tramo de la historia: sus actores llevan una condición especial de rango (`SPECIAL(id)`, cuyo rango está en
 `PROGRESS_RANGES` de `main/game/events.c`; `SPECIAL(0x19)` es 0x1B-0x25, `SPECIAL(0x1A)` es 0x27-0x28). Ojo:
 `PROGRESS(n), 1` es igualdad, no "desde".
+Desde la v1.2.2, cada una de estas lleva su último paso en `SIDE_QUESTS` (el campo `last`): pasado ese paso, el
+Digilog deja de mostrarla en "Activas". Kenny 0x1B; cinco Black Kings 0x24; WarGreymon BK 0x28; la Bruja y los
+Caballeros 0x25; los Maestros 0x28; Zanbamon 0x18; MasterTyranno 0x04. Pharaohmon y las cartas épicas no, porque
+vuelven en el capítulo extra.
 - **Armas viejas:** Zanbamon `F40:55`/`56` (Catacumba, solo en los pasos 0x08 y 0x18); Datamon `F40:08`/`09` (Sala
   de Control de Asuka, siempre); MasterTyranno `F40:0f`/`10` (Valle Tyranno, solo en 0x04); Pharaohmon `F40:53`/`54`
   (Ruinas Protocolo, en 0x04 y en el capítulo extra).

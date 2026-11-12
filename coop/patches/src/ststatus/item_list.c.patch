@@ -82,7 +82,7 @@
  #define TAB_ACTIVE 0
  #define TAB_DONE 1
  s32 STSTATUS_objectiveModeAt(s32 progress); /* map_screen.c */
-@@ -421,11 +479,14 @@
+@@ -421,14 +479,19 @@
   * field's flag) while the story is not past `last`; done once that flag is
   * set
   */
@@ -97,16 +97,51 @@
  } SideQuest;
  #define ANY_STEP 0xFF
  
-@@ -449,7 +510,7 @@
-     { 0x033, 0x2D3, FLAG(0x40, 0x85) }, /* Mind Chip, Fire Master */
-     { 0x141, 0x2D4, FLAG(0x40, 0x87) }, /* EXP Adapter, Dark Master */
-     { 0x18C, 0x293, FLAG(0x40, 0x1D) }, /* Crony ID, Kenny */
++/* Asuka Link: a quest whose rival is only there for a stretch of the story has its last step (their actors' range
++   conditions, PROGRESS_RANGES of main/game/events.c; docs/MISIONES.md): past it, it can't be done, and leaves the list */
+ static const SideQuest SIDE_QUESTS[] = {
+     { 0x006, 0x233, FLAG(0x40, 0x24) }, /* Agumon DDNA, MetalGreymon */
+     { 0x022, 0x23C, FLAG(0x40, 0x26) }, /* Guilmon DDNA, WarGrowlmon */
+@@ -438,30 +501,33 @@
+     { 0x168, 0x228, FLAG(0x40, 0x2E) }, /* Monmon DDNA, Armormon */
+     { 0x18B, 0x23C, FLAG(0x40, 0x30) }, /* Kumamon DDNA, GrapLeomon */
+     { 0x023, 0x234, FLAG(0x40, 0x32) }, /* Veemon DDNA, Paildramon */
+-    { 0x066, 0x243, FLAG(0x40, 0x56) }, /* Rusty Katana, Zanbamon */
++    { 0x066, 0x243, FLAG(0x40, 0x56), 0x18 }, /* Rusty Katana, Zanbamon (steps 0x08 and 0x18 only) */
+     { 0x074, 0x21C, FLAG(0x40, 0x09) }, /* Rusty Glove, Datamon */
+-    { 0x099, 0x22B, FLAG(0x40, 0x10) }, /* Old Claw, MasterTyranno */
++    { 0x099, 0x22B, FLAG(0x40, 0x10), 0x04 }, /* Old Claw, MasterTyranno (step 0x04 only) */
+     { 0x08D, 0x226, FLAG(0x40, 0x54) }, /* Old Wand, Pharaohmon */
+-    { 0x0DD, 0x26A, FLAG(0x40, 0x19) }, /* Yin Yang Hat, Ice Witch */
+-    { 0x088, 0x26B, FLAG(0x40, 0x40) }, /* Divine Rod, Fire Knight */
+-    { 0x0A3, 0x26C, FLAG(0x40, 0x42) }, /* Brave Sword, Dark Knight */
+-    { 0x030, 0x2D2, FLAG(0x40, 0x83) }, /* MP Chip, Ice Master */
+-    { 0x033, 0x2D3, FLAG(0x40, 0x85) }, /* Mind Chip, Fire Master */
+-    { 0x141, 0x2D4, FLAG(0x40, 0x87) }, /* EXP Adapter, Dark Master */
+-    { 0x18C, 0x293, FLAG(0x40, 0x1D) }, /* Crony ID, Kenny */
 -    { 0x004, 0x229, FLAG(0x1A, 0x28) }, /* Tree Boots, Veemon */
++    { 0x0DD, 0x26A, FLAG(0x40, 0x19), 0x25 }, /* Yin Yang Hat, Ice Witch */
++    { 0x088, 0x26B, FLAG(0x40, 0x40), 0x25 }, /* Divine Rod, Fire Knight */
++    { 0x0A3, 0x26C, FLAG(0x40, 0x42), 0x25 }, /* Brave Sword, Dark Knight */
++    { 0x030, 0x2D2, FLAG(0x40, 0x83), 0x28 }, /* MP Chip, Ice Master */
++    { 0x033, 0x2D3, FLAG(0x40, 0x85), 0x28 }, /* Mind Chip, Fire Master */
++    { 0x141, 0x2D4, FLAG(0x40, 0x87), 0x28 }, /* EXP Adapter, Dark Master */
++    { 0x18C, 0x293, FLAG(0x40, 0x1D), 0x1B }, /* Crony ID, Kenny (step 0x1B only) */
 +    { 0x004, 0x229, FLAG(0x1A, 0x28), 0, 0x192 }, /* Tree Boots, Veemon (Hide's event needs the Folder Bag) */
      { 0x192, 0x211, FLAG(0x40, 0xA1) }, /* Folder Bag, the tamers */
-     { 0x02A, 0x28B, FLAG(0x40, 0x77) }, /* Platinum ID, BK WarGreymon */
-     { 0x0F2, 0x295, FLAG(0x40, 0x79) }, /* Wild Helmet, BK MegaGargomon */
-@@ -461,7 +522,10 @@
+-    { 0x02A, 0x28B, FLAG(0x40, 0x77) }, /* Platinum ID, BK WarGreymon */
+-    { 0x0F2, 0x295, FLAG(0x40, 0x79) }, /* Wild Helmet, BK MegaGargomon */
+-    { 0x0F5, 0x29A, FLAG(0x40, 0x7B) }, /* Hazard Helmet, BK Imperialdramon */
+-    { 0x100, 0x2B0, FLAG(0x40, 0x7D) }, /* Sniper Suit, BK Seraphimon */
+-    { 0x10E, 0x2BC, FLAG(0x40, 0x7F) }, /* Hazard Armor, BK WarGrowlmon */
+-    { 0x142, 0x2BE, FLAG(0x40, 0x81) }, /* BIT Adapter, BK KingNumemon */
++    { 0x02A, 0x28B, FLAG(0x40, 0x77), 0x28 }, /* Platinum ID, BK WarGreymon */
++    { 0x0F2, 0x295, FLAG(0x40, 0x79), 0x24 }, /* Wild Helmet, BK MegaGargomon */
++    { 0x0F5, 0x29A, FLAG(0x40, 0x7B), 0x24 }, /* Hazard Helmet, BK Imperialdramon */
++    { 0x100, 0x2B0, FLAG(0x40, 0x7D), 0x24 }, /* Sniper Suit, BK Seraphimon */
++    { 0x10E, 0x2BC, FLAG(0x40, 0x7F), 0x24 }, /* Hazard Armor, BK WarGrowlmon */
++    { 0x142, 0x2BE, FLAG(0x40, 0x81), 0x24 }, /* BIT Adapter, BK KingNumemon */
+     /* the Undersea Base's, only while the story is there (shops sell both later);
         the Wing Helmet's event follows the fight that sets 0x46 */
      { 0x0CB, 0x2DB, FLAG(0x40, 0x45), 0x20 }, /* Dramon Guard */
      { 0x0F0, 0x2DC, FLAG(0x40, 0x46), 0x20 }, /* Wing Helmet */
@@ -117,7 +152,7 @@
  #define SIDE_QUEST_COUNT (s32)(sizeof SIDE_QUESTS / sizeof SIDE_QUESTS[0])
  #define JOURNAL_MAX (JOURNAL_LAST_STEP + 1 + SIDE_QUEST_COUNT)
  
-@@ -484,26 +548,40 @@
+@@ -484,26 +550,40 @@
      s32 cursor;
      s32 page;
      s32 pageCount;
@@ -164,7 +199,7 @@
  
  static void *journalTexts(void) {
      return (void *)native_packs_text(LANGUAGE);
-@@ -515,10 +593,58 @@
+@@ -515,10 +595,58 @@
      return FLAGS_00.checkCondition((q->mode & 0xFF) | 0x2000, 1) == 1 && GAME.progress <= (q->last ? q->last : ANY_STEP);
  }
  
@@ -223,7 +258,7 @@
  /* The tab's entries */
  static void fillJournal(Journal *journal) {
      s32 i;
-@@ -545,7 +671,14 @@
+@@ -545,7 +673,14 @@
  }
  
  /* An entry's field */
@@ -238,7 +273,7 @@
      return entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode;
  }
  
-@@ -566,30 +699,191 @@
+@@ -566,30 +701,191 @@
      return mode >= 0x200 && mode <= 0x2D6;
  }
  
@@ -437,7 +472,7 @@
  static void showJournalPage(Journal *journal, JournalWindows *windows) {
      TextWindow *window;
      s32 i;
-@@ -600,32 +894,19 @@
+@@ -600,32 +896,19 @@
          window = windows->entries[i];
          if (n >= journal->count) {
              window->setVisible(window, 0);
@@ -473,7 +508,7 @@
      windows->cursor->setVisible(windows->cursor, journal->count != 0);
  }
  
-@@ -633,66 +914,190 @@
+@@ -633,66 +916,190 @@
      s32 i;
  
      if (show) {
@@ -705,7 +740,7 @@
      }
  }
  
-@@ -705,6 +1110,7 @@
+@@ -705,6 +1112,7 @@
      if (PAD_PRESSED(PAD_LEFT) || PAD_PRESSED(PAD_RIGHT)) {
          SOUND.playSound(SOUND_MENU_MOVE);
          journal->tab ^= 1;
@@ -713,7 +748,7 @@
          journal->cursor = 0;
          journal->page = 0;
          fillJournal(journal);
-@@ -723,14 +1129,24 @@
+@@ -723,14 +1131,24 @@
          journal->cursor = journal->cursor < journal->count - 1 ? journal->cursor + 1 : cursor;
      }
      if (cursor == journal->cursor) {
@@ -739,7 +774,7 @@
      showJournalEntry(journal, windows);
      return 1;
  }
-@@ -799,21 +1215,36 @@
+@@ -799,21 +1217,36 @@
          if (FILE_CACHE.isLoading(TEXT_FILE(TEXT_STAGE_NAMES)) || FILE_CACHE.isLoading(TEXT_FILE(TEXT_ITEM_NAMES))) {
              break;
          }
@@ -788,7 +823,7 @@
          windows->cursor->setVisible(windows->cursor, 0);
          journal->nextState(journal);
          break;
-@@ -833,8 +1264,9 @@
+@@ -833,8 +1266,9 @@
      Journal *journal = createTask(updateJournal, sizeof(Journal), sizeof(JournalWindows));
  
      journal->layer = SCREEN_LAYER;

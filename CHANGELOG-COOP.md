@@ -26,6 +26,10 @@ Basado en el port v0.18.9. Red: versión 7, la misma que la v1.2.1.
   tenerlas todas.
 - **El Digilog, en francés, italiano y alemán:** todos sus pasos y misiones, con los nombres de lugares, objetos y
   cartas de cada versión del juego (antes salían en inglés).
+- **Las misiones que ya no se pueden hacer salen de "Activas":** Kenny, los Black Kings, la Bruja de Hielo, los
+  Caballeros, los Maestros, Zanbamon y MasterTyranno solo están en un tramo de la historia. Pasado ese tramo, el
+  Digilog deja de mostrarlas (como ya hacía el port con las de la Base Submarina), en vez de dejarlas pendientes para
+  siempre.
 - **El pie del Digilog ya no se monta:** en español, francés, italiano y alemán la tecla del MAPA pisaba "ACTIVAS /
   HECHAS" (venía así del port). Cuando las cuatro teclas no caben, se quita "ELEGIR" y las pestañas ocupan su sitio.
 - **Por dentro, cada cosa en su sitio** (no cambia nada al jugar):
