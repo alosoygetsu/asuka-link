@@ -4,6 +4,21 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.3.2
+Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problema).
+- **Las misiones de DDNA ya no se dan por hechas antes de tiempo.** Contaban como hechas al conseguir la DDNA del
+  jefe, pero el compañero no se une hasta que se la llevas al investigador DRI. Ahora están hechas cuando el DRI te lo
+  da, y tienen ese último paso.
+- **Los DRI te piden su DDNA aunque ya tengas a ese compañero.** Antes solo se lo pedían a quien no lo tenía, y el
+  jefe de la misión no aparecía nunca. Si ya lo tienes, la misión se hace al conseguir la DDNA.
+- **Cada DRI dice qué nivel de equipo pide.** Solo te hacen el encargo con una suma de niveles del equipo concreta
+  (Johann y Jimmy de 30 a 59; Kazuki y Michael de 45 a 74; Ken, Yuji y Yang de 60 a 89; Bob, menos de 30), y ese
+  paso del Digilog ahora lo dice, con dónde está cada DRI.
+- **Una misión sale en el Digilog en cuanto empiezas su primer paso** (por ejemplo, al hablar con un DRI), no solo al
+  pisar el mapa de su jefe.
+- **La búsqueda de Etemon** (historia, la Máscara Sepik) enseña todos sus pasos: el Sepikmon falso del Puente de
+  Asuka, Etemon diciendo que se fue al Lago Divermon, Nick en el lago y la vuelta con Etemon.
+
 ## v1.3.1
 Basado en el port v0.18.9. Red: versión 8, como la 1.3.0 (se juntan sin problema).
 - **Cuadros negros en el mapa cuando llega otro jugador.** En los mapas grandes (por ejemplo las casas de arena de

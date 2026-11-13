@@ -1,0 +1,106 @@
+--- a/src/stages/central_sector/wstag330.c
++++ b/src/stages/central_sector/wstag330.c
+@@ -133,16 +133,14 @@
+ u16 actor2Talk0Actions[] = { FLAG(2, 1), 1, ITEM(1, 0x2B), 1, SPECIAL(0x13), 1, CODES_END };
+ u16 actor3Talk0Conditions[] = { FLAG(0x1A, 0x1F), 0, CODES_END };
+ u16 actor3Talk0Actions[] = { FLAG(0x1A, 0x1F), 1, CODES_END };
+-u16 actor3Talk1Conditions[] = { FLAG(0x1A, 0x1F), 1, SPECIAL(0x2D), 0, CODES_END };
++u16 actor3Talk1Conditions[] = { FLAG(0x1A, 0x1F), 1, SPECIAL(0x2D), 0, ITEM(0, 0x27), 1, CODES_END };
+ u16 actor3Talk2Conditions[] = {
+     FLAG(0x1A, 0x1F), 1,
+-    SPECIAL(0x2D), 1,
+     SPECIAL(0x26), 0,
+     CODES_END,
+ };
+ u16 actor3Talk3Conditions[] = {
+     SPECIAL(0x26), 1,
+-    SPECIAL(0x2D), 1,
+     FLAG(0x1A, 0x1F), 1,
+     SPECIAL(0x28), 0,
+     CODES_END,
+@@ -150,7 +148,6 @@
+ u16 actor3Talk3Actions[] = { FLAG(6, 2), 1, CODES_END };
+ u16 actor3Talk4Conditions[] = {
+     FLAG(0x1A, 0x1F), 1,
+-    SPECIAL(0x2D), 1,
+     SPECIAL(0x26), 1,
+     SPECIAL(0x28), 1,
+     CODES_END,
+@@ -160,16 +157,14 @@
+ u16 actor4Talk1Conditions[] = { SPECIAL(0xE), 1, CODES_END };
+ u16 actor5Talk0Conditions[] = { FLAG(0x1A, 0x1F), 0, CODES_END };
+ u16 actor5Talk0Actions[] = { FLAG(0x1A, 0x1F), 1, CODES_END };
+-u16 actor5Talk1Conditions[] = { FLAG(0x1A, 0x1F), 1, SPECIAL(0x2D), 0, CODES_END };
++u16 actor5Talk1Conditions[] = { FLAG(0x1A, 0x1F), 1, SPECIAL(0x2D), 0, ITEM(0, 0x27), 1, CODES_END };
+ u16 actor5Talk2Conditions[] = {
+     FLAG(0x1A, 0x1F), 1,
+-    SPECIAL(0x2D), 1,
+     SPECIAL(0x26), 0,
+     CODES_END,
+ };
+ u16 actor5Talk3Conditions[] = {
+     FLAG(0x1A, 0x1F), 1,
+-    SPECIAL(0x2D), 1,
+     SPECIAL(0x26), 1,
+     SPECIAL(0x28), 0,
+     CODES_END,
+@@ -177,7 +172,6 @@
+ u16 actor5Talk3Actions[] = { FLAG(6, 2), 1, CODES_END };
+ u16 actor5Talk4Conditions[] = {
+     FLAG(0x1A, 0x1F), 1,
+-    SPECIAL(0x2D), 1,
+     SPECIAL(0x26), 1,
+     SPECIAL(0x28), 1,
+     CODES_END,
+@@ -187,16 +181,14 @@
+ u16 actor6Talk1Conditions[] = { SPECIAL(0xE), 1, CODES_END };
+ u16 actor7Talk0Conditions[] = { FLAG(0x1A, 0x20), 0, CODES_END };
+ u16 actor7Talk0Actions[] = { FLAG(0x1A, 0x20), 1, CODES_END };
+-u16 actor7Talk1Conditions[] = { FLAG(0x1A, 0x20), 1, SPECIAL(0x36), 0, CODES_END };
++u16 actor7Talk1Conditions[] = { FLAG(0x1A, 0x20), 1, SPECIAL(0x36), 0, ITEM(0, 0x26), 1, CODES_END };
+ u16 actor7Talk2Conditions[] = {
+     FLAG(0x1A, 0x20), 1,
+-    SPECIAL(0x36), 1,
+     SPECIAL(0x26), 0,
+     CODES_END,
+ };
+ u16 actor7Talk3Conditions[] = {
+     FLAG(0x1A, 0x20), 1,
+-    SPECIAL(0x36), 1,
+     SPECIAL(0x26), 1,
+     SPECIAL(0x28), 0,
+     CODES_END,
+@@ -204,7 +196,6 @@
+ u16 actor7Talk3Actions[] = { FLAG(6, 3), 1, CODES_END };
+ u16 actor7Talk4Conditions[] = {
+     FLAG(0x1A, 0x20), 1,
+-    SPECIAL(0x36), 1,
+     SPECIAL(0x26), 1,
+     SPECIAL(0x28), 1,
+     CODES_END,
+@@ -214,16 +205,14 @@
+ u16 actor8Talk1Conditions[] = { SPECIAL(0xF), 1, CODES_END };
+ u16 actor9Talk0Conditions[] = { FLAG(0x1A, 0x20), 0, CODES_END };
+ u16 actor9Talk0Actions[] = { FLAG(0x1A, 0x20), 1, CODES_END };
+-u16 actor9Talk1Conditions[] = { FLAG(0x1A, 0x20), 1, SPECIAL(0x36), 0, CODES_END };
++u16 actor9Talk1Conditions[] = { FLAG(0x1A, 0x20), 1, SPECIAL(0x36), 0, ITEM(0, 0x26), 1, CODES_END };
+ u16 actor9Talk2Conditions[] = {
+     FLAG(0x1A, 0x20), 1,
+-    SPECIAL(0x36), 1,
+     SPECIAL(0x26), 0,
+     CODES_END,
+ };
+ u16 actor9Talk3Conditions[] = {
+     FLAG(0x1A, 0x20), 1,
+-    SPECIAL(0x36), 1,
+     SPECIAL(0x26), 1,
+     SPECIAL(0x28), 0,
+     CODES_END,
+@@ -231,7 +220,6 @@
+ u16 actor9Talk3Actions[] = { FLAG(6, 3), 1, CODES_END };
+ u16 actor9Talk4Conditions[] = {
+     FLAG(0x1A, 0x20), 1,
+-    SPECIAL(0x36), 1,
+     SPECIAL(0x26), 1,
+     SPECIAL(0x28), 1,
+     CODES_END,

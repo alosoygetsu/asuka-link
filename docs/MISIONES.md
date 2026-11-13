@@ -73,11 +73,19 @@ en este orden, porque cada una pide las anteriores: Invencible, Eternamente, Sup
 ## Pasos de las misiones que ya están
 ### DDNA (8): todas siguen el mismo patrón
 1. Hablar con el investigador DRI (marca propia).
-2. Te pide encontrar al Digimon (`F06:0n`). Solo te lo pide si **no tienes** a ese compañero y tu equipo tiene cierto
-   nivel (suma de niveles entre 30 y 60).
+2. Te pide encontrar al Digimon (`F06:0n`) si la suma de niveles del equipo está en su tramo. En el juego original,
+   además, solo si **no tienes** a ese compañero; desde la v1.3.2 lo pide siempre (`coop/patches/src/stages/`: se
+   quita «le falta X» de sus charlas), porque vencer al jefe abre su raid.
 3. Aparece en su mapa (el de la misión): vencerlo (marca `F1c:1x` y combate).
 4. Coger su DDNA (`+objeto`).
-5. Llevárselo al DRI: el compañero se une (`desbloquea`). Hecha.
+5. Llevárselo al DRI: el compañero se une (`desbloquea`). Hecha: en el Digilog, tener la DDNA **y** al compañero
+   (`JOURNAL_PARTNER_DDNA`; la DDNA no se gasta). Antes contaba como hecha al coger la DDNA (`F40:24`…).
+- **Cuándo te hace el encargo cada DRI** (sus charlas; `PROGRESS(n), 0` es «historia ≠ n»):
+  Johann (Valle Tyranno) y Jimmy (Ciudad Seiryu), historia 0x05-0x26, equipo 30-59; Kazuki y Michael (Central Park),
+  0x0E-0x26, 45-74; Ken, Yuji y Yang (entrada del Desierto Mobius, según la puerta), desde 0x0F salvo 0x27-0x28,
+  60-89; Bob (Ruinas Protocolo), 0x11-0x26, **menos de 30**.
+- **Tras el final**, en la Placa de Circuitos (0x2EA/0x2EB), cada jefe da su DDNA y el compañero si tienes a todos a
+  nivel 45 y te falta ese compañero.
 - **Agumon:** DRI Johann en las Ruinas (0x22B) (`F1a:2d`, `F06:00`); MetalGreymon en 0x233 (`F1c:12`).
 - **Veemon:** DRI Bob en las Ruinas Protocolo (0x226) (`F1a:29`, `F06:07`); Paildramon en 0x234 (`F1c:19`).
 
@@ -137,11 +145,14 @@ está hecho cuando su condición se cumple. Abajo, los subpasos de cada paso, co
 ### 0x07-0x09 Zanbamon y la máscara
 1. Zanbamon te corta el paso en la Tumba de la Selva. (`F40:00`, 0x480)
 2. Gatomon dice que Sepikmon, en la Casa del Chamán, sabrá qué hacer. (`F1c:43`, 0x238)
-3. Sepikmon perdió su máscara cuando estaba con Baronmon. (eventos 180/190, Casa del Chamán, 0x475)
+3. Sepikmon perdió su máscara cuando estaba con Baronmon. (evento 180, `F1a:17`, Casa del Chamán, 0x475)
 4. Baronmon, en las Ruinas Protocolo: Sepikmon ha estado haciendo bromas en Ciudad Asuka. (`F1a:18`, 0x226)
-5. Encuentra a Etemon en el Vestíbulo de Asuka. (`F1a:1b`, 0x201)
-6. Recupera la Máscara Sepik de Etemon en las Alcantarillas de Asuka. (`+Máscara Sepik`, 0x21B)
-7. Devuélvesela a Sepikmon. (evento 230, paso 0x0A)
+5. En el Puente de Asuka, un Sepikmon (falso) dice que encontró la máscara. (`F1a:19`, 0x202)
+6. Etemon, en Ciudad Asuka: Sepikmon huyó al Lago Divermon. (`F1a:1a`, 0x201)
+7. En el lago solo está Nick (evento 205: la historia pasa a 0x09). (0x227)
+8. Etemon, otra vez en Ciudad Asuka, muy contento. (`F1a:1b`, 0x201)
+9. Recupera la Máscara Sepik de Etemon en las Alcantarillas de Asuka. (`+Máscara Sepik`, 0x21B)
+10. Devuélvesela a Sepikmon. (evento 230, paso 0x0A)
 
 ### 0x0A Líder Suzaku
 1. Vence al Líder Suzaku en el Salón Suzaku: Pin Suzaku. Para el Sector Oeste hay que llamar a Submarimon. (`F40:02`, 0x240)

@@ -99,6 +99,8 @@ coop = 0 en native.ini apaga el cooperativo.)
    - DIGILOG (en el menú del mapa): cada misión dice en qué paso vas ("Paso 2 de
      5") y qué toca hacer; con □ (Cuadrado) ves todos sus pasos. Las que solo
      se pueden hacer en un tramo de la historia lo avisan.
+     Los investigadores DRI te piden su DDNA aunque ya tengas a ese compañero:
+     así puedes combatir contra su jefe. Su paso dice qué nivel de equipo piden.
    - OPCIONES (pantalla completa, ventana, resolución, botones...): en el menú de
      pausa del mapa (Start), antes de SALIR.
    - Si uno entra en combate, un menú o una cinemática, desaparece para los demás

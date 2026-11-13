@@ -60,9 +60,15 @@ STORY = [
     ([0x07, 0x08, 0x09], [
         (F(0x40, 0x00), S(480), "Zanbamon te corta el paso en la Tumba de la Selva.", "Zanbamon blocks the way at the Jungle Grave."),
         (F(0x1C, 0x43), M(0x238), "Gatomon dice que Sepikmon sabrá qué hacer.", "Gatomon says Sepikmon will know what to do."),
-        (AFTER(0x07), S(475), "Sepikmon perdió su máscara: la tenía con Baronmon.", "Sepikmon lost his mask while with Baronmon."),
+        (F(0x1A, 0x17), S(475), "Sepikmon perdió su máscara: la tenía con Baronmon.", "Sepikmon lost his mask while with Baronmon."),
         (F(0x1A, 0x18), M(0x226), "Baronmon: Sepikmon anda gastando bromas en Asuka.", "Baronmon: Sepikmon is up to pranks in Asuka."),
-        (F(0x1A, 0x1B), M(0x201), "Encuentra a Etemon en el Vestíbulo de Asuka.", "Find Etemon in Asuka's Main Lobby."),
+        (F(0x1A, 0x19), M(0x202), "En el Puente de Asuka, un Sepikmon dice que encontró la máscara.",
+         "On Asuka Bridge, a Sepikmon says he found the mask."),
+        (F(0x1A, 0x1A), M(0x201), "Etemon, en Ciudad Asuka: Sepikmon huyó al Lago Divermon.",
+         "Etemon, in Asuka City: Sepikmon ran to Divermon Lake."),
+        (AFTER(0x08), M(0x227), "Busca a Sepikmon en el Lago Divermon: solo está Nick.",
+         "Look for Sepikmon at Divermon Lake: only Nick is there."),
+        (F(0x1A, 0x1B), M(0x201), "Vuelve a ver a Etemon en Ciudad Asuka.", "See Etemon again in Asuka City."),
         (ITEM(0x015), M(0x21B), "Recupera la Máscara Sepik en las Alcantarillas.", "Get the Sepik Mask back in the Sewers."),
         (AFTER(0x09), S(475), "Devuélvele la máscara a Sepikmon.", "Give the mask back to Sepikmon."),
     ]),
@@ -394,23 +400,37 @@ QUEST_STEPS[0x201] = [
     ]
 ]
 
-# las 8 DDNA: el mismo patrón (docs/MISIONES.md)
-DDNA = [  # DDNA, DRI y su mapa, su marca, la de su encargo, el Digimon y su mapa, la de su combate
-    (0x006, "Johann", M(0x22B), 0x2D, 0, "MetalGreymon", M(0x233), 0x12),
-    (0x022, "Jimmy", M(0x22E), 0x2E, 1, "WarGrowlmon", M(0x23C), 0x13),
-    (0x027, "Kazuki", M(0x21D), 0x1F, 2, "MagnaAngemon", M(0x247), 0x14),
-    (0x026, "Michael", M(0x21D), 0x20, 3, "Taomon", M(0x24A), 0x15),
-    (0x013, "Ken", S(635), 0x2F, 4, "Kyukimon", M(0x241), 0x16),
-    (0x18B, "Yuji", S(635), 0x30, 5, "GrapLeomon", M(0x23C), 0x18),
-    (0x168, "Yang", S(635), 0x31, 6, "Armormon", M(0x228), 0x17),
-    (0x023, "Bob", M(0x226), 0x29, 7, "Paildramon", M(0x234), 0x19),
+# las 8 DDNA: el mismo patrón (docs/MISIONES.md). Hecha cuando el DRI te da al compañero: tener su DDNA y al compañero
+# (PARTNER_DDNA). Desde la v1.3.2 los DRI te hacen el encargo aunque ya lo tengas (coop/patches de sus mapas): el jefe
+# abre su raid, y así la misión se hace al conseguir la DDNA.
+PARTNERS_DDNA = ["Agumon", "Guilmon", "Veemon", "Patamon", "Renamon", "Kotemon", "Monmon", "Kumamon"]  # SPECIAL 0x0B + k: lo tienes
+def PARTNER_DDNA(k, item): return 0xD000 | k << 9 | item  # el Digilog: tener ese objeto y al compañero k
+DDNA = [  # DDNA, DRI y su mapa, su marca, la de su encargo, el Digimon y su mapa, la de su combate, el compañero,
+          # la suma de niveles del equipo con la que te hace el encargo (de, hasta; 0: menos de)
+    (0x006, "Johann", M(0x22B), 0x2D, 0, "MetalGreymon", M(0x233), 0x12, 0, (30, 59)),
+    (0x022, "Jimmy", M(0x22E), 0x2E, 1, "WarGrowlmon", M(0x23C), 0x13, 1, (30, 59)),
+    (0x027, "Kazuki", M(0x21D), 0x1F, 2, "MagnaAngemon", M(0x247), 0x14, 3, (45, 74)),
+    (0x026, "Michael", M(0x21D), 0x20, 3, "Taomon", M(0x24A), 0x15, 4, (45, 74)),
+    (0x013, "Ken", S(635), 0x2F, 4, "Kyukimon", M(0x241), 0x16, 5, (60, 89)),
+    (0x18B, "Yuji", S(635), 0x30, 5, "GrapLeomon", M(0x23C), 0x18, 7, (60, 89)),
+    (0x168, "Yang", S(635), 0x31, 6, "Armormon", M(0x228), 0x17, 6, (60, 89)),
+    (0x023, "Bob", M(0x226), 0x29, 7, "Paildramon", M(0x234), 0x19, 2, (0, 30)),
 ]
-for item, dri, dri_map, talk, ask, mon, mon_map, fight in DDNA:
+DRI_PLACE = {"Johann": ("el Valle Tyranno", "Tyranno Valley"), "Jimmy": ("Ciudad Seiryu", "Seiryu City"),
+             "Kazuki": ("Central Park", "Central Park"), "Michael": ("Central Park", "Central Park"),
+             "Ken": ("el Desierto Mobius", "Mobius Desert"), "Yuji": ("el Desierto Mobius", "Mobius Desert"),
+             "Yang": ("el Desierto Mobius", "Mobius Desert"), "Bob": ("las Ruinas Protocolo", "the Protocol Ruins")}
+for item, dri, dri_map, talk, ask, mon, mon_map, fight, k, (lo, hi) in DDNA:
+    partner = PARTNERS_DDNA[k]
+    es_lv, en_lv = (f"de {lo} a {hi}", f"{lo} to {hi}") if lo else (f"menor de {hi}", f"under {hi}")
     QUEST_STEPS[item] = [
-        (F(0x1A, talk), dri_map, f"Habla con el DRI {dri}.", f"Talk to DRI {dri}."),
-        (F(0x06, ask), dri_map, f"El DRI {dri} te pide que busques a {mon}.", f"DRI {dri} asks you to find {mon}."),
-        (F(0x1C, fight), mon_map, f"Vence a {mon}.", f"Beat {mon}."),
-        (ITEM(item), mon_map, f"{mon} te da su DDNA.", f"{mon} gives you its DDNA."),
+        (F(0x1A, talk), dri_map, f"Habla con el DRI {dri} en {DRI_PLACE[dri][0]}.", f"Talk to DRI {dri} in {DRI_PLACE[dri][1]}."),
+        (F(0x06, ask), dri_map, f"Con niveles del equipo {es_lv} en total, te pide buscar a {mon}.",
+         f"With your team's levels {en_lv} in all, he asks you to find {mon}."),
+        (F(0x1C, fight), mon_map, f"Encuentra a {mon}: te reta.", f"Find {mon}: it challenges you."),
+        (ITEM(item), mon_map, f"Vence a {mon}: te da su DDNA.", f"Beat {mon}: it gives you its DDNA."),
+        (PARTNER_DDNA(k, item), dri_map, f"Lleva la DDNA al DRI {dri}: {partner} se une a ti.",
+         f"Take the DDNA to DRI {dri}: {partner} joins you."),
     ]
 
 
@@ -528,6 +548,8 @@ def main(first_text=FIRST_STEP_TEXT):
          "typedef struct JournalQuest { unsigned short item, mode, done, text, title; } JournalQuest; /* a side quest the port's list hasn't; title: its own, for one without an item (item >= JOURNAL_TITLED) */",
          "#define JOURNAL_TITLED 0x200 /* a quest's key from here on is no item: its title is its own */",
          "#define JOURNAL_ALL 0xE000 /* a quest's done: when all its steps hold, in any order */",
+         "/* a step's or a quest's code: having the item and partner k (special 0x0B + k), the DDNA handed to its DRI */",
+         "#define JOURNAL_PARTNER_DDNA(k, item) (0xD000 | (k) << 9 | (item))",
          "",
          "static const JournalStep JOURNAL_STEPS[] = {"]
     h += [f"    {{0x{c:04X}, 0x{m:03X}, {x}}}," for c, m, x in rows]

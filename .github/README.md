@@ -76,6 +76,7 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 - [x] Completar el Digilog (paneles, fotos de los mapas, objeto que pide cada misión)
 - [x] Pasos en la historia y en todas las misiones del Digilog
 - [x] Encontrar las misiones que el Digilog aún no tiene (y sus pasos, en los 5 idiomas)
+- [x] Misiones de DDNA: hechas cuando el DRI te da al compañero, y con su jefe aunque ya lo tengas
 - [ ] Raids: aviso de turno, objetos y huir
 - [ ] Ver a los amigos en la pantalla del mapa e ir a su mapa
 

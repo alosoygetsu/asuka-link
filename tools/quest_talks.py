@@ -66,7 +66,7 @@ def code(c, v):
     if 0x9200 <= c < 0x9400: return f"CARTA {c & 0x1FF}={v}"
     if 0x7400 <= c < 0x7600: return f"COMBATE {c & 0x1FF}"
     if 0x7600 <= c < 0x7A00: return f"DUELO {c:#x}"
-    if 0x6000 <= c < 0x7000: return f"historia={c & 0xFFF:#x}"
+    if 0x6000 <= c < 0x7000: return f"historia{'=' if v else '!='}{c & 0xFFF:#x}"
     if 0x7000 <= c < 0x7200: return special(c & 0x1FF, v)
     if 0x7200 <= c < 0x7400: return f"equipo{c & 0x1FF}={v}"
     if c < 0x6000: return f"F{c >> 8:02x}:{c & 0xFF:02x}={v}"
