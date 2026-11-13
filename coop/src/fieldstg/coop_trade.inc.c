@@ -76,7 +76,7 @@ static s32 coopRaidOpen(s32 *list) {
         }
     }
     for (i = 0; i < COOP_RAID_BOSSES; i++) {
-        if (i == 0 || coopRaidBosses[i].level <= best + 5) {
+        if (i == 0 || coopRaidBosses[i].level <= best + 5 || native_coop_raid_test() < 0) { /* tests: DW3_COOP_RAID=-1, all */
             list[n++] = i;
         }
     }

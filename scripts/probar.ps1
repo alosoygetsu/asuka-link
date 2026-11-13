@@ -16,7 +16,7 @@
 #   (hablar con el personaje N de dw3.py charlas), text (X hasta que acaben las charlas), wait:N, un botón, f2, digilog (lo vuelca);
 #   la prueba acaba al hacer el último.
 #   -CoopAuto menu|trade|battle|raid|duel cooperativo encendido (solo, sin nadie más) y DW3_COOP_AUTO: el menú del
-#   Guardromon abierto o su elección hecha por sí sola.
+#   Guardromon abierto o su elección hecha por sí sola; todas las raids en su lista (DW3_COOP_RAID=-1).
 #   -Until expresión del log que da la prueba por buena, -Shot captura reducida en test-shots\, -Keep no cierra,
 #   -Log todas las líneas del juego.
 param([Parameter(Position = 0)][ValidateSet("digilog", "campo")][string]$Case = "campo",
@@ -63,6 +63,7 @@ $env:DW3_TEST = @{ digilog = "digilog"; campo = "" }[$Case]
 $env:DW3_COOP_SAVE = $saveArg
 $env:DW3_PRESS = $Press
 $env:DW3_COOP_AUTO = if ($CoopAuto) { $CoopAuto } else { $null }
+$env:DW3_COOP_RAID = if ($CoopAuto) { "-1" } else { $null }  # todas las raids en su lista
 $env:DW3_STEPS = $Steps
 $env:DW3_LANGUAGE = if ($Lang) { "$Lang" } else { $null }
 $gameArgs = @("--field", $Field, "--party", "$Party")
@@ -71,7 +72,7 @@ if ($Progress -ge 0) { $gameArgs += "--progress", "$Progress" }
 if ($Set) { $Set.Split(",") | ForEach-Object { $gameArgs += "--set", $_.Trim() } }
 $game = Start-Process "$dir\dw2003.exe" -ArgumentList $gameArgs -WorkingDirectory $dir -PassThru `
     -RedirectStandardError $out -RedirectStandardOutput "$dir\prueba.out"
-Remove-Item Env:DW3_TEST, Env:DW3_COOP_AUTO, Env:DW3_COOP_SAVE, Env:DW3_PRESS, Env:DW3_STEPS, Env:DW3_LANGUAGE -ErrorAction SilentlyContinue
+Remove-Item Env:DW3_TEST, Env:DW3_COOP_AUTO, Env:DW3_COOP_RAID, Env:DW3_COOP_SAVE, Env:DW3_PRESS, Env:DW3_STEPS, Env:DW3_LANGUAGE -ErrorAction SilentlyContinue
 
 $done = @{ digilog = 'DIGILOG end'; campo = $null }[$Case]
 if ($Steps -and -not $done) { $done = if ($Steps -match 'digilog') { 'DIGILOG end' } else { 'steps: \w+, done' } }

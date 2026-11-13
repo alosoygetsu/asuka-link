@@ -164,22 +164,10 @@ static void coopTradeCardName(s32 card, s32 x, s32 y, s32 palette, s32 maxW) {
     coopTradeText((const u8 *)getString(FILE_CACHE.load(TEXT_FILE(TEXT_CARD_NAMES)), card), x, y, palette, maxW);
 }
 
-/* A short window at the foot: line (built), and the buttons under it */
-static void coopTradeSmall(const u8 *line, s32 cross, s32 circle) {
-    s32 x = 0x18;
-
-    coopTradePanel(0x10, 0xA8, 0x120, 0x34);
-    coopTradeText(line, 0x18, 0xB0, PALETTE_WHITE, 0x110);
-    if (cross >= 0) {
-        x += coopTradeButton(x, 0xC6, COOP_ICON_CROSS, cross);
-    }
-    if (circle >= 0) {
-        coopTradeButton(x, 0xC6, COOP_ICON_CIRCLE, circle);
-    }
-}
-
-/* ---- the Guardromon's menu: the game's own list menu, as its NPCs open it (stages/common/list_menu.inc.c, WSTAG210's
-   guide): its window (MENU_SPRITES' frame for 5 to 8 rows), text windows and cursor, opening and closing as theirs ---- */
+/* ---- the Guardromon's windows: the game's own, as its NPCs open them (stages/common/list_menu.inc.c, WSTAG210's
+   guide): a list (MENU_SPRITES' frame for 5 to 8 rows, text windows, the cursor) and the message box at the foot
+   (sprite 0x45, a text window), each opening and closing as theirs, with their sounds. Each frame coopTradeDraw says
+   what should show (coopWant); the task opens, changes or shuts each part to match ---- */
 
 #define COOP_GUARD_TALK 0
 #define COOP_GUARD_TRADE 1
@@ -188,6 +176,12 @@ static void coopTradeSmall(const u8 *line, s32 cross, s32 circle) {
 #define COOP_GUARD_RAID 4
 #define COOP_GUARD_EXIT 5
 #define COOP_GUARD_ROWS 6
+
+#define COOP_LIST_NONE 0
+#define COOP_LIST_MENU 1 /* the Guardromon's choice */
+#define COOP_LIST_RAIDS 2 /* the raid's boss */
+#define COOP_LIST_ROWS 8 /* the game's list: up to 8 */
+#define COOP_BOX_SIZE 160
 
 /* What the menu offers, row by row (COOP_GUARD_*): how many. The card duel only once the game has opened the cards
    (the Folder Bag, item 0x192: the field menu's Cards with it, main/menu/field_menu.c) */
@@ -205,85 +199,175 @@ static s32 coopGuardOptions(s32 *rows) {
     return n;
 }
 
+/* What should show this frame (coopTradeDraw fills it) */
+static struct {
+    s32 list; /* COOP_LIST_*: another one shuts the one shown and opens itself */
+    s32 rows;
+    const u8 *row[COOP_LIST_ROWS];
+    s32 cursor; /* its row */
+    u8 box[COOP_BOX_SIZE]; /* the message box's text, empty: none */
+} coopWant;
+
+#define COOP_PART_SHUT 0
+#define COOP_PART_OPENING 1
+#define COOP_PART_OPEN 2
+#define COOP_PART_CLOSING 3
+
 typedef struct CoopGuardMenu {
     TASK_HEADER(CoopGuardMenu);
-    s32 count;
-    s32 closing; /* the menu left: shut it */
-    PanelAnim tween; /* the window's width */
+    s32 list, rows; /* the list shown */
+    s32 listPart, boxPart; /* COOP_PART_* */
+    const u8 *shown[COOP_LIST_ROWS];
+    u8 box[COOP_BOX_SIZE];
+    PanelAnim tweens[2]; /* the list's width, the box's */
 } CoopGuardMenu;
 
 typedef struct CoopGuardMenuChildren {
-    TextWindow *options[COOP_GUARD_ROWS];
+    TextWindow *options[COOP_LIST_ROWS];
     Cursor *cursor;
+    TextWindow *message;
 } CoopGuardMenuChildren;
 
 /* MENU_SPRITES' frame of the list's window, by the number of rows (5 to 8: WSTAG210's listWindowFrames) */
 static const s32 coopGuardFrames[4] = {28, 27, 25, 36};
 
+static s32 coopBoxSame(const u8 *a, const u8 *b) {
+    while (*a != 0 && *a == *b) {
+        a++;
+        b++;
+    }
+    return *a == *b;
+}
+
+/* The list: opens what coopWant asks, changes its rows and cursor, shuts it when it asks none or another */
+static void coopGuardList(CoopGuardMenu *task, CoopGuardMenuChildren *children) {
+    s32 i;
+
+    switch (task->listPart) {
+    case COOP_PART_SHUT:
+        if (coopWant.list != COOP_LIST_NONE) {
+            task->list = coopWant.list;
+            task->rows = coopWant.rows;
+            FIELDSTG_tweenStart(&task->tweens[0], 1);
+            task->listPart = COOP_PART_OPENING;
+        }
+        break;
+    case COOP_PART_OPENING:
+        if (FIELDSTG_tweenUpdate(&task->tweens[0])) {
+            for (i = 0; i < COOP_LIST_ROWS; i++) {
+                task->shown[i] = NULL;
+            }
+            task->listPart = COOP_PART_OPEN;
+        }
+        break;
+    case COOP_PART_OPEN:
+        if (coopWant.list != task->list || coopWant.rows != task->rows) {
+            for (i = 0; i < task->rows; i++) {
+                children->options[i]->setVisible(children->options[i], 0);
+            }
+            children->cursor->setVisible(children->cursor, 0);
+            FIELDSTG_tweenStart(&task->tweens[0], 0);
+            task->listPart = COOP_PART_CLOSING;
+            break;
+        }
+        for (i = 0; i < task->rows; i++) {
+            if (task->shown[i] != coopWant.row[i]) {
+                task->shown[i] = coopWant.row[i];
+                children->options[i]->setString(children->options[i], (char *)coopWant.row[i], -1);
+            }
+        }
+        children->cursor->setPos(children->cursor, 0xAF, 0x21 + coopWant.cursor * 14);
+        children->cursor->setVisible(children->cursor, 1);
+        break;
+    case COOP_PART_CLOSING:
+        if (FIELDSTG_tweenUpdate(&task->tweens[0])) {
+            task->listPart = COOP_PART_SHUT;
+        }
+        break;
+    }
+}
+
+/* The message box: the same, with coopWant.box */
+static void coopGuardBox(CoopGuardMenu *task, CoopGuardMenuChildren *children) {
+    s32 i;
+
+    switch (task->boxPart) {
+    case COOP_PART_SHUT:
+        if (coopWant.box[0] != 0) {
+            FIELDSTG_tweenStart(&task->tweens[1], 1);
+            task->boxPart = COOP_PART_OPENING;
+        }
+        break;
+    case COOP_PART_OPENING:
+        if (FIELDSTG_tweenUpdate(&task->tweens[1])) {
+            task->box[0] = 0xFF; /* none written yet */
+            task->box[1] = 0;
+            task->boxPart = COOP_PART_OPEN;
+        }
+        break;
+    case COOP_PART_OPEN:
+        if (coopWant.box[0] == 0) {
+            children->message->setVisible(children->message, 0);
+            FIELDSTG_tweenStart(&task->tweens[1], 0);
+            task->boxPart = COOP_PART_CLOSING;
+        } else if (!coopBoxSame(task->box, coopWant.box)) {
+            for (i = 0; i < COOP_BOX_SIZE; i++) {
+                task->box[i] = coopWant.box[i];
+            }
+            children->message->setString(children->message, (char *)task->box, -1);
+        }
+        break;
+    case COOP_PART_CLOSING:
+        if (FIELDSTG_tweenUpdate(&task->tweens[1])) {
+            task->boxPart = COOP_PART_SHUT;
+        }
+        break;
+    }
+}
+
 static void coopGuardMenuRun(CoopGuardMenu *task, CoopGuardMenuChildren *children) {
-    static const u8 TEXTS[COOP_GUARD_ROWS] = {COOP_TEXT_GUARD_TALK, COOP_TEXT_GUARD_TRADE, COOP_TEXT_GUARD_BATTLE,
-                                              COOP_TEXT_GUARD_DUEL, COOP_TEXT_GUARD_RAID, COOP_TEXT_GUARD_EXIT};
     SpriteDrawer drawer;
-    s32 rows[COOP_GUARD_ROWS];
     s32 i;
 
     switch (task->state) {
     case TASK_INIT:
     default:
         task->nextState(task);
-        task->count = coopGuardOptions(rows);
-        task->tween.duration = 10;
-        for (i = 0; i < task->count; i++) {
+        task->tweens[0].duration = 10;
+        task->tweens[1].duration = 10;
+        for (i = 0; i < COOP_LIST_ROWS; i++) {
             children->options[i] = createTextWindow(FIELD_LAYER_MAP, 1, 0xBD, 0x21 + i * 14);
             children->options[i]->setDepth(children->options[i], 1);
         }
-        children->cursor = createCursor(FIELD_LAYER_MAP, 1, 0xAF, 0x21 + coopTrade.menu * 14);
+        children->cursor = createCursor(FIELD_LAYER_MAP, 1, 0xAF, 0x21);
         children->cursor->setVisible(children->cursor, 0);
+        children->message = createTextWindow(FIELD_LAYER_MAP, 1, 0x12, 0xB0);
+        children->message->setLines(children->message, 3);
         break;
     case TASK_RUN:
-        switch (task->substate) {
-        case 0:
-        default:
-            FIELDSTG_tweenStart(&task->tween, 1);
-            task->substate++;
-            break;
-        case 1:
-            if (FIELDSTG_tweenUpdate(&task->tween)) {
-                coopGuardOptions(rows);
-                for (i = 0; i < task->count; i++) {
-                    children->options[i]->setString(children->options[i], (char *)coopTradeString(TEXTS[rows[i]]), -1);
-                }
-                children->cursor->setVisible(children->cursor, 1);
-                task->substate++;
-            }
-            break;
-        case 2:
-            children->cursor->setPos(children->cursor, 0xAF, 0x21 + coopTrade.menu * 14);
-            if (task->closing) {
-                for (i = 0; i < task->count; i++) {
-                    children->options[i]->setVisible(children->options[i], 0);
-                }
-                children->cursor->setVisible(children->cursor, 0);
-                FIELDSTG_tweenStart(&task->tween, 0);
-                task->substate++;
-            }
-            break;
-        case 3:
-            if (FIELDSTG_tweenUpdate(&task->tween)) {
-                task->state = TASK_KILL;
-            }
+        coopGuardList(task, children);
+        coopGuardBox(task, children);
+        if (task->listPart == COOP_PART_SHUT && task->boxPart == COOP_PART_SHUT && coopWant.list == COOP_LIST_NONE &&
+            coopWant.box[0] == 0) {
+            task->state = TASK_KILL;
             break;
         }
         initSpriteDrawer(&drawer);
         drawer.setLayerId(FIELD_LAYER_MAP, 2);
         drawer.setTexture(0x140, 0);
         drawer.setFollowScroll(0);
-        if (task->tween.level != 0) {
-            if (task->tween.level != ONE) {
-                drawer.setScale(task->tween.level, ONE, ONE);
+        if (task->listPart != COOP_PART_SHUT && task->tweens[0].level != 0) {
+            if (task->tweens[0].level != ONE) {
+                drawer.setScale(task->tweens[0].level, ONE, ONE);
                 drawer.setPivot(0x140, 0x56);
             }
-            drawer.draw(FILE_CACHE.getEntry(FILE_MENU_SPRITES << 16), coopGuardFrames[task->count - 5], 0xA8, 0x18);
+            drawer.draw(FILE_CACHE.getEntry(FILE_MENU_SPRITES << 16), coopGuardFrames[(task->rows < 5 ? 5 : task->rows) - 5],
+                        0xA8, 0x18);
+        }
+        if (task->boxPart != COOP_PART_SHUT && task->tweens[1].level != 0) {
+            drawer.setScale(task->tweens[1].level, ONE, ONE);
+            drawer.setPivot(0, 0xC3); /* as FIELDSTG's questions open theirs (fieldstg/choice.c) */
+            drawer.draw(FILE_CACHE.getEntry(FILE_MENU_SPRITES << 16), 0x45, 0, 0xAC);
         }
         break;
     case TASK_DONE:
@@ -292,16 +376,32 @@ static void coopGuardMenuRun(CoopGuardMenu *task, CoopGuardMenuChildren *childre
     }
 }
 
-/* Each frame: the menu's window open while the Guardromon's choice is, shut (as the game shuts it) after */
+/* list (COOP_LIST_*) open and taking buttons: the game's menus take none while opening */
+static s32 coopGuardListReady(s32 list) {
+    return coopGuardMenu != NULL && coopGuardMenu->state == TASK_RUN && coopGuardMenu->listPart == COOP_PART_OPEN &&
+           coopGuardMenu->list == list && coopWant.list == list;
+}
+
+/* Each frame, after coopTradeDraw: the windows as coopWant says */
 static void coopGuardMenuFrame(void) {
-    if (coopGuardMenu == NULL && coopTrade.phase == COOP_TRADE_MENU) {
+    if (coopGuardMenu == NULL && (coopWant.list != COOP_LIST_NONE || coopWant.box[0] != 0)) {
         coopGuardMenu = createTask(coopGuardMenuRun, sizeof(CoopGuardMenu), sizeof(CoopGuardMenuChildren));
     }
     if (coopGuardMenu != NULL) {
-        if (coopTrade.phase != COOP_TRADE_MENU) {
-            coopGuardMenu->closing = 1;
-        }
         coopGuardMenu = (CoopGuardMenu *)TASK_REGISTRY.funcs.run((Task *)coopGuardMenu);
+    }
+}
+
+/* The message box's text: line, then on a second line a button's icon and its word (-1 none) */
+static void coopWantBox(const u8 *line, s32 icon, s32 word) {
+    u8 button[7] = {0x02, 0x01, 0x01, 0, 0x01, 0x01, 0}; /* a new line, the icon, a space */
+
+    coopWant.box[0] = 0;
+    coopTradeCat(coopWant.box, COOP_BOX_SIZE, line);
+    if (word >= 0) {
+        button[3] = icon;
+        coopTradeCat(coopWant.box, COOP_BOX_SIZE, button);
+        coopTradeCat(coopWant.box, COOP_BOX_SIZE, coopTradeString(word));
     }
 }
 
@@ -337,6 +437,10 @@ static void coopTradeDraw(const NativeCoopTrade *mine, const NativeCoopTrade *in
     s32 x;
     s32 both;
 
+    /* the game's windows (coopGuardMenuRun): what they show this frame */
+    coopWant.list = COOP_LIST_NONE;
+    coopWant.rows = 0;
+    coopWant.box[0] = 0;
     if (coopTrade.phase == COOP_TRADE_NONE) {
         if (coopTrade.msgFrames > 0) {
             buf[0] = 0;
@@ -344,45 +448,55 @@ static void coopTradeDraw(const NativeCoopTrade *mine, const NativeCoopTrade *in
                 coopTradeCat(buf, sizeof buf, coopTradeName(coopTrade.msgPeer, name));
             }
             coopTradeCat(buf, sizeof buf, coopTradeString(coopTrade.msg));
-            coopTradeSmall(buf, -1, -1);
+            coopWantBox(buf, 0, -1);
         }
         return;
     }
     if (coopTrade.phase == COOP_TRADE_MENU) {
-        return; /* the game's list menu (coopGuardMenuRun) */
+        static const u8 TEXTS[COOP_GUARD_ROWS] = {COOP_TEXT_GUARD_TALK, COOP_TEXT_GUARD_TRADE, COOP_TEXT_GUARD_BATTLE,
+                                                  COOP_TEXT_GUARD_DUEL, COOP_TEXT_GUARD_RAID, COOP_TEXT_GUARD_EXIT};
+        s32 rows[COOP_GUARD_ROWS];
+
+        coopWant.list = COOP_LIST_MENU;
+        coopWant.rows = coopGuardOptions(rows);
+        for (i = 0; i < coopWant.rows; i++) {
+            coopWant.row[i] = coopTradeString(TEXTS[rows[i]]);
+        }
+        coopWant.cursor = coopTrade.menu;
+        return;
     }
     if (coopTrade.phase == COOP_TRADE_RAID_PICK) {
+        /* the bosses in the list, the one under the cursor (its whole name) and its level in the box */
         s32 open[COOP_RAID_BOSSES];
         s32 count = coopRaidOpen(open);
-        u8 num[8];
+        const u8 *bossName;
 
-        coopTradePanel(0x10, 0x2C, 0x120, 0x2A + (count < COOP_RAID_ROWS ? count : COOP_RAID_ROWS) * 14);
-        coopTradeText(coopTradeString(COOP_TEXT_GUARD_RAID), 0x18, 0x32, PALETTE_YELLOW, 0);
-        coopTradeRect(0x18, 0x42, 0x110, 1, 0x60, 0x50, 0x20, 0);
+        coopWant.list = COOP_LIST_RAIDS;
         for (i = 0; i < COOP_RAID_ROWS && coopTrade.raidTop + i < count; i++) {
-            const CoopRaidBoss *boss = &coopRaidBosses[open[coopTrade.raidTop + i]];
-            s32 y = 0x48 + i * 14;
-            s32 on = coopTrade.raidTop + i == coopTrade.raidCursor;
-
-            if (on) {
-                coopTradeRect(0x16, y - 1, 0x110, 12, 0x20, 0x38, 0x80, 0);
-            }
-            coopTradeText((const u8 *)getString(FILE_CACHE.load(TEXT_FILE(TEXT_DIGIMON_NAMES)), boss->nameId), 0x1C, y,
-                          on ? PALETTE_YELLOW : PALETTE_WHITE, 0xB8);
-            coopTradeText(coopTradeString(COOP_TEXT_RAID_LEVEL), 0xE0, y, PALETTE_GREY, 0);
-            coopTradeNumber(num, 0, boss->level);
-            coopTradeText(num, 0xF8, y, on ? PALETTE_YELLOW : PALETTE_WHITE, 0);
+            coopWant.row[i] = (const u8 *)getString(FILE_CACHE.load(TEXT_FILE(TEXT_DIGIMON_NAMES)),
+                                                    coopRaidBosses[open[coopTrade.raidTop + i]].nameId);
         }
+        coopWant.rows = i;
+        coopWant.cursor = coopTrade.raidCursor - coopTrade.raidTop;
+        bossName = (const u8 *)getString(FILE_CACHE.load(TEXT_FILE(TEXT_DIGIMON_NAMES)),
+                                         coopRaidBosses[open[coopTrade.raidCursor]].nameId);
+        buf[0] = 0;
+        coopTradeCat(buf, sizeof buf, bossName);
+        coopTradeCat(buf, sizeof buf, (const u8 *)"\x01\x01\x01\x01");
+        coopTradeCat(buf, sizeof buf, coopTradeString(COOP_TEXT_RAID_LEVEL));
+        coopTradeCat(buf, sizeof buf, (const u8 *)"\x01\x01"); /* "Lv 17" */
+        coopTradeNumber(num, 0, coopRaidBosses[open[coopTrade.raidCursor]].level);
+        coopTradeCat(buf, sizeof buf, num);
+        coopWantBox(buf, COOP_ICON_CIRCLE, COOP_TEXT_TRADE_LEAVE);
         return;
     }
     if (coopTrade.kind >= 1 && coopTrade.phase >= COOP_TRADE_OPEN) {
-        coopTradeSmall(coopTradeString(COOP_TEXT_GUARD_PREPARING), -1, COOP_TEXT_TRADE_LEAVE);
+        coopWantBox(coopTradeString(COOP_TEXT_GUARD_PREPARING), COOP_ICON_CIRCLE, COOP_TEXT_TRADE_LEAVE);
         return;
     }
     if (coopTrade.phase == COOP_TRADE_ASK && coopTrade.kind == 2) {
         /* the raid's room: "Waiting for another player... 2/4  9" */
         u8 line[96];
-        u8 num[8];
         s32 secs = coopTrade.roomCount >= 2 ? (COOP_ROOM_WAIT - coopTrade.roomFrames + 59) / 60 : 0;
 
         line[0] = 0;
@@ -396,11 +510,11 @@ static void coopTradeDraw(const NativeCoopTrade *mine, const NativeCoopTrade *in
             coopTradeNumber(num, 0, secs > 99 ? 99 : secs);
             coopTradeCat(line, sizeof line, num);
         }
-        coopTradeSmall(line, -1, COOP_TEXT_TRADE_LEAVE);
+        coopWantBox(line, COOP_ICON_CIRCLE, COOP_TEXT_TRADE_LEAVE);
         return;
     }
     if (coopTrade.phase == COOP_TRADE_ASK) {
-        coopTradeSmall(coopTradeString(COOP_TEXT_GUARD_WAIT_OTHER), -1, COOP_TEXT_TRADE_LEAVE);
+        coopWantBox(coopTradeString(COOP_TEXT_GUARD_WAIT_OTHER), COOP_ICON_CIRCLE, COOP_TEXT_TRADE_LEAVE);
         return;
     }
     /* the trade: the title and who with, the two offers, the spare cards, a note, the buttons */

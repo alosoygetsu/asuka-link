@@ -55,7 +55,7 @@ static void coopTradeUpdate(void) {
             s32 count = coopGuardOptions(rows);
             s32 prev = coopTrade.menu;
 
-            if (coopGuardMenu == NULL || coopGuardMenu->state != TASK_RUN || coopGuardMenu->substate != 2) {
+            if (!coopGuardListReady(COOP_LIST_MENU)) {
                 break; /* its window still opening: the game's menus take no button yet */
             }
             if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP)) {
@@ -96,11 +96,20 @@ static void coopTradeUpdate(void) {
         case COOP_TRADE_RAID_PICK: {
             s32 open[COOP_RAID_BOSSES];
             s32 count = coopRaidOpen(open);
+            s32 prev = coopTrade.raidCursor;
 
-            if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP) || PAD_PRESSED(PAD_DOWN) || PAD_REPEATED(PAD_DOWN)) {
-                coopTrade.raidCursor = (coopTrade.raidCursor + (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP) ? count - 1 : 1)) % count;
+            if (!coopGuardListReady(COOP_LIST_RAIDS)) {
+                break; /* its window still opening (or the menu's still shutting) */
+            }
+            /* as the game's list menus: the cursor stops at the ends, held buttons repeat */
+            if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP)) {
+                coopTrade.raidCursor = coopTrade.raidCursor > 0 ? coopTrade.raidCursor - 1 : 0;
+            } else if (PAD_PRESSED(PAD_DOWN) || PAD_REPEATED(PAD_DOWN)) {
+                coopTrade.raidCursor = coopTrade.raidCursor < count - 1 ? coopTrade.raidCursor + 1 : count - 1;
+            }
+            if (prev != coopTrade.raidCursor) {
                 SOUND.playSound(SOUND_CURSOR);
-            } else if (PAD_PRESSED(PAD_CIRCLE)) {
+            } else if (PAD_PRESSED(PAD_CIRCLE) || PAD_PRESSED(PAD_TRIANGLE)) {
                 coopTrade.phase = COOP_TRADE_MENU; /* back to the Guardromon's choice */
                 SOUND.playSound(SOUND_MENU_CANCEL);
             } else if (PAD_PRESSED(PAD_CROSS)) {
@@ -292,8 +301,8 @@ static void coopTradeUpdate(void) {
         coopTradeOffer(&out);
     }
     native_coop_tags_block(coopTrade.phase != COOP_TRADE_NONE || coopTrade.msgFrames > 0 || coopGuardMenu != NULL);
+    coopTradeDraw(&out, &in); /* the custom trade window, and what the game's windows show (coopWant) */
     coopGuardMenuFrame();
-    coopTradeDraw(&out, &in);
 }
 
 /* Every frame of the running field: the player's state out, the others' in */
