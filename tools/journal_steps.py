@@ -83,9 +83,9 @@ STORY = [
         (F(0x1C, 0x0E), S(305), "En la Sala Maestra os pilla el Maestro de Juego.", "The Game Master catches you in the Master Room."),
     ]),
     ([0x0E], [
-        (F(0x1A, 0x2B), None, "Te piden una bomba para abrir un muro.", "You need a bomb to open a wall."),
+        (F(0x1A, 0x2B), S(475), "Te piden una bomba para abrir un muro.", "You need a bomb to open a wall."),
         (F(0x1C, 0x4F), M(0x226), "Baronmon haría un Chip TNT con una Bola TNT.", "Baronmon could make a TNT Chip from a TNT Ball."),
-        (ITEM(0x05A), None, "Los Triceramon del Valle Tyranno sueltan Bolas TNT.", "Triceramon in Tyranno Valley drop TNT Balls."),
+        (ITEM(0x05A), M(0x22B), "Los Triceramon del Valle Tyranno sueltan Bolas TNT.", "Triceramon in Tyranno Valley drop TNT Balls."),
         (ITEM(0x00E), M(0x226), "Baronmon te hace el Chip TNT.", "Baronmon makes you the TNT Chip."),
         (F(0x40, 0x07), S(455), "Pon el Chip TNT en el muro del Pantano Bios.", "Set the TNT Chip on the wall in Bios Swamp."),
     ]),
@@ -163,11 +163,11 @@ NEW_QUESTS = [
 QUEST_STEPS = {
     0x005: [
         (F(0x1A, 0x36), M(0x21F), "Habla con Tai Kong Wang en Shell Beach.", "Talk to Tai Kong Wang at Shell Beach."),
-        (ITEM(0x192), None, "Consigue la Bolsa de Carpetas.", "Get the Folder Bag."),
+        (ITEM(0x192), M(0x211), "Consigue la Bolsa de Carpetas.", "Get the Folder Bag."),
         (F(0x1A, 0x21), M(0x21F), "Te hará una caña: necesita materiales.", "She'll make a pole: she needs materials."),
         (F(0x1A, 0x2C), M(0x227), "Ayuda a Divermon en su lago: un Pez Rojo.", "Help Divermon at his lake: a Red Snapper."),
-        (ITEM(0x059), None, "Los Dokugumon del Bosque Protocolo sueltan Tela de Araña.", "Dokugumon in Protocol Forest drop Spider Web."),
-        (ITEM(0x0A7), None, "Compra una Jabalina de Bambú en Ciudad Asuka.", "Buy a Bamboo Spear in Asuka City."),
+        (ITEM(0x059), S(370), "Los Dokugumon del Bosque Protocolo sueltan Tela de Araña.", "Dokugumon in Protocol Forest drop Spider Web."),
+        (ITEM(0x0A7), M(0x201), "Compra una Jabalina de Bambú en Ciudad Asuka.", "Buy a Bamboo Spear in Asuka City."),
         (ITEM(0x005), M(0x21F), "Llévale los tres materiales a Tai Kong Wang.", "Bring the three materials to Tai Kong Wang."),
     ],
     0x008: [
@@ -176,11 +176,11 @@ QUEST_STEPS = {
         (ITEM(0x008), M(0x213), "Ponchomon te da el ID El Dorado.", "Ponchomon gives you the El Dorado ID."),
     ],
     0x012: [
-        (F(0x1A, 0x3B), M(0x228), "Gana al primer Divermon a las cartas.", "Beat the first Divermon at cards."),
-        (F(0x1A, 0x3A), M(0x228), "Gana al segundo Divermon.", "Beat the second Divermon."),
+        (F(0x1A, 0x37), M(0x228), "Gana al primer Divermon a las cartas.", "Beat the first Divermon at cards."),
+        (F(0x1A, 0x38), M(0x228), "Gana al segundo Divermon.", "Beat the second Divermon."),
         (F(0x1A, 0x39), M(0x228), "Gana al tercer Divermon.", "Beat the third Divermon."),
-        (F(0x1A, 0x38), M(0x228), "Gana al cuarto Divermon.", "Beat the fourth Divermon."),
-        (F(0x1A, 0x37), M(0x228), "Gana al quinto Divermon.", "Beat the fifth Divermon."),
+        (F(0x1A, 0x3A), M(0x228), "Gana al cuarto Divermon.", "Beat the fourth Divermon."),
+        (F(0x1A, 0x3B), M(0x228), "Gana al quinto Divermon.", "Beat the fifth Divermon."),
         (ITEM(0x012), M(0x228), "Gana a KingDivermon: Trofeo Asuka.", "Beat KingDivermon: Asuka Trophy."),
     ],
     0x014: [
@@ -209,58 +209,58 @@ SP = lambda i: 0x7000 | i  # una condición especial: un compañero a nivel 45
 QUEST_STEPS.update({
     0x069: [
         (ITEM(0x066), M(0x243), "Vence a Zanbamon en la Catacumba: Katana Oxidada.", "Beat Zanbamon in the Catacomb: Rusty Katana."),
-        (ITEM(0x063), None, "Compra el Onimaru en la Torre Delirios, Amaterasu.", "Buy the Onimaru in Delirium Tower, Amaterasu."),
+        (ITEM(0x063), S(646), "Compra el Onimaru en la Torre Delirios, Amaterasu.", "Buy the Onimaru in Delirium Tower, Amaterasu."),
         (ITEM(0x067), M(0x2A9), "Kabukimon forja el Kotetsu, Jungla de Éter, Amaterasu.", "Kabukimon forges the Kotetsu, Ether Jungle, Amaterasu."),
         (SP(0x4A), None, "Sube a Kotemon a nivel 45.", "Raise Kotemon to level 45."),
         (ITEM(0x064), M(0x2DA), "Consigue el Tenjinmaru, Magasta B1F.", "Get the Tenjinmaru, Magasta B1F."),
         (ITEM(0x068), M(0x2BF), "Yashamon forja el Masamune, Sala Secreta, Amaterasu.", "Yashamon forges the Masamune, Secret Room, Amaterasu."),
-        (ITEM(0x065), None, "Compra el Acero Fujin en Ciudad Amaterasu.", "Buy the Fuujin Blade in Amaterasu City."),
+        (ITEM(0x065), S(201), "Compra el Acero Fujin en Ciudad Amaterasu.", "Buy the Fuujin Blade in Amaterasu City."),
         (ITEM(0x069), M(0x269), "MetalEtemon forja la Muramasa: la última de las cinco.", "MetalEtemon forges the Muramasa: the last of the five."),
     ],
     0x077: [
         (ITEM(0x074), M(0x21C), "Vence a Datamon en Ciudad Asuka: Guante Oxidado.", "Beat Datamon in Asuka City: Rusty Glove."),
-        (ITEM(0x071), None, "Compra el Puño Kaiser en la Torre Delirios, Amaterasu.", "Buy the Kaiser Fist in Delirium Tower, Amaterasu."),
+        (ITEM(0x071), S(646), "Compra el Puño Kaiser en la Torre Delirios, Amaterasu.", "Buy the Kaiser Fist in Delirium Tower, Amaterasu."),
         (ITEM(0x075), M(0x2B0), "Nohemon forja el Zodiaco, Catacumbas, Amaterasu.", "Nohemon forges the Zodiac, Catacomb, Amaterasu."),
         (SP(0x4C), None, "Sube a Kumamon a nivel 45.", "Raise Kumamon to level 45."),
-        (ITEM(0x072), None, "Compra el Brazo Tempest en Bai Hu o Xuan Wu.", "Buy the Tempest Arm in Bai Hu or Xuan Wu."),
-        (ITEM(0x076), None, "Seehomon forja la Prominencia, bucea en Central Park.", "Seehomon forges the Prominence, dive in Central Park."),
-        (ITEM(0x073), None, "Compra el Puño Raijin en Ciudad Amaterasu.", "Buy the Raijin Fist in Amaterasu City."),
+        (ITEM(0x072), S(761), "Compra el Brazo Tempest en Bai Hu o Xuan Wu.", "Buy the Tempest Arm in Bai Hu or Xuan Wu."),
+        (ITEM(0x076), M(0x2E4), "Seehomon forja la Prominencia, bucea en Central Park.", "Seehomon forges the Prominence, dive in Central Park."),
+        (ITEM(0x073), S(201), "Compra el Puño Raijin en Ciudad Amaterasu.", "Buy the Raijin Fist in Amaterasu City."),
         (ITEM(0x077), M(0x269), "MetalEtemon forja la Super Nova, pide Invencible y Eternamente.", "MetalEtemon forges the Super Nova, needs Invincible, Eternally."),
     ],
     0x083: [
         (ITEM(0x080), M(0x252), "Vence a HiAndromon, Fábrica Dum Dum: Rifle Oxidado.", "Beat HiAndromon, Dum Dum Factory: Rusty Rifle."),
-        (ITEM(0x07D), None, "Compra el Cañón Racimo en la Torre Delirios, Amaterasu.", "Buy the Cluster Cannon in Delirium Tower, Amaterasu."),
+        (ITEM(0x07D), S(646), "Compra el Cañón Racimo en la Torre Delirios, Amaterasu.", "Buy the Cluster Cannon in Delirium Tower, Amaterasu."),
         (ITEM(0x081), M(0x2AE), "Shurimon forja la Justicia, Lago SB Zhu Que.", "Shurimon forges the Justice, Zhu Que UG Lake."),
         (SP(0x4B), None, "Sube a Monmon a nivel 45.", "Raise Monmon to level 45."),
-        (ITEM(0x07E), None, "Consigue el Cañón Láser.", "Get the Laser Cannon."),
+        (ITEM(0x07E), S(761), "Compra el Cañón Láser en Bai Hu o Xuan Wu.", "Buy the Laser Cannon in Bai Hu or Xuan Wu."),
         (ITEM(0x082), M(0x2C1), "Sagitarimon forja el Juicio, Desierto Mobius, Amaterasu.", "Sagittarimon forges the Judgment, Mobius Desert, Amaterasu."),
-        (ITEM(0x07F), None, "Compra el Cañón Suijin en Ciudad Amaterasu.", "Buy the Suijin Cannon in Amaterasu City."),
+        (ITEM(0x07F), S(201), "Compra el Cañón Suijin en Ciudad Amaterasu.", "Buy the Suijin Cannon in Amaterasu City."),
         (ITEM(0x083), M(0x269), "MetalEtemon forja el Castigo, pide Invencible, Eternamente, Super Nova.", "MetalEtemon forges the Punishment, needs the three before."),
     ],
     0x090: [
         (ITEM(0x08D), M(0x226), "Vence a Pharaohmon en las Ruinas Protocolo: Varita Vieja.", "Beat Pharaohmon at the Protocol Ruins: Old Wand."),
-        (ITEM(0x08A), None, "Compra la Khakkhara en la Torre Delirios, Amaterasu.", "Buy the Khakkhara in Delirium Tower, Amaterasu."),
+        (ITEM(0x08A), S(646), "Compra la Khakkhara en la Torre Delirios, Amaterasu.", "Buy the Khakkhara in Delirium Tower, Amaterasu."),
         (ITEM(0x08E), M(0x295), "Ponchomon forja el Brillo, con Patamon o Renamon.", "Ponchomon forges the Twinkle, with Patamon or Renamon."),
-        (ITEM(0x08B), None, "Compra la Vara Cristal en Bai Hu o Xuan Wu.", "Buy the Crystal Rod in Bai Hu or Xuan Wu."),
+        (ITEM(0x08B), S(761), "Compra la Vara Cristal en Bai Hu o Xuan Wu.", "Buy the Crystal Rod in Bai Hu or Xuan Wu."),
         (ITEM(0x08F), M(0x2CD), "Kongoumon forja el Inmaculado, compañero a nivel 45.", "Kongoumon forges the Immaculate, partner at level 45."),
-        (ITEM(0x08C), None, "Compra el Milenio en Ciudad Amaterasu.", "Buy the Millenium in Amaterasu City."),
+        (ITEM(0x08C), S(201), "Compra el Milenio en Ciudad Amaterasu.", "Buy the Millenium in Amaterasu City."),
         (ITEM(0x090), M(0x269), "MetalEtemon forja el Eternamente, pide Invencible.", "MetalEtemon forges the Eternally, needs Invincible."),
     ],
     0x09C: [
         (ITEM(0x099), M(0x22B), "Vence a MasterTyranno en el Valle Tyranno: Garra Antigua.", "Beat MasterTyranno in Tyranno Valley: Old Claw."),
-        (ITEM(0x096), None, "Compra el Colmillo Sable en la Torre Delirios, Amaterasu.", "Buy the Saber Fang in Delirium Tower, Amaterasu."),
+        (ITEM(0x096), S(646), "Compra el Colmillo Sable en la Torre Delirios, Amaterasu.", "Buy the Saber Fang in Delirium Tower, Amaterasu."),
         (ITEM(0x09A), M(0x2BE), "Shadramon forja el Vencer, con Agumon, Guilmon o Veemon.", "Shadramon forges the Vanquish, Agumon, Guilmon or Veemon."),
-        (ITEM(0x097), None, "Compra el Colmillo Veneno en Bai Hu o Xuan Wu.", "Buy the Venom Fang in Bai Hu or Xuan Wu."),
-        (ITEM(0x09B), None, "Depthmon forja la Destrucción, buceando, compañero a nivel 45.", "Depthmon forges the Destruction, diving, partner at level 45."),
-        (ITEM(0x098), None, "Compra el Colmillo Oculto en Ciudad Amaterasu.", "Buy the Hidden Fang in Amaterasu City."),
+        (ITEM(0x097), S(761), "Compra el Colmillo Veneno en Bai Hu o Xuan Wu.", "Buy the Venom Fang in Bai Hu or Xuan Wu."),
+        (ITEM(0x09B), M(0x2E4), "Depthmon forja la Destrucción, buceando, compañero a nivel 45.", "Depthmon forges the Destruction, diving, partner at level 45."),
+        (ITEM(0x098), S(201), "Compra el Colmillo Oculto en Ciudad Amaterasu.", "Buy the Hidden Fang in Amaterasu City."),
         (ITEM(0x09C), M(0x269), "MetalEtemon forja el Invencible: la primera de las cinco.", "MetalEtemon forges the Invincible: the first of the five."),
     ],
     # las Botas Árbol (ya en el Digilog del port; sus pasos)
     0x004: [
         (F(0x1A, 0x22), M(0x220), "Un chico en la Capa de Conexión quiere su carta de Gabumon.", "A boy at Plug Cape wants his Gabumon card."),
-        (F(0x1A, 0x23), None, "La carta está en la Posada de Asuka, abajo.", "The card is downstairs in the Asuka Inn."),
+        (F(0x1A, 0x23), S(235), "La carta está en la Posada de Asuka, abajo.", "The card is downstairs in the Asuka Inn."),
         (F(0x1A, 0x24), M(0x220), "Dásela: te manda a hablar con Veemon.", "Give it to him: he sends you to Veemon."),
-        (F(0x1A, 0x25), None, "En la taberna de Asuka vieron a Veemon en la Pradera del Viento.", "At Asuka's tavern they saw Veemon on the Wind Prairie."),
+        (F(0x1A, 0x25), S(255), "En la taberna de Asuka vieron a Veemon en la Pradera del Viento.", "At Asuka's tavern they saw Veemon on the Wind Prairie."),
         (F(0x1A, 0x26), M(0x229), "Encuentra a Veemon pateando árboles en el Bosque de las Patadas.", "Find Veemon by kicking trees in Kicking Forest."),
         (ITEM(0x004), M(0x229), "Veemon te da las botas para patear árboles.", "Veemon gives you the Tree Boots."),
     ],
@@ -418,8 +418,11 @@ DDNA = [  # DDNA, DRI y su mapa, su marca, la de su encargo, el Digimon y su map
 ]
 DRI_PLACE = {"Johann": ("el Valle Tyranno", "Tyranno Valley"), "Jimmy": ("Ciudad Seiryu", "Seiryu City"),
              "Kazuki": ("Central Park", "Central Park"), "Michael": ("Central Park", "Central Park"),
-             "Ken": ("el Desierto Mobius", "Mobius Desert"), "Yuji": ("el Desierto Mobius", "Mobius Desert"),
-             "Yang": ("el Desierto Mobius", "Mobius Desert"), "Bob": ("las Ruinas Protocolo", "the Protocol Ruins")}
+             # the Mobius Desert's way in is 8 rooms of a loop (place points, wstag635/640): Ken in the first one, from S
+             # Noise Desert; Yuji and Yang in the 4th and the 7th
+             "Ken": ("la entrada del Desierto Mobius", "Mobius Desert's way in"),
+             "Yuji": ("el interior del Desierto Mobius", "the depths of Mobius Desert"),
+             "Yang": ("el interior del Desierto Mobius", "the depths of Mobius Desert"), "Bob": ("las Ruinas Protocolo", "the Protocol Ruins")}
 for item, dri, dri_map, talk, ask, mon, mon_map, fight, k, (lo, hi) in DDNA:
     partner = PARTNERS_DDNA[k]
     es_lv, en_lv = (f"de {lo} a {hi}", f"{lo} to {hi}") if lo else (f"menor de {hi}", f"under {hi}")

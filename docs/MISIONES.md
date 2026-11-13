@@ -31,8 +31,9 @@ Candidatos completos (los 77 objetos que da un personaje): [misiones-candidatas.
 3. Te da el ID El Dorado (`+0x008`). Hecha. Abre el club de Mike el Rapero.
 
 ### Trofeo Asuka (Duel Island, 0x228; torneo de cartas)
-1. Ganar a los 5 Divermon de la isla en duelo de cartas: `F1a:37`, `F1a:38`, `F1a:39`, `F1a:3a`, `F1a:3b` (un paso que
-   cuenta cuántos llevas).
+1. Ganar a los 5 Divermon de la isla en duelo de cartas, que cortan las escaleras de su torre: de abajo arriba,
+   `F1a:37`, `F1a:38`, `F1a:39`, `F1a:3a` y `F1a:3b` (por sus sitios en `wstag385`; el orden es obligado). Los 4 Etemon
+   del Trofeo Sol (`wstag386`), igual: `F1a:3c` a `F1a:3f` y MetalEtemon `F1a:40`.
 2. Ganar a KingDivermon: Trofeo Asuka (`+0x012`, `F1c:53`). Hecha. Al ganar, las 5 marcas vuelven a 0.
 
 ### Trofeo Sol (0x297; torneo de cartas)
@@ -95,7 +96,12 @@ en este orden, porque cada una pide las anteriores: Invencible, Eternamente, Sup
 - **Kotemon:** DRI Ken (`F1a:2f`, `F06:04`, equipo 60-90); Kyukimon en 0x241 (`F1c:16`).
 - **Kumamon:** DRI Yuji (`F1a:30`, `F06:05`, equipo 60-90); GrapLeomon en 0x23C (`F1c:18`).
 - **Monmon:** DRI Yang (`F1a:31`, `F06:06`, equipo 60-90); Armormon en 0x228 (`F1c:17`).
-- Los DRI están en los mapas 0x21D, 0x22E, 0x258 (por asignar a cada uno).
+- Los DRI están en los mapas 0x21D, 0x22E, 0x258. El 0x258 (entrada del Desierto Mobius, `wstag635`) y el 0x259
+  (`wstag640`) son un laberinto de 8 salas cada uno (`placePoints`, la sala en `GAME.placeArg`): Ken en la sala 1 (la
+  de S Noise Desert, 0x257), Yuji en la 4 y Yang en la 7 (`WARP_ARG(0x1E/0x21/0x24)`). Las salidas se cruzan con X.
+- **Tiendas** (`stitshop/data/stitshop.c`): el Cañón Láser, con el Tenjinmaru, el Brazo Tempest, la Vara Cristal y
+  el Colmillo Veneno, en las tiendas 26 y 28 (Bai Hu y Xuan Wu); los de la Torre Delirios, en la 25; los finales, en
+  la 15.
 
 ## Herreros: uno por compañero
 Cada mejora la hacen herreros distintos según el compañero que lleves (por ejemplo Vencer: Shadramon con Agumon en

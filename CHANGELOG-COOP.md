@@ -18,6 +18,14 @@ Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problem
   pisar el mapa de su jefe.
 - **La búsqueda de Etemon** (historia, la Máscara Sepik) enseña todos sus pasos: el Sepikmon falso del Puente de
   Asuka, Etemon diciendo que se fue al Lago Divermon, Nick en el lago y la vuelta con Etemon.
+- **Trofeo Asuka:** los Divermon de la Isla del Duelo iban al revés en el Digilog. Ahora el primero es el del pie de
+  la escalera, y el paso avanza al ganarle.
+- **Más pasos con su mapa:** la bomba de Sepikmon, las Bolas TNT, la Bolsa de Carpetas, la Tela de Araña, la
+  Jabalina, la carta de Gabumon, la taberna, Seehomon y Depthmon, y las compras de las cadenas de armas (Torre
+  Delirios, Xuan Wu, Ciudad Amaterasu).
+- **El Cañón Láser** (cadena de Monmon) se compra en Bai Hu o Xuan Wu, y su paso lo dice.
+- **Ken, Yuji y Yang:** Ken está en la primera sala del Desierto Mobius y Yuji y Yang más adentro, y sus pasos lo
+  dicen.
 
 ## v1.3.1
 Basado en el port v0.18.9. Red: versión 8, como la 1.3.0 (se juntan sin problema).
