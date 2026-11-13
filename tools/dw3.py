@@ -858,6 +858,13 @@ def exits_graph(extra=False):
     return out
 
 
+def stage_mode(stage):
+    """el modo de un mapa (euModes[0][0] de su JSON), en hex; '?' si no tiene"""
+    d = stages_json().get(stage) or {}
+    modes = d.get("euModes") or d.get("modes") or []
+    return f"{modes[0][0]:#x}" if modes else "?"
+
+
 def mode_label(g, m):
     if m not in g:
         return f"{m:#x}"
@@ -882,7 +889,17 @@ def cmd_salidas(args):
         for z, ms in sorted(by_zone.items()):
             print(f"  {z}: {len(ms)} modos ({min(ms):#x}-{max(ms):#x})")
         return
-    m = int(args[0], 16)
+    a = args[0].lower().removesuffix(".json").removesuffix(".c")
+    if a.startswith("wstag"):  # el archivo del mapa en lugar de su modo
+        st = [k for k, (s, _) in g.items() if s == a]
+        if not st:
+            sys.exit(f"{a}: no está entre los mapas{' del capítulo extra' if extra else ''} (¿--extra?)")
+        m = st[0]
+    else:
+        try:
+            m = int(a, 16)
+        except ValueError:
+            sys.exit("uso: dw3.py salidas [0x230 | wstag430] [--extra]")
     if m not in g:
         sys.exit(f"{m:#x}: ningún mapa{' del capítulo extra' if extra else ''} con ese modo")
     st, ex = g[m]
@@ -943,6 +960,9 @@ def run_script(name, argv):
     # sin las cabeceras de mapa o paso que se quedan vacías (quest_talks --busca las saca todas)
     head = re.compile(r"^(====|########) ")
     lines = [l for k, l in enumerate(lines) if not head.match(l) or (k + 1 < len(lines) and not head.match(lines[k + 1]))]
+    # cada mapa con su modo (el número del wstag no lo es: wstag225 es el modo 0x207), salvo donde ya sale
+    lines = [l if "modos" in l or "['0x" in l else re.sub(r"\b(wstag\d+)\b(?! \[0x)", lambda m: f"{m.group(1)} [{stage_mode(m.group(1))}]", l)
+             for l in lines]
     for l in capped(lines, MAX * 3 if MAX else 0, "salen --max×3 líneas; --max 0 para todas"):
         print(l)
 
