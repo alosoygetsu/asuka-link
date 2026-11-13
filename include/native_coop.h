@@ -165,6 +165,8 @@ int native_coop_find_vram_any(int w, int h, int *out_x, int *out_y, int *page_x,
 void native_coop_vram_copy(int from_x, int from_y, int to_x, int to_y, int w, int h);
 /* the CLUT at (x, y) recoloured for other player n (0-2) */
 void native_coop_vram_tint(int x, int y, int n);
+/* the game's menu CLUTs (x, y, w x h) copied to (to_x, to_y) with their dark blues lilac: the co-op's windows */
+void native_coop_vram_lilac(int x, int y, int to_x, int to_y, int w, int h);
 /* the character creator's tones: src's 16 colours turned for tone (0 as drawn, 1-7) into dst; and a CLUT into VRAM */
 #define NATIVE_TONES 8
 void native_tone_clut(unsigned short *dst, const unsigned short *src, int tone);

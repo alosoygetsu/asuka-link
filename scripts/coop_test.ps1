@@ -1,22 +1,24 @@
-# Pruebas del cooperativo en local (solo para nosotros): 2 a 4 copias del juego en 127.0.0.1, en test2..test5 junto a
+﻿# Pruebas del cooperativo en local (solo para nosotros): 2 a 4 copias del juego en 127.0.0.1, en test2..test5 junto a
 # native\, que se juntan en el mismo mapa y, según el modo, se ven, combaten, hacen una raid o juegan un duelo de
 # cartas solas (DW3_COOP_AUTO). Espera a que todas apunten su resultado en coop.log; si los logs se quedan quietos
 # demasiado (40 s; 180 s en una raid, cuyos turnos con el jefe atacando a cada uno son largos), guarda capturas de cada ventana en test-shots\ y para. native\build solo se lee: ni su native.ini ni sus
 # partidas se tocan.
 #   powershell -File native\scripts\coop_test.ps1 -Mode duel
 #   powershell -File native\scripts\coop_test.ps1 -Mode raid -Players 3 [-Raid 200]
-#   -Mode see | battle | raid | duel; -Keep deja las copias abiertas al terminar.
-param([ValidateSet("see", "battle", "raid", "duel")][string]$Mode = "see", [ValidateRange(2, 4)][int]$Players = 2,
-      [int]$Raid = 200, [int]$Timeout = 900, [switch]$Keep)
+#   -Mode trade abre el intercambio de cartas entre dos (con cartas de sobra) y saca capturas a los 20 s quietos.
+#   -Press "fotograma:botón,..." los mismos botones en todas las copias (DW3_PRESS).
+#   -Mode see | battle | raid | duel | trade; -Keep deja las copias abiertas al terminar.
+param([ValidateSet("see", "battle", "raid", "duel", "trade")][string]$Mode = "see", [ValidateRange(2, 4)][int]$Players = 2,
+      [int]$Raid = 200, [int]$Timeout = 900, [string]$Press, [switch]$Keep)
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot)  # la carpeta del proyecto: native\, test2..test5
 $build = "$root\native\build"
 $shots = "$root\test-shots"
-if ($Mode -in "battle", "duel") { $Players = 2 }  # el PvP y el duelo son de dos
+if ($Mode -in "battle", "duel", "trade") { $Players = 2 }  # el PvP y el duelo son de dos
 $dirs = @("$root\test2", "$root\test3", "$root\test4", "$root\test5")[0..($Players - 1)]
 $parties = @(0, 1, 2, 0)
-$quietMax = if ($Mode -eq "raid") { 180 } else { 40 }
-$done = @{ see = 'is here'; battle = 'PvP battle with player \d+: '; raid = 'Raid: (won|lost)'; duel = 'Card duel with player \d+: (won|lost)' }[$Mode]
+$quietMax = if ($Mode -eq "raid") { 180 } elseif ($Mode -eq "trade") { 20 } else { 40 }
+$done = @{ see = 'is here'; battle = 'PvP battle with player \d+: '; raid = 'Raid: (won|lost)'; duel = 'Card duel with player \d+: (won|lost)'; trade = 'card trade with player' }[$Mode]
 
 Add-Type -Name Shot -Namespace CoopTest -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool GetWindowRect(System.IntPtr h, out RECT r);
@@ -39,7 +41,7 @@ function Stop-Copies {  # solo las de test2..test5, nunca la de native\build
 
 Stop-Copies; Start-Sleep 1
 $base = (Get-Content "$build\native.ini" | Where-Object { $_ -notmatch '^\s*(coop|coop_peer|coop_peers|coop_port|scale|fullscreen)\s*=' }) -join "`n"
-$auto = @{ see = $null; battle = 'battle'; raid = 'raid'; duel = 'duel' }[$Mode]
+$auto = @{ see = $null; battle = 'battle'; raid = 'raid'; duel = 'duel'; trade = 'trade' }[$Mode]
 for ($i = 0; $i -lt $Players; $i++) {
     $d = $dirs[$i]
     New-Item -ItemType Directory -Force "$d\saves" | Out-Null
@@ -49,11 +51,13 @@ for ($i = 0; $i -lt $Players; $i++) {
     Set-Content "$d\native.ini" "$base`ncoop = 1`nscale = 2`nfullscreen = 0`ncoop_port = $(27501 + $i)`ncoop_peers = $peers`n" -NoNewline
     Remove-Item "$d\coop.log" -ErrorAction SilentlyContinue
     if ($auto) { $env:DW3_COOP_AUTO = $auto } else { Remove-Item Env:DW3_COOP_AUTO -ErrorAction SilentlyContinue }
+    $env:DW3_PRESS = $Press
+    if ($Mode -eq "trade") { $env:DW3_COOP_CARDS = "3" } else { Remove-Item Env:DW3_COOP_CARDS -ErrorAction SilentlyContinue }
     if ($Mode -eq "raid") { $env:DW3_COOP_RAID = "$Raid" } else { Remove-Item Env:DW3_COOP_RAID -ErrorAction SilentlyContinue }
     Start-Process "$d\dw2003.exe" -ArgumentList "--field 0x230 --progress 10 --party $($parties[$i])" -WorkingDirectory $d
     Start-Sleep -Milliseconds 800
 }
-Remove-Item Env:DW3_COOP_AUTO, Env:DW3_COOP_RAID -ErrorAction SilentlyContinue
+Remove-Item Env:DW3_COOP_AUTO, Env:DW3_COOP_RAID, Env:DW3_COOP_CARDS, Env:DW3_PRESS -ErrorAction SilentlyContinue
 
 $logs = $dirs | ForEach-Object { "$_\coop.log" }
 $end = (Get-Date).AddSeconds($Timeout); $last = ''; $quiet = 0; $stalled = $false

@@ -12,7 +12,6 @@
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #endif
 #define COOP_CARDS 0x13D /* GAME.cards'; the album's are from 1 */
-#define COOP_TRADE_ROWS 5
 #define COOP_TRADE_MENU 10 /* coopTrade.phase: the Guardromon's choice, talk or trade */
 #define COOP_TRADE_RAID_PICK 11 /* coopTrade.phase: the raid's boss picked from the list */
 #define COOP_RAID_ROWS 8
@@ -252,11 +251,13 @@ static void coopTradeEnd(s32 lastPhase, s32 msg) {
 
 /* The Guardromon's menu window (coopGuardMenuRun), run by coopTradeUpdate while there */
 static struct CoopGuardMenu *coopGuardMenu;
+static s32 coopLilacOn; /* their lilac CLUTs (coopLilacPrepare): 0 not yet this field, 1 made, -1 none */
 
 static void coopTradeReset(void) {
     s32 c;
 
     coopGuardMenu = NULL; /* gone with the last field's heap */
+    coopLilacOn = 0; /* the last field's VRAM box is free again (native_coop_vram_reset) */
     coopTrade.phase = COOP_TRADE_NONE;
     coopTrade.froze = 0; /* the new field isn't busy */
     coopTrade.linger = 0;

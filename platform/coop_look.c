@@ -266,6 +266,36 @@ void native_vram_clut(int x, int y, const uint16_t *colors) {
     gl_refresh(x, y, 16, 1);
 }
 
+/* The co-op's windows (coop_window.inc.c): w x h words of the game's menu CLUTs at (x, y) copied to (to_x, to_y), their
+   dark blues (the windows' grounds) turned Asuka Link's lilac, #5A3A8A at their brightest, each as bright as it was.
+   The light colours (the edges, the text) and the greys stay */
+void native_coop_vram_lilac(int x, int y, int to_x, int to_y, int w, int h) {
+    static int logged;
+    int i, j;
+
+    native_coop_vram_copy(x, y, to_x, to_y, w, h);
+    soft_write(to_x, to_y, w, h);
+    for (j = 0; j < h; j++) {
+        uint16_t *clut = &g_vram[(to_y + j) * VRAM_W + to_x];
+
+        for (i = 0; i < w; i++) {
+            int c = clut[i], r = c & 31, g = (c >> 5) & 31, b = (c >> 10) & 31;
+
+            if (!logged && g_coop_debug) {
+                LOG("coop: menu clut (%d, %d) %2d %2d %2d", x + i, y + j, r, g, b);
+            }
+            if (c == 0 || r != 0 || g != 0 || b > 9) {
+                continue; /* not the ground: its pure dark blues, 1 to 9 (the edges are lighter and greyer) */
+            }
+            /* lilac (11, 7, 17 in 5 bits) at the ground's brightest, 9 */
+            clut[i] = (uint16_t)((c & 0x8000) | (11 * b / 9) | ((7 * b / 9) << 5) | ((17 * b / 9) << 10));
+        }
+    }
+    logged = 1;
+    gl_vram_dirty(to_x, to_y, w, h);
+    gl_refresh(to_x, to_y, w, h);
+}
+
 /* The page as text, one character per 4 x 8 words: '.' free, '#' taken (when
    no box was found, to see why) */
 void native_coop_vram_dump(int page_x, int page_y) {
