@@ -113,13 +113,15 @@ int native_coop_find_vram(int page_x, int page_y, int w, int h, int *out_x, int 
     return 0;
 }
 
-/* The same in any texture page right of the frame buffers (x 640 on, where a
-   black screen would look blank): 1 with the box's corner and its page */
+/* The same in any texture page right of the frame buffers and the actors' sheets: x 640 on first (on the field the
+   map's tiles stream there, coop_ghosts.inc.c keeps the slots its tiles use), then down to x 448, whose top half
+   nothing of the field uses (VRAM dumps of nine maps, walking, talking and with the menu open; the menu takes the
+   bottom half of x 448). 1 with the box's corner and its page */
 int native_coop_find_vram_any(int w, int h, int *out_x, int *out_y, int *page_x, int *page_y) {
     int px, py;
 
     for (py = 0; py < VRAM_H; py += 256) {
-        for (px = VRAM_W - 64; px >= 640; px -= 64) {
+        for (px = VRAM_W - 64; px >= (py == 0 ? 448 : 640); px -= 64) {
             if (native_coop_find_vram(px, py, w, h, out_x, out_y)) {
                 *page_x = px;
                 *page_y = py;

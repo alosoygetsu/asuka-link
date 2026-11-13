@@ -42,6 +42,25 @@ static void coopReserveSlot(s32 image) {
     native_coop_vram_reserve(slot->clutX, slot->clutY, 16, 1);
 }
 
+/* The VRAM the map's tiles stream into as the view moves (map_streamer.c, stream.c): the 12 slots of
+   FIELDSTG_slotImages, 128 x 128 words each, that fill x 640 on, and their CLUTs at (0, 0xF0 + slot). A blank box
+   there is only a tile not loaded yet or a transparent part of one: a ghost's frames put there showed in the tiles
+   that came over them later, as black squares with the other player inside. The slots go in order (the oldest image,
+   all of them unused at first), so a map of fewer tiles leaves the rest free. */
+static void coopReserveMapSlots(void) {
+    MapStreamer *map = TASK_REGISTRY.funcs.find(FIELD_TASK_MAP, -1, -1);
+    s32 n = 12;
+    s32 i;
+
+    if (map != NULL && map->state == TASK_RUN && map->width * map->height < n) {
+        n = map->width * map->height;
+    }
+    for (i = 0; i < n; i++) {
+        native_coop_vram_reserve(FIELDSTG_slotImages[i].x, FIELDSTG_slotImages[i].y, 128, 128);
+        native_coop_vram_reserve(0, 0xF0 + i, 256, 1);
+    }
+}
+
 void coopSynthReset(void); /* actor_control.c: the models' made sets */
 static void coopTradeReset(void); /* a new field: no trade */
 
@@ -124,6 +143,7 @@ static void coopCreateGhosts(FieldChildren *children, Actor *player) {
         return;
     }
     native_coop_vram_reclaim(); /* the last map's players' boxes, when nothing came over them */
+    coopReserveMapSlots();
     for (i = -2; i < 4; i++) {
         coopReserveSlot(i);
     }

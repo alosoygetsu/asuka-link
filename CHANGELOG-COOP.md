@@ -4,6 +4,14 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.3.1
+Basado en el port v0.18.9. Red: versión 8, como la 1.3.0 (se juntan sin problema).
+- **Cuadros negros en el mapa cuando llega otro jugador.** En los mapas grandes (por ejemplo las casas de arena de
+  0x23F) aparecían rectángulos negros de 64×64 sobre el fondo, a veces con un muñeco dentro. Era el otro jugador: sus
+  fotogramas se guardaban en la parte de la memoria de vídeo donde se cargan las baldosas del fondo a medida que te
+  mueves, y cuando llegaba una baldosa a ese hueco se mezclaban. Ahora van a una zona que el mapa no usa, y el otro
+  jugador se sigue viendo.
+
 ## v1.3.0
 Basado en el port v0.18.9. **Red: versión 8**: no se conecta con las 1.2.x. Actualizad todos.
 
