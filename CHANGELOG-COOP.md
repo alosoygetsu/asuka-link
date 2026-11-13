@@ -11,6 +11,12 @@ Basado en el port v0.18.9. Red: versión 8, como la 1.3.x y la 1.4.0 (se juntan 
   colores y con un fondo oscuro que se salía del marco.
 - **Tu aspecto desde la llegada al Mundo Digital:** en la escena de la Sala de Login, justo después del vídeo, ya
   sales con el aspecto que elegiste. Antes salía Junior hasta que tomabas el control.
+- **Digilog, el carisma del equipo a la vista:** el paso que pide carisma dice ahora cuánto tienes ("Ahora: 154").
+  Es la suma del carisma de tus tres compañeros, contando lo que llevan equipado; el juego no lo enseñaba en
+  ningún sitio.
+- **Digilog, misión del ID El Dorado en su orden:** primero hay que llegar a 210 de carisma entre los tres, y
+  luego hablar con Ponchomon (dos veces si es la primera) para que te dé el ID. Antes el orden de los pasos estaba
+  al revés. La misión sale al visitar El Dorado, no antes.
 
 ## v1.4.0
 Basado en el port v0.18.9, con cosas de sus versiones hasta la v0.19.7 traídas a mano. Red: versión 8, como la

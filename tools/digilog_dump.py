@@ -30,6 +30,10 @@ def main():
             found = True
             print(f"Digilog (paso de la historia {raw.split()[-1]})")
             continue
+        total = re.search(r"DIGILOG total (\d+)", raw)
+        if total:  # under a step that asks for a party stat: the team's total now
+            print(f"      ahora: {total.group(1)}")
+            continue
         m = LINE.search(raw)
         if not m:
             continue

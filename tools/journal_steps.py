@@ -176,9 +176,11 @@ QUEST_STEPS = {
         (ITEM(0x005), M(0x21F), "Llévale los tres materiales a Tai Kong Wang.", "Bring the three materials to Tai Kong Wang."),
     ],
     0x008: [
-        (F(0x1A, 0x05), M(0x213), "Habla con Ponchomon en El Dorado.", "Talk to Ponchomon at El Dorado."),
-        (PARTY(2), None, "Sube el carisma del equipo a 210.", "Raise your team's charisma to 210."),
-        (ITEM(0x008), M(0x213), "Ponchomon te da el ID El Dorado.", "Ponchomon gives you the El Dorado ID."),
+        # Ponchomon only hands the ID over with the team's charisma at 210 (PARTY_STAT 2: the three partners', with
+        # their equipment); his first talk (F1A:05) only greets. The Digilog shows the total now under this step
+        (PARTY(2), None, "Suma 210 de carisma entre los tres.", "Reach 210 charisma among all three."),
+        (ITEM(0x008), M(0x213), "Habla dos veces con Ponchomon en El Dorado: te da su ID.",
+         "Talk to Ponchomon at El Dorado twice: he gives you his ID."),
     ],
     0x012: [
         (F(0x1A, 0x37), M(0x228), "Gana al primer Divermon a las cartas.", "Beat the first Divermon at cards."),
@@ -472,9 +474,10 @@ def texts():
     return out
 
 
-# los textos del Digilog (platform/journal_text.h): "Paso ", " de ", las cifras 0-9 y luego el de cada paso
-JOURNAL_WORDS = ["Step ", " of "]
-FIRST_STEP_TEXT = 12
+# los textos del Digilog (platform/journal_text.h): "Paso ", " de ", las cifras 0-9, "Ahora: " y luego el de cada paso
+# y "Ahora: " (bajo un paso que pide una estadística del equipo, su total de ahora)
+JOURNAL_WORDS = ["Step ", " of ", "Now: "]
+FIRST_STEP_TEXT = 13
 # francés, italiano y alemán: tools/journal_text/<idioma>.toml, cada texto inglés con su traducción (lo que falte, en inglés)
 TRANSLATED = ["fra", "ita", "ger"]
 
@@ -492,7 +495,7 @@ def write_texts():
     import game_text
     steps = texts()
     english = JOURNAL_WORDS + [en for _, en in steps]
-    by_lang = {"eng": english, "spn": ["Paso ", " de "] + [es for es, _ in steps]}
+    by_lang = {"eng": english, "spn": ["Paso ", " de ", "Ahora: "] + [es for es, _ in steps]}
     bad = []
     for lang in TRANSLATED:
         table = translations(lang)
@@ -550,6 +553,7 @@ def main(first_text=FIRST_STEP_TEXT):
          "#define JOURNAL_TEXT_STEP 0 /* \"Step \" */",
          "#define JOURNAL_TEXT_OF 1 /* \" of \" */",
          "#define JOURNAL_TEXT_DIGIT 2 /* 2-11: 0-9 */",
+         "#define JOURNAL_TEXT_NOW 12 /* \"Now: \", before a party stat's total */",
          "",
          "typedef struct JournalStep { unsigned short code, mode, text; } JournalStep; /* code: checkCondition's, or 0xF000 | p: past step p */",
          "typedef struct JournalSteps { unsigned short key, first, count; } JournalSteps; /* a story step's or a side quest's, its item */",

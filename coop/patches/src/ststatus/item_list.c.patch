@@ -163,7 +163,7 @@
  #define SIDE_QUEST_COUNT (s32)(sizeof SIDE_QUESTS / sizeof SIDE_QUESTS[0])
  #define JOURNAL_MAX (JOURNAL_LAST_STEP + 1 + SIDE_QUEST_COUNT)
  
-@@ -484,39 +551,120 @@
+@@ -484,39 +551,127 @@
      s32 cursor;
      s32 page;
      s32 pageCount;
@@ -227,17 +227,25 @@
 +
 +static s32 journalSteps(s32 entry, const JournalStep **out);
 +static s32 journalStepDone(const JournalStep *step);
++static s32 journalPartyTotal(void);
 +
-+/* A side quest is found once its field is visited, or its first step holds (a DRI met before the DDNA's field) */
++/* Whether a step asks for a party stat's total (checkPartyStat, conditions 0x72: El Dorado's charisma) */
++static s32 journalPartyStep(const JournalStep *step) {
++    return (step->code & 0xFF00) == 0x7200;
++}
++
++/* A side quest is found once its field is visited, or its first step holds (a DRI met before the DDNA's field); not
++   for a party stat's, which a team can hold before ever meeting whoever asks for it */
  static s32 sideQuestFound(s32 quest) {
      const SideQuest *q = &SIDE_QUESTS[quest];
 +    const JournalStep *steps;
-+
+ 
+-    return FLAGS_00.checkCondition((q->mode & 0xFF) | 0x2000, 1) == 1 && GAME.progress <= (q->last ? q->last : ANY_STEP);
 +    if (GAME.progress > (q->last ? q->last : ANY_STEP)) {
 +        return 0;
 +    }
 +    return FLAGS_00.checkCondition((q->mode & 0xFF) | 0x2000, 1) == 1 ||
-+           (journalSteps(-1 - quest, &steps) != 0 && journalStepDone(&steps[0]));
++           (journalSteps(-1 - quest, &steps) != 0 && !journalPartyStep(&steps[0]) && journalStepDone(&steps[0]));
 +}
 +
 +/* The item an entry needs and the player lacks, or 0 */
@@ -246,8 +254,7 @@
 +
 +    return req != 0 && FLAGS_00.checkCondition(ITEM(0, req), 1) != 1 ? req : 0;
 +}
- 
--    return FLAGS_00.checkCondition((q->mode & 0xFF) | 0x2000, 1) == 1 && GAME.progress <= (q->last ? q->last : ANY_STEP);
++
 +/* Whether a side quest's steps can be done in any order (JOURNAL_ALL: done when all hold, Asuka Link's card quests) */
 +static s32 sideQuestUnordered(s32 quest) {
 +    return SIDE_QUESTS[quest].done == JOURNAL_ALL;
@@ -292,13 +299,14 @@
  }
  
  /* The tab's entries */
-@@ -545,7 +693,14 @@
+@@ -545,7 +700,15 @@
  }
  
  /* An entry's field */
 +static s32 journalStepMode; /* the shown step's field, 0 for the entry's (showJournalEntry) */
 +static s32 journalTabsX, journalTabsW; /* the foot's tabs key: where it goes after "select", and its width */
 +static s32 journalStepShown, journalStepIndex, journalStepTotal, journalStepIsDone, journalStepText;
++static s32 journalStepParty; /* the shown step asks for a party stat: its text says the total now */
 +
  static s32 journalMode(s32 entry) {
 +    if (journalStepMode != 0) {
@@ -307,7 +315,7 @@
      return entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode;
  }
  
-@@ -566,30 +721,224 @@
+@@ -566,30 +729,284 @@
      return mode >= 0x200 && mode <= 0x2D6;
  }
  
@@ -397,6 +405,9 @@
 +                       n != 0 ? v + 1 : 0, n, n != 0 ? steps[v].text : 0,
 +                       n != 0 && steps[v].mode != 0 ? steps[v].mode : entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode,
 +                       n != 0 && (done || journalStepDone(&steps[v])), done ? 0 : journalNeeds(entry));
++            if (n != 0 && !done && journalPartyStep(&steps[v])) {
++                native_log("DIGILOG total %d", journalPartyTotal());
++            }
 +        }
 +    }
 +    native_log("DIGILOG end");
@@ -442,6 +453,59 @@
 +    return file;
 +}
 +
++/* The party's total of battle stat 5 (charisma), added up as checkPartyStat does: the three partners', with their
++   equipment */
++static s32 journalPartyTotal(void) {
++    PartnerTotals totals;
++    s32 total = 0;
++    s32 i;
++    s32 id;
++
++    for (i = 0; i < PARTY_SIZE; i++) {
++        id = GAME.funcs.getPartyMember(i);
++        if (id >= 0) {
++            GAME.funcs.computeStats(id, &totals);
++            total += totals.fields.battle[5];
++        }
++    }
++    return total;
++}
++
++/* A party stat step's text with a line under it, "Now: " and the party's total, in a one-string text file */
++static void *journalStepWithTotal(s32 text, s32 total) {
++    static u32 file[64];
++    s32 *texts = (s32 *)native_journal_text(LANGUAGE);
++    u8 *out = (u8 *)&file[2];
++    u8 *end = (u8 *)&file[64] - 1;
++    const u8 *src;
++    char digits[5];
++    s32 d = 0;
++
++    for (src = (const u8 *)getString(texts, text); *src != 0 && out < end; src++) {
++        *out++ = *src;
++    }
++    if (out + 2 < end) { /* a line break, as the game's texts have it */
++        *out++ = 2;
++        *out++ = 1;
++    }
++    for (src = (const u8 *)getString(texts, JOURNAL_TEXT_NOW); *src != 0 && out < end; src++) {
++        *out++ = *src;
++    }
++    do {
++        digits[d++] = (char)(total % 10);
++        total /= 10;
++    } while (total != 0 && d < 5);
++    while (d > 0) {
++        for (src = (const u8 *)getString(texts, JOURNAL_TEXT_DIGIT + digits[--d]); *src != 0 && out < end; src++) {
++            *out++ = *src;
++        }
++    }
++    *out = 0;
++    file[0] = 1;
++    file[1] = 8;
++    return file;
++}
++
  static void showJournalEntry(Journal *journal, JournalWindows *windows) {
 +    void *items = FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_NAMES));
 +    s32 done = journal->tab == TAB_DONE;
@@ -465,6 +529,7 @@
      entry = journal->entries[journal->cursor];
 +    need = done ? 0 : journalNeeds(entry);
 +    journalStepMode = 0;
++    journalStepParty = 0;
 +    {
 +        const JournalStep *steps;
 +        s32 n = journalSteps(entry, &steps);
@@ -479,6 +544,7 @@
 +            journalStepIsDone = done || journalStepDone(&steps[v]);
 +            journalStepText = steps[v].text;
 +            journalStepMode = steps[v].mode;
++            journalStepParty = !done && journalPartyStep(&steps[v]);
 +        }
 +    }
      place = journalPlace(journalMode(entry));
@@ -521,7 +587,9 @@
 +        windows->reward->setString(windows->reward, items, journalReward(entry));
 +        windows->reward->setPalette(windows->reward, PALETTE_GREEN);
 +    }
-+    if (journalStepShown) { /* the step's text */
++    if (journalStepShown && journalStepParty) { /* the step's text and the party's total now */
++        windows->help->setString(windows->help, journalStepWithTotal(journalStepText, journalPartyTotal()), 0);
++    } else if (journalStepShown) { /* the step's text */
 +        windows->help->setString(windows->help, native_journal_text(LANGUAGE), journalStepText);
 +    } else if (entry < 0 && -1 - entry >= PORT_SIDE_QUESTS) {
 +        windows->help->setString(windows->help, native_journal_text(LANGUAGE), JOURNAL_NEW_QUESTS[-1 - entry - PORT_SIDE_QUESTS].text);
@@ -539,7 +607,7 @@
  static void showJournalPage(Journal *journal, JournalWindows *windows) {
      TextWindow *window;
      s32 i;
-@@ -600,32 +949,19 @@
+@@ -600,32 +1017,19 @@
          window = windows->entries[i];
          if (n >= journal->count) {
              window->setVisible(window, 0);
@@ -575,7 +643,7 @@
      windows->cursor->setVisible(windows->cursor, journal->count != 0);
  }
  
-@@ -633,66 +969,190 @@
+@@ -633,66 +1037,190 @@
      s32 i;
  
      if (show) {
@@ -807,7 +875,7 @@
      }
  }
  
-@@ -705,6 +1165,7 @@
+@@ -705,6 +1233,7 @@
      if (PAD_PRESSED(PAD_LEFT) || PAD_PRESSED(PAD_RIGHT)) {
          SOUND.playSound(SOUND_MENU_MOVE);
          journal->tab ^= 1;
@@ -815,7 +883,7 @@
          journal->cursor = 0;
          journal->page = 0;
          fillJournal(journal);
-@@ -723,14 +1184,24 @@
+@@ -723,14 +1252,24 @@
          journal->cursor = journal->cursor < journal->count - 1 ? journal->cursor + 1 : cursor;
      }
      if (cursor == journal->cursor) {
@@ -841,7 +909,7 @@
      showJournalEntry(journal, windows);
      return 1;
  }
-@@ -755,6 +1226,7 @@
+@@ -755,6 +1294,7 @@
          STSTATUS_data.funcs.updateFade(&journal->fades[2]);
          if (STSTATUS_data.funcs.updateFade(&journal->fades[0])) {
              showJournal(journal, windows, 1);
@@ -849,7 +917,7 @@
              journal->substate++;
          }
          break;
-@@ -799,21 +1271,36 @@
+@@ -799,21 +1339,36 @@
          if (FILE_CACHE.isLoading(TEXT_FILE(TEXT_STAGE_NAMES)) || FILE_CACHE.isLoading(TEXT_FILE(TEXT_ITEM_NAMES))) {
              break;
          }
@@ -898,7 +966,7 @@
          windows->cursor->setVisible(windows->cursor, 0);
          journal->nextState(journal);
          break;
-@@ -833,8 +1320,9 @@
+@@ -833,8 +1388,9 @@
      Journal *journal = createTask(updateJournal, sizeof(Journal), sizeof(JournalWindows));
  
      journal->layer = SCREEN_LAYER;
