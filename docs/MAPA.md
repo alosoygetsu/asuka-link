@@ -58,6 +58,7 @@ mapas (`WSTAGnnn.PRO`) en 0x800A5DE0, encima de FIELDSTG.
 | Una opción fija o de arranque | `platform/main.c` |
 | Pasos del Digilog | `tools/journal_steps.py` (genera `include/journal_steps.h` y `platform/journal_text.h`) |
 | Textos propios dentro del juego | `tools/coop_text.py` → `platform/coop_text.h` |
+| Textos de los packs, Digilog del port, viaje rápido | `tools/packs_text/<idioma>.toml` → `tools/packs_text.py --sin-mklang` |
 | La sala o el launcher | `launcher/sala*.c`, `home.c`; textos en `launcher/lang_*.c` (comprobar con `--check`) |
 | Mods de mapas o de Digimon | `platform/stagemods.c`, `digimon_mods.c` |
 | Estudiar una misión | `dw3.py marca`, `texto`, `charlas`, `pasos`, `eventos`, `dialogo`; `docs/MISIONES.md` |

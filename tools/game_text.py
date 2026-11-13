@@ -19,15 +19,20 @@ def _packs_file(h, lang):
     return b"".join(int(x, 16).to_bytes(4, "little") for x in re.findall(r"0x([0-9A-F]{8})", body))
 
 
-def learn():
-    """character -> its bytes, from the port's texts and their encoding"""
-    h = (NATIVE / "platform/packs_text.h").read_text(encoding="utf-8")
+def learn(h=None, texts=None):
+    """character -> its bytes, from the port's texts and their encoding: platform/packs_text.h and
+    tools/packs_text/<language>.toml, or the header's text h and {language: [strings]} texts given"""
+    if h is None:
+        h = (NATIVE / "platform/packs_text.h").read_text(encoding="utf-8")
     table = {}
     for lang in LANGUAGES:
         b = _packs_file(h, lang)
         n = int.from_bytes(b[:4], "little")
         offs = [int.from_bytes(b[4 + 4 * i:8 + 4 * i], "little") for i in range(n)]
-        strings = tomllib.loads((NATIVE / f"tools/packs_text/{lang}.toml").read_text(encoding="utf-8"))["strings"]
+        if texts is not None:
+            strings = texts[lang]
+        else:
+            strings = tomllib.loads((NATIVE / f"tools/packs_text/{lang}.toml").read_text(encoding="utf-8"))["strings"]
         for s, o in zip(strings, offs):
             if "[" in s:
                 continue  # a code's length isn't known

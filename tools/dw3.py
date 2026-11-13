@@ -784,6 +784,147 @@ def cmd_evos(args):
         print("  " + l)
 
 
+# ---------------------------------------------------------------- salidas de los mapas (salidas)
+
+# StageSlot (include/field_map.h), como lo traen los JSON de los mapas: conditions[2][2], type, arg, x, y, dir,
+# hideAnim, place, placeArg. Las que llevan a otro modo: arg es el modo (en los warps y lanzamientos, su SlotDest)
+EXIT_KINDS = {1: "puerta", 9: "warp1", 10: "warp0", 14: "lanzamiento"}
+
+
+@functools.lru_cache(None)
+def stage_places():
+    """{wstagNNN: (nombre, zona)} de dw3_decomp/src/stages/README.md"""
+    out, zone = {}, ""
+    for l in read(DECOMP / "src" / "stages" / "README.md").split("\n"):
+        m = re.match(r"## (.*?) \(`", l)
+        if m:
+            zone = m.group(1)
+        m = re.match(r"- `(wstag\d+)`: (.*)", l)
+        if m:
+            out[m.group(1)] = (m.group(2), zone)
+    return out
+
+
+def place_points(stage):
+    """las salas de un mapa que rellena sus salidas al entrar (copyPlacePoints, stages/common): {(place, placeArg):
+    [(modo, x, y)]}, el punto i va a la salida i de stageSlots; {} si no las tiene"""
+    c = next(iter((DECOMP / "src" / "stages").rglob(stage + ".c")), None)
+    if not c or "copy_place_points" not in read(c):
+        return {}
+    t = read(c)
+    v = r"(0x[0-9A-Fa-f]+|\d+)"
+    points = {m.group(1): (num(m.group(2)), num(m.group(5)), num(m.group(6)), m.group(8))
+              for m in re.finditer(r"StagePoint (\w+) = \{ %s, %s, %s, %s, %s, %s, &?(\w+) \};" % ((v,) * 6), t)}
+    out = {}
+    for m in re.finditer(r"StagePoints (\w+) = \{ %s, %s, &(\w+) \};" % (v, v), t):
+        lst, k = [], m.group(4)
+        while k in points:
+            mode, x, y, k = points[k]
+            lst.append((mode, x, y))
+        out[(num(m.group(2)), num(m.group(3)))] = lst
+    return out
+
+
+@functools.lru_cache(None)
+def exits_graph(extra=False):
+    """{modo: (wstag, [(tipo, destino, x, y, condiciones, sala)])}; sala: (place, placeArg) en los mapas que eligen sus
+    salidas al entrar, o None. Sin el capítulo extra (wstag92x-97x) salvo extra"""
+    import quest_talks as q
+    out = {}
+    for st, d in stages_json().items():
+        if (st >= "wstag920") != extra and not (extra and st < "wstag920"):
+            continue
+        modes = d.get("euModes") or d.get("modes") or []
+        if not modes:
+            continue
+        lst = []
+        slots = d.get("slots", [])
+        rooms = place_points(st)
+        for k, s in enumerate(slots):
+            if s[4] not in EXIT_KINDS:
+                continue
+            conds = [c for c in (q.code(s[i], s[i + 1]) for i in (0, 2) if s[i] != 0xFFFF) if c]
+            if rooms:
+                for room, pts in rooms.items():
+                    if k < len(pts):
+                        lst.append((EXIT_KINDS[s[4]], pts[k][0], pts[k][1], pts[k][2], conds, room))
+            else:
+                lst.append((EXIT_KINDS[s[4]], s[5], s[6], s[7], conds, None))
+        mode = modes[0][0]
+        if mode in out and not extra:
+            out[mode][1].extend(lst)
+        else:
+            out[mode] = (st, lst)
+    return out
+
+
+def mode_label(g, m):
+    if m not in g:
+        return f"{m:#x}"
+    st = g[m][0]
+    name, zone = stage_places().get(st, ("?", "?"))
+    return f"{m:#x} {st} ({name.split(',')[0]})"
+
+
+def cmd_salidas(args):
+    """salidas [MODO_hex] [--extra]: puertas, warps y lanzamientos de un modo, de dónde se llega y a qué zonas sale
+    andando (sin modo: las salas sin salida y las zonas)"""
+    extra = "--extra" in args
+    args = [a for a in args if a != "--extra"]
+    g = exits_graph(extra)
+    zone = {m: stage_places().get(st, ("", "?"))[1] for m, (st, _) in g.items()}
+    if not args:
+        none = sorted(m for m, (_, ex) in g.items() if not [e for e in ex if e[1] != m])
+        print(f"{len(g)} modos; sin salida a otro modo ({len(none)}): " + ", ".join(mode_label(g, m) for m in none))
+        by_zone = {}
+        for m in g:
+            by_zone.setdefault(zone[m], []).append(m)
+        for z, ms in sorted(by_zone.items()):
+            print(f"  {z}: {len(ms)} modos ({min(ms):#x}-{max(ms):#x})")
+        return
+    m = int(args[0], 16)
+    if m not in g:
+        sys.exit(f"{m:#x}: ningún mapa{' del capítulo extra' if extra else ''} con ese modo")
+    st, ex = g[m]
+    name, z = stage_places().get(st, ("?", "?"))
+    print(f"{m:#x} {st}: {name} [{z}]")
+    lines = []
+    if any(e[5] for e in ex):
+        print("  sus salidas dependen de la sala, (GAME.place, GAME.placeArg), con la que se entra (copyPlacePoints)")
+    grouped = {}  # la misma salida en varias salas, una línea
+    for kind, dest, x, y, conds, room in ex:
+        grouped.setdefault((kind, dest, x, y, tuple(conds)), []).append(room)
+    for (kind, dest, x, y, conds), rooms in grouped.items():
+        rs = [r for r in rooms if r]
+        sala = ("salas " if len(rs) > 1 else "sala ") + " ".join(f"{a},{b}" for a, b in rs) + ": " if rs else ""
+        lines.append(f"  {sala}{kind} → {mode_label(g, dest)} en ({x}, {y})" + (f" si {', '.join(conds)}" if conds else ""))
+    print(f"salidas ({len(ex)}):" if ex else "salidas: ninguna")
+    for l in capped(lines, MAX * 2 if MAX else 0):
+        print(l)
+    came = sorted({src for src, (_, e) in g.items() for k, d, *_ in e if d == m and src != m})
+    print("se llega desde: " + (", ".join(mode_label(g, s) for s in came) if came else "ningún modo (evento, menú o viaje)"))
+    # andando (sin mirar condiciones): el camino más corto a cada zona distinta
+    prev, todo, reached = {m: None}, [m], {}
+    while todo:
+        cur = todo.pop(0)
+        for _, d, *_ in g.get(cur, ("", []))[1]:
+            if d in prev:
+                continue
+            prev[d] = cur
+            if zone.get(d, "?") != z:
+                reached.setdefault(zone.get(d, "?"), d)
+            else:
+                todo.append(d)
+    if not reached:
+        print(f"andando no sale de {z} (sin mirar condiciones)")
+    for oz, d in sorted(reached.items()):
+        path, k = [], d
+        while k is not None:
+            path.append(f"{k:#x}")
+            k = prev[k]
+        print(f"  a {oz}: {' → '.join(reversed(path))}")
+
+
 # ---------------------------------------------------------------- los scripts de historia y misiones
 
 def run_script(name, argv):
@@ -858,6 +999,7 @@ COMMANDS = {
     "tecnicas": cmd_tecnicas,
     "evos": cmd_evos,
     "digilog": cmd_digilog,
+    "salidas": cmd_salidas,
     "pasos": script_cmd("story_steps", "pasos [paso_hex ...]: conversaciones que hacen algo en cada paso de historia (story_steps.py)"),
     "eventos": script_cmd("story_events", "eventos [paso_hex ...]: cadena de eventos de cada paso de historia (story_events.py)"),
     "codigo": script_cmd("story_code", "codigo [paso_hex ...]: dónde cambia GAME.progress y qué marcas activa el código (story_code.py)"),
