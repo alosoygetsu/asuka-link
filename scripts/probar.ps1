@@ -4,6 +4,7 @@
 # nunca se cierra.
 #   powershell -File native\scripts\probar.ps1 digilog -Save D:\ruta\card1.mcd [-Slot 0..2]
 #   powershell -File native\scripts\probar.ps1 campo -Field 0x22B -Progress 12 -Shot
+#   powershell -File native\scripts\probar.ps1 campo -Field 0x230 -Progress 4 -Steps "free,talk:45,text,f2"
 #   powershell -File native\scripts\probar.ps1 campo -Press "200:triangle,260:down" -Until "algo del log" -Shot
 # Casos:
 #   digilog  abre el Digilog solo (DW3_TEST=digilog) y lo escribe en texto (tools/digilog_dump.py)
@@ -11,11 +12,14 @@
 # Opciones: -Save tarjeta .mcd (sin ella, partida nueva con el equipo -Party), -Slot (si no, el último guardado),
 #   -Field modo del mapa (si no, el de la partida o 0x230), -Progress paso de la historia, -Place "P,A" GAME.place y placeArg (una sala de un laberinto), -Set "CODE=V,..." marcas y
 #   objetos (main/game/events.c), -Press botones a destiempo (DW3_PRESS, "frame:botón,..."), -Lang 2..6 idioma,
+#   -Steps pasos en orden, cada uno cuando se puede (DW3_STEPS, platform/pad.c): free (el jugador libre), talk:N
+#   (hablar con el personaje N de dw3.py charlas), text (X hasta que acaben las charlas), wait:N, un botón, f2, digilog (lo vuelca);
+#   la prueba acaba al hacer el último.
 #   -Until expresión del log que da la prueba por buena, -Shot captura reducida en test-shots\, -Keep no cierra,
 #   -Log todas las líneas del juego.
 param([Parameter(Position = 0)][ValidateSet("digilog", "campo")][string]$Case = "campo",
       [string]$Save, [ValidateRange(-1, 2)][int]$Slot = -1, [string]$Field, [int]$Progress = -1, [string]$Set, [string]$Place,
-      [int]$Party = 0, [string]$Press, [ValidateRange(0, 6)][int]$Lang = 0, [string]$Until, [int]$Seconds = 15,
+      [int]$Party = 0, [string]$Press, [string]$Steps, [ValidateRange(0, 6)][int]$Lang = 0, [string]$Until, [int]$Seconds = 15,
       [int]$Timeout = 90, [string]$Copy = "test5", [switch]$Shot, [switch]$Keep, [switch]$Log)
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot)  # la carpeta del proyecto: native\, test2..test5
@@ -55,6 +59,7 @@ Remove-Item $out, "$dir\prueba.out" -ErrorAction SilentlyContinue
 $env:DW3_TEST = @{ digilog = "digilog"; campo = "" }[$Case]
 $env:DW3_COOP_SAVE = $saveArg
 $env:DW3_PRESS = $Press
+$env:DW3_STEPS = $Steps
 $env:DW3_LANGUAGE = if ($Lang) { "$Lang" } else { $null }
 $gameArgs = @("--field", $Field, "--party", "$Party")
 if ($Place) { $gameArgs += "--place", $Place }
@@ -62,15 +67,17 @@ if ($Progress -ge 0) { $gameArgs += "--progress", "$Progress" }
 if ($Set) { $Set.Split(",") | ForEach-Object { $gameArgs += "--set", $_.Trim() } }
 $game = Start-Process "$dir\dw2003.exe" -ArgumentList $gameArgs -WorkingDirectory $dir -PassThru `
     -RedirectStandardError $out -RedirectStandardOutput "$dir\prueba.out"
-Remove-Item Env:DW3_TEST, Env:DW3_COOP_SAVE, Env:DW3_PRESS, Env:DW3_LANGUAGE -ErrorAction SilentlyContinue
+Remove-Item Env:DW3_TEST, Env:DW3_COOP_SAVE, Env:DW3_PRESS, Env:DW3_STEPS, Env:DW3_LANGUAGE -ErrorAction SilentlyContinue
 
 $done = @{ digilog = 'DIGILOG end'; campo = $null }[$Case]
+if ($Steps -and -not $done) { $done = if ($Steps -match 'digilog') { 'DIGILOG end' } else { 'steps: \w+, done' } }
 if ($Until) { $done = $Until }
 $start = Get-Date; $inField = $null; $result = $null
 while (-not $result) {
     Start-Sleep -Milliseconds 500
     $text = if (Test-Path $out) { Get-Content $out -Raw -ErrorAction SilentlyContinue } else { "" }
-    if ($text -match 'CRASH') { $result = "SE HA CAÍDO" }
+    if ($text -match 'steps: .*stopped') { $result = "PASOS PARADOS" }
+    elseif ($text -match 'CRASH') { $result = "SE HA CAÍDO" }
     elseif ($game.HasExited) { $result = "SE HA CERRADO (código $($game.ExitCode))" }
     elseif ($done -and $text -match $done) { $result = "bien" }
     elseif (-not $done -and $text -match 'field: mode') {
@@ -107,9 +114,9 @@ if (-not $Keep -and -not $game.HasExited) { $game | Stop-Process; $game.WaitForE
 
 # lo que importa del log
 if ($Log) { Get-Content $out }
-elseif ($Case -eq "digilog" -and $ok) { python -I "$root\native\tools\digilog_dump.py" $out }
+elseif (($Case -eq "digilog" -or $Steps -match 'digilog') -and $ok) { python -I "$root\native\tools\digilog_dump.py" $out }
 else {
-    Get-Content $out | Select-String 'CRASH|error|fail|can.t|test:|field:|refused' | Select-Object -Last 15 | ForEach-Object { "   $($_.Line)" }
+    Get-Content $out | Select-String 'CRASH|error|fail|can.t|test:|field:|refused|steps:' | Select-Object -Last 15 | ForEach-Object { "   $($_.Line)" }
     if (-not $ok) { "   -- las últimas líneas:"; Get-Content $out -Tail 10 | ForEach-Object { "   $_" } }
 }
 if (-not $ok) { exit 1 }

@@ -171,9 +171,12 @@ static void dump_game(void) {
     }
 }
 
-/* DW3_TEST=digilog (scripts/probar.ps1): 3 s into a field, the field menu's Digilog
+/* DW3_TEST=digilog (scripts/probar.ps1): once the field has left the player free
+   for a second (no event or talk: coop_test.inc.c), the field menu's Digilog
    as if picked (field_menu.c: FIELD_MENU_CHOICE, then MODE_STATUS), which
    dumps its entries (ststatus/item_list.c) */
+int native_test_field_free(void); /* coop/src/fieldstg/coop_test.inc.c */
+
 static void test_frame(void) {
     static int field_frames, done;
     int mode = getMode();
@@ -181,8 +184,8 @@ static void test_frame(void) {
     if (done || !native_test("digilog")) {
         return;
     }
-    field_frames = mode >= 0x200 && mode <= 0x2FF ? field_frames + 1 : 0;
-    if (field_frames == 180) {
+    field_frames = mode >= 0x200 && mode <= 0x2FF && native_test_field_free() ? field_frames + 1 : 0;
+    if (field_frames == 60) {
         int32_t *choice = (int32_t *)FIELD_MENU_CHOICE;
         int32_t extra = GAME[GAME_ITEMS + 0x192] != 0;
 

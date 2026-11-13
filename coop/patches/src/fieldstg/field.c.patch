@@ -1,6 +1,6 @@
 --- a/src/fieldstg/field.c
 +++ b/src/fieldstg/field.c
-@@ -362,10 +362,26 @@
+@@ -362,10 +362,27 @@
      }
  }
  
@@ -13,6 +13,7 @@
 +#include "fieldstg/coop_pvp.inc.c" /* the PvP battle and the card duel */
 +#include "fieldstg/coop_raid.inc.c" /* the raid's room */
 +#include "fieldstg/coop_guard.inc.c" /* what the Guardromon's menu does each frame, and the co-op's frame on the field */
++#include "fieldstg/coop_test.inc.c" /* our tests' steps: whether the player is free, a talk by character */
 +#endif
 +
  /* Ends the player, the partners and the map's characters */
@@ -27,7 +28,7 @@
      for (i = 0; i < 4; i++) {
          if (children->actors[i] != NULL) {
              children->actors[i]->setState(children->actors[i], TASK_KILL);
-@@ -592,6 +608,9 @@
+@@ -592,6 +609,9 @@
          switch (task->substate) {
          case 0:
          default:
@@ -37,7 +38,7 @@
              startField(task, children);
          case 1:
              switch (task->step) {
-@@ -645,6 +664,9 @@
+@@ -645,6 +665,9 @@
          }
          break;
      case TASK_RUN:

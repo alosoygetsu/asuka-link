@@ -226,6 +226,85 @@ static uint16_t scripted(int frame) {
     return held;
 }
 
+/* DW3_STEPS="free,talk:45,text,start,wait:20,down,cross,f2": our tests' steps
+   (scripts/probar.ps1 -Steps), in order, each once it can be done, not at a
+   fixed vsync: free waits until the field leaves the player to the pad (no
+   event, talk, warp or battle) for half a second; talk:N talks to the map's
+   character N (dw3.py charlas' "actor N", decimal or 0x), once free; text
+   presses cross until the talks and events are over and the player is free;
+   wait:N waits N vsyncs; a button is held for 6 vsyncs, then 10 go by; f1, f2,
+   f5, f9 the debug keys, esc the options menu; digilog opens the Digilog and
+   dumps it (DW3_TEST=digilog, state.c). Each step done goes to the log
+   ("steps: ..."), the last as "steps: done" */
+int native_test_field_free(void); /* coop/src/fieldstg/coop_test.inc.c */
+int native_test_talk(int character);
+int getMode(void);
+
+static uint16_t steps(void) {
+    static const char *p;
+    static int started, t, free_frames;
+    char name[16];
+    int arg = 0, done = 0, mode = getMode();
+    uint16_t held = 0;
+
+    if (!started) {
+        started = 1;
+        p = SDL_getenv("DW3_STEPS");
+    }
+    free_frames = mode >= 0x200 && mode <= 0x2FF && native_test_field_free() ? free_frames + 1 : 0;
+    if (p == NULL || *p == 0 || SDL_sscanf(p, "%15[a-z0-9]", name) != 1) {
+        return 0;
+    }
+    if (p[SDL_strlen(name)] == ':') {
+        arg = (int)SDL_strtol(p + SDL_strlen(name) + 1, NULL, 0);
+    }
+    t++;
+    if (SDL_strcmp(name, "free") == 0) {
+        done = free_frames >= 30;
+    } else if (SDL_strcmp(name, "wait") == 0) {
+        done = t >= arg;
+    } else if (SDL_strcmp(name, "talk") == 0) {
+        if (free_frames >= 30) {
+            if (!native_test_talk(arg)) {
+                LOG("steps: no character %d to talk to here (mode %04X): stopped", arg, mode);
+                p = NULL;
+                return 0;
+            }
+            done = 1;
+        }
+    } else if (SDL_strcmp(name, "text") == 0) {
+        held = t % 20 < 6 && free_frames == 0 ? 1 << 14 : 0; /* 14: cross */
+        done = free_frames >= 30;
+    } else if (name[0] == 'f' && name[1] >= '0' && name[1] <= '9') {
+        state_key(SDL_GetKeyFromName(name));
+        done = 1;
+    } else if (SDL_strcmp(name, "esc") == 0) {
+        menu_toggle();
+        done = 1;
+    } else if (SDL_strcmp(name, "digilog") == 0) {
+        SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "DW3_TEST", "digilog", true); /* state.c opens it once free */
+        done = 1;
+    } else {
+        int i;
+
+        for (i = 0; i < 16 && SDL_strcmp(name, NAMES[i]) != 0; i++) {
+        }
+        if (i == 16) {
+            LOG("steps: what is \"%s\"? stopped", name);
+            p = NULL;
+            return 0;
+        }
+        held = t <= 6 ? 1 << i : 0;
+        done = t >= 16;
+    }
+    if (done) {
+        p = SDL_strchr(p, ',') ? SDL_strchr(p, ',') + 1 : "";
+        LOG("steps: %s%s (vsync %d)", name, *p ? "" : ", done", VSync(-1));
+        t = 0;
+    }
+    return held;
+}
+
 /* DW3_RECORD=<file> writes every vsync's input from boot (buttons, 2 bytes,
    then the sticks, 4); DW3_REPLAY=<file> plays one back instead of the keys,
    and hands them back at its end. The game runs the same from boot: its
@@ -267,7 +346,7 @@ static void record_replay(uint16_t *held, uint8_t *sticks) {
 void pad_update(void) {
     const bool *keys = SDL_GetKeyboardState(NULL);
     static int frame;
-    uint16_t held = scripted(frame++) | (native_coop_auto_press() ? 1 << 14 : 0); /* 14: cross */
+    uint16_t held = scripted(frame++) | steps() | (native_coop_auto_press() ? 1 << 14 : 0); /* 14: cross */
     uint8_t *b = s_buf[0];
     size_t i;
 
