@@ -14,6 +14,7 @@ import game_text  # noqa: E402
 # TEAM the partners' choice at a new game (stplnmet), LOOK the look's page, TRADE the card trade's window,
 # GUARD the Guardromon's menu and its waits (fieldstg/field.c), RAID the raid's list, room and battle (wfightmn/menu.c),
 # MENU the field menu's rows of our own (main/menu/field_menu.c: OPTIONS opens platform/menu.c's options)
+# SHOP the item shop's yes in Spanish (stitshop/trade.c)
 BLOCKS = [
     ('TEAM', ['TITLE', 'HELP', 'YOURS', 'INTRO', 'MARK', 'MARK_2', 'MARK_3', 'SEPARATOR', 'NONE', 'ACCEPT'], {
         'eng': ['Choose your Partners', 'Pick 3 partners; pick one again\nto drop it. Then Accept.', 'Your Team', 'Please choose three partner\nDigimon, any three you like.', '1', '2', '3', ', ', 'No partners yet', 'Accept'],
@@ -56,6 +57,14 @@ BLOCKS = [
         'ita': ['OPZIONI'],
         'ger': ['OPTIONEN'],
         'spn': ['OPCIONES'],
+    }),
+    # SHOP the item shop's confirmation (stitshop/trade.c): the disc's Spanish has "Buy" and "Sell" in English there
+    ('SHOP', ['BUY', 'SELL'], {
+        'eng': ['Buy', 'Sell'],
+        'fra': ['Acheter', 'Vendre'],
+        'ita': ['Compra', 'Vendi'],
+        'ger': ['Kaufen', 'Verkaufen'],
+        'spn': ['Comprar', 'Vender'],
     }),
 ]
 

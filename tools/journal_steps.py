@@ -83,11 +83,16 @@ STORY = [
         (F(0x1C, 0x0E), S(305), "En la Sala Maestra os pilla el Maestro de Juego.", "The Game Master catches you in the Master Room."),
     ]),
     ([0x0E], [
+        (F(0x1A, 0x02), S(485), "Busca el Símbolo de la Sinceridad: pregunta a Nami en la Bahía Fénix.",
+         "Look for the Symbol of Sincerity: ask Nami at Phoenix Bay."),
         (F(0x1A, 0x2B), S(475), "Te piden una bomba para abrir un muro.", "You need a bomb to open a wall."),
         (F(0x1C, 0x4F), M(0x226), "Baronmon haría un Chip TNT con una Bola TNT.", "Baronmon could make a TNT Chip from a TNT Ball."),
         (ITEM(0x05A), M(0x22B), "Los Triceramon del Valle Tyranno sueltan Bolas TNT.", "Triceramon in Tyranno Valley drop TNT Balls."),
         (ITEM(0x00E), M(0x226), "Baronmon te hace el Chip TNT.", "Baronmon makes you the TNT Chip."),
         (F(0x40, 0x07), S(455), "Pon el Chip TNT en el muro del Pantano Bios.", "Set the TNT Chip on the wall in Bios Swamp."),
+        # hasta que la historia pase de paso: sin nombrar al Jefe Qing Long, que aún no ha salido
+        (AFTER(0x0E), M(0x236), "El muro ha caído: crúzalo y busca el Digihuevo de la Sinceridad.",
+         "The wall is down: go through and look for the Digi-Egg of Sincerity."),
     ]),
     ([0x0F, 0x10, 0x11], [
         (F(0x40, 0x1E), S(675), "Vence al Líder Byakko en la Cúpula Byakko.", "Beat Leader Byakko in Byakko Dome."),

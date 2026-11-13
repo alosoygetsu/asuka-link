@@ -103,6 +103,9 @@ coop = 0 en native.ini apaga el cooperativo.)
      se pueden hacer en un tramo de la historia lo avisan.
      Los investigadores DRI te piden su DDNA aunque ya tengas a ese compañero:
      así puedes combatir contra su jefe. Su paso dice qué nivel de equipo piden.
+   - VIAJE RÁPIDO: en el MAPA del menú, X sobre una zona que ya visitaste y "Sí"
+     te lleva allí al momento. Solo desde donde podrías salir andando: en una sala
+     de la que solo se sale con un evento, X suena a cancelar.
    - OPCIONES (pantalla completa, ventana, resolución, botones...): en el menú de
      pausa del mapa (Start), antes de SALIR.
    - Si uno entra en combate, un menú o una cinemática, desaparece para los demás

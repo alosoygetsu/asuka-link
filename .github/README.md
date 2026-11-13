@@ -54,6 +54,8 @@ conectado, el ping y los errores habituales. La guía completa está en `LEEME-C
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Creador de personaje | Al empezar partida eliges ser Junior, Chico o Chica y uno de 8 tonos de color; con todas las animaciones, también en las escenas |
 | Entrenamiento sin azar | En los gimnasios todos los intentos salen bien, cada stat sube lo máximo y ninguno baja |
+| Viaje rápido seguro | En el mapa del menú, "Sí" te lleva al momento a una zona visitada, pero solo desde donde podrías salir andando (no desde salas de evento) |
+| Emblemas | Los de Búsqueda y Contraataque funcionan también junto a armas con efecto (igual para todos en PvP y raids) |
 | Multiplicador de EXP | x1 a x5 sobre la EXP de combate (compañeros y Digimon) |
 | Multiplicador de dinero | x1 a x5 sobre el dinero de combate |
 | Opciones | Dentro del juego, en el menú de pausa (OPCIONES, con Start en el mapa): pantalla completa, ventana, resolución, pantalla ancha en combates, iconos, vibración y botones. Los mods del port van fijos (viaje rápido, Digilog, texto rápido, EXP compartida completa, entrenamiento sin azar…) y EXP y dinero se cambian en el launcher |

@@ -75,8 +75,13 @@
  /* Works out a side's stats into its BattleStats: the partner's totals with
     the fighter's boosts, its resistances and what its equipment and
     accessories add, or the enemy's (computeEnemyStats). The match depends on
-@@ -55,6 +123,16 @@
+@@ -53,8 +121,21 @@
+     s16 *values;
+     s32 count;
      s32 found;
++#ifdef NATIVE
++    s32 critWeapon = 0; /* a critical weapon: it and Search Crest both set criticalBonus */
++#endif
      s32 i;
  
 +#ifdef NATIVE
@@ -92,7 +97,7 @@
      if (which) {
          stats = &FIGHTSTG_battleFuncs.stats[0];
      } else {
-@@ -62,7 +140,11 @@
+@@ -62,7 +143,11 @@
      }
      HEAP.zero(stats, sizeof(BattleStats));
      if (side == 0) {
@@ -104,3 +109,45 @@
          member = GAME.funcs.getPartyMember(index);
          digimon = &DIGIMON_DATA[member];
          GAME.funcs.computeStats(member, &totals);
+@@ -182,18 +267,41 @@
+                 } else if (values[i] == 0x96 || values[i] == 0xBF) {
+                     stats->criticalBonus = data->weapon.statusPower;
+                     found = 1;
++#ifdef NATIVE
++                    critWeapon = 1;
++#endif
+                 }
+             }
+         }
++#ifdef NATIVE
++        /* Asuka Link (after the port's v0.19.5 fix_equip_stacking, always on, so every player of a PvP battle or a
++           raid has the same rule): Search and Counter Crest also work beside a special weapon (Search not beside a
++           critical one, which sets the same field); Triple Crest stays blocked, a triple hit skips the weapon's effect */
++        {
++#else
+         if (!found) {
++#endif
+             values = &partner->equip[4];
+             for (i = 0; i < 2; i++) {
++#ifdef NATIVE
++                if (values[i] == 0x13C) {
++                    if (!found) {
++                        stats->tripleHit = 1;
++                    }
++                } else if (values[i] == 0x13D) {
++                    if (!critWeapon) {
++                        data = GET_ITEM[0](0x13D)->data.record;
++                        stats->criticalBonus = data->acc.amount;
++                    }
++                } else if (values[i] == 0x13E) {
++#else
+                 if (values[i] == 0x13C) {
+                     stats->tripleHit = 1;
+                 } else if (values[i] == 0x13D) {
+                     data = GET_ITEM[0](0x13D)->data.record;
+                     stats->criticalBonus = data->acc.amount;
+                 } else if (values[i] == 0x13E) {
++#endif
+                     data = GET_ITEM[0](0x13E)->data.record;
+                     stats->counter = data->acc.amount;
+                 }

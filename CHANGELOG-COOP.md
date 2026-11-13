@@ -4,6 +4,23 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.4.0
+Basado en el port v0.18.9, con cosas de sus versiones hasta la v0.19.7 traídas a mano. Red: versión 8, como la
+1.3.x (se juntan sin problema).
+- **Viaje rápido al momento.** En el mapa del menú, "Sí" te lleva enseguida: la pantalla se funde y apareces en esa
+  zona, sin tener que cerrar el menú. Los demás jugadores te ven llegar como si hubieras cruzado una puerta.
+- **El viaje rápido solo funciona donde podrías salir andando.** En una sala de la que solo se sale con un evento o en
+  un sitio que la historia tiene cerrado, X en el mapa suena a cancelar y no pregunta. Antes se podía viajar desde ahí
+  y saltarse partes de la historia.
+- **Emblemas de Búsqueda y de Contraataque:** ahora también funcionan junto a un arma que envenena, paraliza, confunde,
+  noquea, absorbe o da críticos; el juego los apagaba. El de Búsqueda no suma con un arma de críticos, porque dan lo
+  mismo. El Emblema Triple sigue igual: un golpe triple no aplica el efecto del arma. Es igual para todos, también en
+  los combates entre jugadores y las raids.
+- **La tienda dice "Comprar" y "Vender"** al confirmar, en español; el disco trae "Buy" y "Sell" en inglés.
+- **Digilog, el Digihuevo de la Sinceridad:** el paso ya no destripa al Jefe Qing Long antes de tiempo. Se llama
+  "Huevo Sinceridad", empieza preguntando a Nami en la Bahía Fénix y, con el muro del Pantano Bios abierto, te manda a
+  buscar el Digihuevo.
+
 ## v1.3.2
 Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problema).
 - **Las misiones de DDNA ya no se dan por hechas antes de tiempo.** Contaban como hechas al conseguir la DDNA del

@@ -1,0 +1,42 @@
+--- a/src/stitshop/trade.c
++++ b/src/stitshop/trade.c
+@@ -3,6 +3,21 @@
+ 
+ #include "stitshop.h"
+ 
++#ifdef NATIVE
++/* The disc's Spanish has "Buy" and "Sell" in English here: those two are the co-op's own (tools/coop_text.py) */
++#define LANGUAGE_SPANISH 6
++static void shopVerb(TextWindow *window, s32 index, s32 own) {
++    if (LANGUAGE == LANGUAGE_SPANISH) {
++        window->setString(window, (void *)native_coop_text(LANGUAGE), own);
++    } else {
++        window->setString(window, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_SHOP)), index);
++    }
++}
++#define SHOP_VERB(window, index, own) shopVerb((window), (index), (own))
++#else
++#define SHOP_VERB(window, index, own) (window)->setString((window), FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_SHOP)), (index))
++#endif
++
+ /* Creates the buying dialog's windows: the quantity, the total with its yes and
+    no, and the cursor */
+ void STITSHOP_createBuyWindows(ShopBuy *buy, ShopBuyWindows *win) {
+@@ -35,7 +50,7 @@
+     if (show) {
+         win->total->setString(win->total, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_SHOP)), 0x12);
+         win->total->setNumber(win->total, 1, GET_ITEM[0](buy->item)->price * buy->quantity);
+-        win->yes->setString(win->yes, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_SHOP)), 0x13);
++        SHOP_VERB(win->yes, 0x13, COOP_TEXT_SHOP_BUY);
+         win->no->setString(win->no, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_SHOP)), 0x14);
+     } else {
+         win->total->setVisible(win->total, 0);
+@@ -918,7 +933,7 @@
+     if (STITSHOP_funcs.updateFade(&sell->panels[2]) != 0) {
+         win->total->setString(win->total, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_SHOP)), 0x12);
+         win->total->setNumber(win->total, 1, GET_ITEM[0](sell->item)->sellPrice * sell->quantity);
+-        win->yes->setString(win->yes, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_SHOP)), 0x22);
++        SHOP_VERB(win->yes, 0x22, COOP_TEXT_SHOP_SELL);
+         win->no->setString(win->no, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_SHOP)), 0x14);
+         sell->choice = 0;
+         win->cursor->setPos(win->cursor, 0xB8, 0x49);
