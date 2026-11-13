@@ -13,9 +13,11 @@ mapas (`WSTAGnnn.PRO`) en 0x800A5DE0, encima de FIELDSTG.
   `task/` las tareas (el "planificador" del juego).
 - `fieldstg/` el campo: actores, cámara, conversaciones (`speech.c`), eventos de historia (`story.c`,
   `event.c`, `script.c` el intérprete de guiones), combates del mapa (`battle.c`), el estado del campo (`field.c`,
-  `state.c`), carga del mapa (`map*.c`, `field_stage.c`).
+  `state.c`), carga del mapa (`map*.c`, `field_stage.c`). Los Sí/No de `choice.c` solo los usa WSTAG260 (el
+  concurso de preguntas).
 - `stages/<zona>/wstagNNN.c` cada mapa: su `setupStage`, sus actores y conversaciones (`actorNTalkM*`), sus guiones de
   evento (`scriptN`) y lo que hace cada evento al acabar (`endEventN`). `stages/README.md`: qué mapa es cada uno.
+  `stages/common/*.inc.c`: piezas que comparten varios mapas (`list_menu.inc.c`, los menús de lista de los NPC).
 - `fightstg/` el combate (daño, turnos, técnicas, IA enemiga); `wfightmn/` su menú y eventos de turno;
   `wfightts/` el combate de pruebas.
 - `cardgame/` el juego de cartas; `stcrdabm` álbum, `stcrddek` editor de mazos, `stcrdshp` tienda de cartas.
