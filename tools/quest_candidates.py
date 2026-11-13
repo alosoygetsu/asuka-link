@@ -58,7 +58,11 @@ def cond_text(c, v):
     if 0x7600 <= c < 0x7A00: return f"duelo de cartas {c:#x}"
     if 0x6000 <= c < 0x7000: return f"historia en el paso {c & 0xFFF}"
     if 0x7000 <= c < 0x7200: return f"especial {c & 0x1FF}={v}"
-    if 0x7200 <= c < 0x7400: return f"equipo {c & 0x1FF}"
+    if 0x7200 <= c < 0x7400:
+        import sys
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import quest_talks
+        return quest_talks.party_stat(c & 0x1FF, v)
     if c < 0x6000: return f"marca {c >> 8:#x}:{c & 0xFF:#x}={v}"
     return f"{c:#x}={v}"
 

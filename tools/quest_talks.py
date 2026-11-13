@@ -38,6 +38,13 @@ SPECIALS = {_nums[i]: (_nums[i + 1], _nums[i + 2]) for i in range(0, len(_nums) 
 _rg = _ev[_ev.index("u8 PROGRESS_RANGES[][2] = {"):]
 _rg = [int(x, 16) for x in re.findall(r"0x([0-9A-Fa-f]+)", _rg[:_rg.index("};")])]
 RANGES = [(_rg[i], _rg[i + 1]) for i in range(0, len(_rg), 2)]
+# las condiciones 0x72 (checkPartyStat): el Carisma del equipo (battle[5] de los tres, con su equipo) frente a un umbral
+_th = _ev[_ev.index("s32 PARTY_STAT_THRESHOLDS[] = {"):]
+CHARISMA = [int(x) for x in re.findall(r"\d+", _th[_th.index("{"):_th.index("};")])]
+
+def party_stat(i, v):
+    t = CHARISMA[i] if i < len(CHARISMA) else f"umbral {i}"
+    return f"carisma del equipo {'≥' if v else '<'}{t}"
 PARTNERS = ["Kotemon", "Kumamon", "Monmon", "Agumon", "Veemon", "Guilmon", "Renamon", "Patamon"]
 SETS = {0: "Pez Rojo + Tela de Araña + Jabalina de Bambú", 1: "las 5 armas finales (Muramasa, Super Nova, Castigo, Eternamente, Invencible)"}
 
@@ -68,7 +75,7 @@ def code(c, v):
     if 0x7600 <= c < 0x7A00: return f"DUELO {c:#x}"
     if 0x6000 <= c < 0x7000: return f"historia{'=' if v else '!='}{c & 0xFFF:#x}"
     if 0x7000 <= c < 0x7200: return special(c & 0x1FF, v)
-    if 0x7200 <= c < 0x7400: return f"equipo{c & 0x1FF}={v}"
+    if 0x7200 <= c < 0x7400: return party_stat(c & 0x1FF, v)
     if c < 0x6000: return f"F{c >> 8:02x}:{c & 0xFF:02x}={v}"
     return f"{c:#x}={v}"
 

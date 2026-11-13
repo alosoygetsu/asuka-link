@@ -569,6 +569,8 @@ def cmd_marca(args):
         for c, _, es, _ in steps:
             if c == code:
                 other.append(f"Digilog misión (objeto {item:#x}): {es}")
+    if code >> 8 == 0x20:
+        print(f"(grupo 0x20: el mapa del modo {0x200 | code & 0xFF:#x} ya visitado)")
     print(f"marca {flag_text(code)} (código {code:#06x}): {len(sets)} cambios, {len(tests)} comprobaciones, {len(other)} otros, {len(notes)} comentarios")
     for title, ls in (("se cambia:", sets), ("se comprueba:", tests), ("otros (tablas, Digilog):", other),
                       ("comentarios:", notes)):
@@ -988,7 +990,8 @@ def cmd_digilog(args):
         if 0x8000 <= c < 0x9000:
             return f"objeto {c & 0x1FF:#x}"
         if 0x7200 <= c < 0x7400:
-            return f"equipo {c & 0x1FF}"
+            import quest_talks as q
+            return q.party_stat(c & 0x1FF, 1)
         return flag_text(c)
 
     def where(w):
