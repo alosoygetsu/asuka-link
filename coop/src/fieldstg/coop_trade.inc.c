@@ -90,7 +90,7 @@ static struct {
     s32 frames; /* in the phase */
     s32 froze; /* busy was set here */
     u32 readyTheirs; /* their offer's hash when this side got ready */
-    s32 menu; /* the Guardromon's choice: 0 talk, 1 trade, 2 battle, 3 duel, 4 raid, 5 exit */
+    s32 menu; /* the Guardromon's choice: its row (coopGuardOptions) */
     s32 kind; /* what the wait is for: 0 a card trade, 1 a PvP battle, 2 a raid, 3 a card duel (NativeCoopTrade.pad[0]) */
     s32 raid; /* the raid picked: coopRaidBosses' index (NativeCoopTrade.pad[1]) */
     s32 raidCursor, raidTop;
@@ -250,9 +250,13 @@ static void coopTradeEnd(s32 lastPhase, s32 msg) {
     }
 }
 
+/* The Guardromon's menu window (coopGuardMenuRun), run by coopTradeUpdate while there */
+static struct CoopGuardMenu *coopGuardMenu;
+
 static void coopTradeReset(void) {
     s32 c;
 
+    coopGuardMenu = NULL; /* gone with the last field's heap */
     coopTrade.phase = COOP_TRADE_NONE;
     coopTrade.froze = 0; /* the new field isn't busy */
     coopTrade.linger = 0;
@@ -293,7 +297,6 @@ s32 coopTradeTalk(Actor *actor, Point *pos, Actor *target) {
     coopTradeStart(-1, 0, COOP_TRADE_MENU);
     coopTrade.menu = 0;
     coopTrade.talker = actor;
-    coopTrade.talkAt = *pos;
-    SOUND.playSound(SOUND_MENU_OPEN);
+    coopTrade.talkAt = *pos; /* the menu's window opens with its sound (coopGuardMenuRun) */
     return 1;
 }

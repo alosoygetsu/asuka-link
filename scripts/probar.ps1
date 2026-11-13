@@ -15,12 +15,14 @@
 #   -Steps pasos en orden, cada uno cuando se puede (DW3_STEPS, platform/pad.c): free (el jugador libre), talk:N
 #   (hablar con el personaje N de dw3.py charlas), text (X hasta que acaben las charlas), wait:N, un botón, f2, digilog (lo vuelca);
 #   la prueba acaba al hacer el último.
+#   -CoopAuto menu|trade|battle|raid|duel cooperativo encendido (solo, sin nadie más) y DW3_COOP_AUTO: el menú del
+#   Guardromon abierto o su elección hecha por sí sola.
 #   -Until expresión del log que da la prueba por buena, -Shot captura reducida en test-shots\, -Keep no cierra,
 #   -Log todas las líneas del juego.
 param([Parameter(Position = 0)][ValidateSet("digilog", "campo")][string]$Case = "campo",
       [string]$Save, [ValidateRange(-1, 2)][int]$Slot = -1, [string]$Field, [int]$Progress = -1, [string]$Set, [string]$Place,
       [int]$Party = 0, [string]$Press, [string]$Steps, [ValidateRange(0, 6)][int]$Lang = 0, [string]$Until, [int]$Seconds = 15,
-      [int]$Timeout = 90, [string]$Copy = "test5", [switch]$Shot, [switch]$Keep, [switch]$Log)
+      [int]$Timeout = 90, [string]$Copy = "test5", [string]$CoopAuto, [switch]$Shot, [switch]$Keep, [switch]$Log)
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot)  # la carpeta del proyecto: native\, test2..test5
 $build = "$root\native\build"
@@ -52,13 +54,15 @@ if (-not (Test-Path "$dir\data")) { New-Item -ItemType Junction -Path "$dir\data
 Copy-Item "$build\dw2003.exe", "$build\dw2003.fill", "$build\SDL3.dll" $dir -Force
 if ($Save) { Copy-Item $Save $New -Force }
 $ini = (Get-Content "$build\native.ini" | Where-Object { $_ -notmatch '^\s*(coop\w*|scale|fullscreen|debug)\s*=' }) -join "`n"
-Set-Content "$dir\native.ini" "$ini`ncoop = 0`nscale = 1`nfullscreen = 0`ndebug = 1`n" -NoNewline
+$coopIni = if ($CoopAuto) { "coop = 1`ncoop_port = 27509`ncoop_peers = 127.0.0.1:27508" } else { "coop = 0" }
+Set-Content "$dir\native.ini" "$ini`n$coopIni`nscale = 1`nfullscreen = 0`ndebug = 1`n" -NoNewline
 $out = "$dir\prueba.log"
 Remove-Item $out, "$dir\prueba.out" -ErrorAction SilentlyContinue
 
 $env:DW3_TEST = @{ digilog = "digilog"; campo = "" }[$Case]
 $env:DW3_COOP_SAVE = $saveArg
 $env:DW3_PRESS = $Press
+$env:DW3_COOP_AUTO = if ($CoopAuto) { $CoopAuto } else { $null }
 $env:DW3_STEPS = $Steps
 $env:DW3_LANGUAGE = if ($Lang) { "$Lang" } else { $null }
 $gameArgs = @("--field", $Field, "--party", "$Party")
@@ -67,7 +71,7 @@ if ($Progress -ge 0) { $gameArgs += "--progress", "$Progress" }
 if ($Set) { $Set.Split(",") | ForEach-Object { $gameArgs += "--set", $_.Trim() } }
 $game = Start-Process "$dir\dw2003.exe" -ArgumentList $gameArgs -WorkingDirectory $dir -PassThru `
     -RedirectStandardError $out -RedirectStandardOutput "$dir\prueba.out"
-Remove-Item Env:DW3_TEST, Env:DW3_COOP_SAVE, Env:DW3_PRESS, Env:DW3_STEPS, Env:DW3_LANGUAGE -ErrorAction SilentlyContinue
+Remove-Item Env:DW3_TEST, Env:DW3_COOP_AUTO, Env:DW3_COOP_SAVE, Env:DW3_PRESS, Env:DW3_STEPS, Env:DW3_LANGUAGE -ErrorAction SilentlyContinue
 
 $done = @{ digilog = 'DIGILOG end'; campo = $null }[$Case]
 if ($Steps -and -not $done) { $done = if ($Steps -match 'digilog') { 'DIGILOG end' } else { 'steps: \w+, done' } }

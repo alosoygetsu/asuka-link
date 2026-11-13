@@ -49,26 +49,42 @@ static void coopTradeUpdate(void) {
             coopRaidLobby();
         } else
         switch (coopTrade.phase) {
-        case COOP_TRADE_MENU:
-            if (PAD_PRESSED(PAD_UP) || PAD_PRESSED(PAD_DOWN)) {
-                coopTrade.menu = (coopTrade.menu + (PAD_PRESSED(PAD_UP) ? 5 : 1)) % 6;
+        case COOP_TRADE_MENU: {
+            /* as the game's list menus: the cursor stops at the ends, held buttons repeat, triangle shuts it */
+            s32 rows[COOP_GUARD_ROWS];
+            s32 count = coopGuardOptions(rows);
+            s32 prev = coopTrade.menu;
+
+            if (coopGuardMenu == NULL || coopGuardMenu->state != TASK_RUN || coopGuardMenu->substate != 2) {
+                break; /* its window still opening: the game's menus take no button yet */
+            }
+            if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP)) {
+                coopTrade.menu = coopTrade.menu > 0 ? coopTrade.menu - 1 : 0;
+            } else if (PAD_PRESSED(PAD_DOWN) || PAD_REPEATED(PAD_DOWN)) {
+                coopTrade.menu = coopTrade.menu < count - 1 ? coopTrade.menu + 1 : count - 1;
+            }
+            if (coopTrade.menu >= count) {
+                coopTrade.menu = count - 1;
+            }
+            c = rows[coopTrade.menu];
+            if (prev != coopTrade.menu) {
                 SOUND.playSound(SOUND_CURSOR);
-            } else if (PAD_PRESSED(PAD_CROSS) && coopTrade.menu == 5) {
+            } else if (PAD_PRESSED(PAD_TRIANGLE) || (PAD_PRESSED(PAD_CROSS) && c == COOP_GUARD_EXIT)) {
                 /* exit: the menu shut, no talk */
-                SOUND.playSound(SOUND_MENU_CANCEL);
+                SOUND.playSound(PAD_PRESSED(PAD_TRIANGLE) ? SOUND_MENU_CANCEL : SOUND_SELECT);
                 coopTradeEnd(COOP_TRADE_NONE, -1);
-            } else if (PAD_PRESSED(PAD_CIRCLE) || (PAD_PRESSED(PAD_CROSS) && coopTrade.menu == 0)) {
+            } else if (PAD_PRESSED(PAD_CIRCLE) || (PAD_PRESSED(PAD_CROSS) && c == COOP_GUARD_TALK)) {
                 /* his own talk (saving), as if this weren't here */
                 coopTradeEnd(COOP_TRADE_NONE, -1);
                 coopTrade.passing = 1;
                 FIELDSTG_talkToActorAt(coopTrade.talker, &coopTrade.talkAt);
                 coopTrade.passing = 0;
-            } else if (PAD_PRESSED(PAD_CROSS) && coopTrade.menu == 4) {
+            } else if (PAD_PRESSED(PAD_CROSS) && c == COOP_GUARD_RAID) {
                 coopTrade.phase = COOP_TRADE_RAID_PICK; /* the raid's boss first */
                 coopTrade.raidCursor = coopTrade.raidTop = 0;
                 SOUND.playSound(SOUND_SELECT);
             } else if (PAD_PRESSED(PAD_CROSS)) {
-                coopTrade.kind = coopTrade.menu == 3 ? 3 : coopTrade.menu - 1; /* 0 trade, 1 battle, 3 duel */
+                coopTrade.kind = c == COOP_GUARD_DUEL ? 3 : c - 1; /* 0 trade, 1 battle, 3 duel */
                 coopTrade.teamSent = 0;
                 coopTrade.phase = COOP_TRADE_ASK; /* wait for another player at a Guardromon */
                 coopTrade.session = (((u32)GFX.funcs.getTime() * 2654435761u) ^ ((u32)GAME.playFrames << 7) ^ native_coop_coin()) | 1;
@@ -76,6 +92,7 @@ static void coopTradeUpdate(void) {
                 SOUND.playSound(SOUND_SELECT);
             }
             break;
+        }
         case COOP_TRADE_RAID_PICK: {
             s32 open[COOP_RAID_BOSSES];
             s32 count = coopRaidOpen(open);
@@ -274,7 +291,8 @@ static void coopTradeUpdate(void) {
     if (coopTrade.phase != COOP_TRADE_NONE) {
         coopTradeOffer(&out);
     }
-    native_coop_tags_block(coopTrade.phase != COOP_TRADE_NONE || coopTrade.msgFrames > 0);
+    native_coop_tags_block(coopTrade.phase != COOP_TRADE_NONE || coopTrade.msgFrames > 0 || coopGuardMenu != NULL);
+    coopGuardMenuFrame();
     coopTradeDraw(&out, &in);
 }
 

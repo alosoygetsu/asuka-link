@@ -24,6 +24,11 @@ Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problem
   Jabalina, la carta de Gabumon, la taberna, Seehomon y Depthmon, y las compras de las cadenas de armas (Torre
   Delirios, Xuan Wu, Ciudad Amaterasu).
 - **El Cañón Láser** (cadena de Monmon) se compra en Bai Hu o Xuan Wu, y su paso lo dice.
+- **El menú del Guardromon es el del juego:** la misma ventana, letra, cursor y sonidos que los menús de los
+  personajes (como el guía de Ciudad Asuka); el cursor se para en los extremos y △ lo cierra.
+- **"Duelo" sale en el Guardromon cuando ya tienes la Bolsa de Carpetas**, igual que las cartas en el menú del
+  juego. Antes salía desde el principio.
+- **Equipo libre:** los nombres de los Digimon elegidos salían un poco bajos en su barra; ahora van centrados.
 - **Ken, Yuji y Yang:** Ken está en la primera sala del Desierto Mobius y Yuji y Yang más adentro, y sus pasos lo
   dicen.
 
