@@ -45,6 +45,8 @@ int g_field_mode, g_field_progress = -1, g_field_event, g_field_at_x = -1, g_fie
 /* --set CODE=VALUE: the flags and items the editor's story point assumes, set as
    actions (main/game/events.c's codes) before the field */
 int g_field_sets[64][2], g_field_set_count;
+/* --place P,A: GAME.place and placeArg, where the field starts (a maze's room: the Mobius Desert's 8 rooms by placeArg) */
+int g_field_place = -1, g_field_place_arg;
 int g_field_arg; /* --arg N: the mode's argument (the stage select's scene test takes 1) */
 int g_field_party; /* --party N: the starter set (0-2) given when there is no party */
 void applyAction(int code, int value); /* main/game/events.c */
@@ -57,6 +59,7 @@ void setParty(int set);                /* main/game/party.c */
 #define MODE_STATUS 0x1000    /* STSTATUS, the field menu's screens */
 #define GAME_FIELD_MODE 0x34  /* where MODE_STATUS returns to */
 #define GAME_ITEMS 0x7C       /* s8 counts */
+#define GAME_PLACE 0x44       /* u16 place, placeArg */
 extern uint8_t FIELD_MENU_CHOICE[]; /* the field menu's pick: option, extra (s32 each) */
 
 void state_key(int key) {
@@ -214,6 +217,11 @@ void state_frame(void) {
         /* no save: the party a new game is given (a starter set), which battles need */
         if (*(int32_t *)(GAME + GAME_PARTY) < 0) {
             setParty(g_field_party);
+        }
+        if (g_field_place >= 0) {
+            uint16_t place[2] = {(uint16_t)g_field_place, (uint16_t)g_field_place_arg};
+
+            memcpy(GAME + GAME_PLACE, place, 4);
         }
         for (int i = 0; i < g_field_set_count; i++) {
             applyAction(g_field_sets[i][0], g_field_sets[i][1]);

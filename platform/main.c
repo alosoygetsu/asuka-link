@@ -302,6 +302,8 @@ int main(int argc, char **argv) {
             g_field_arg = (int)SDL_strtol(argv[++i], NULL, 0);
         } else if (SDL_strcmp(argv[i], "--event") == 0 && i + 1 < argc) {
             g_field_event = (int)SDL_strtol(argv[++i], NULL, 0);
+        } else if (SDL_strcmp(argv[i], "--place") == 0) {
+            SDL_sscanf(argv[++i], "%i,%i", &g_field_place, &g_field_place_arg); /* a room of a maze: GAME.place, placeArg */
         } else if (SDL_strcmp(argv[i], "--at") == 0) {
             SDL_sscanf(argv[++i], "%d,%d", &g_field_at_x, &g_field_at_y);
         } else if (SDL_strcmp(argv[i], "--party") == 0 && i + 1 < argc) {

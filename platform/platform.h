@@ -320,5 +320,6 @@ extern int g_field_mode, g_field_progress, g_field_arg; /* state.c: --field MODE
 extern int g_field_sets[64][2], g_field_set_count; /* --set CODE=VALUE (hex code), repeated */
 extern int g_field_party; /* --party N: the starter set given when there is no party */
 extern int g_field_at_x, g_field_at_y; /* --at X,Y: the player's start in the first field (map pixels), x -1 for none */
+extern int g_field_place, g_field_place_arg; /* --place P,A: GAME.place and placeArg at the first field, -1 for none (state.c) */
 
 #endif /* PLATFORM_H */

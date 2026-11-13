@@ -9,12 +9,12 @@
 #   digilog  abre el Digilog solo (DW3_TEST=digilog) y lo escribe en texto (tools/digilog_dump.py)
 #   campo    llega al mapa y espera -Seconds (o -Until); falla si el juego se cae o se cierra
 # Opciones: -Save tarjeta .mcd (sin ella, partida nueva con el equipo -Party), -Slot (si no, el último guardado),
-#   -Field modo del mapa (si no, el de la partida o 0x230), -Progress paso de la historia, -Set "CODE=V,..." marcas y
+#   -Field modo del mapa (si no, el de la partida o 0x230), -Progress paso de la historia, -Place "P,A" GAME.place y placeArg (una sala de un laberinto), -Set "CODE=V,..." marcas y
 #   objetos (main/game/events.c), -Press botones a destiempo (DW3_PRESS, "frame:botón,..."), -Lang 2..6 idioma,
 #   -Until expresión del log que da la prueba por buena, -Shot captura reducida en test-shots\, -Keep no cierra,
 #   -Log todas las líneas del juego.
 param([Parameter(Position = 0)][ValidateSet("digilog", "campo")][string]$Case = "campo",
-      [string]$Save, [ValidateRange(-1, 2)][int]$Slot = -1, [string]$Field, [int]$Progress = -1, [string]$Set,
+      [string]$Save, [ValidateRange(-1, 2)][int]$Slot = -1, [string]$Field, [int]$Progress = -1, [string]$Set, [string]$Place,
       [int]$Party = 0, [string]$Press, [ValidateRange(0, 6)][int]$Lang = 0, [string]$Until, [int]$Seconds = 15,
       [int]$Timeout = 90, [string]$Copy = "test5", [switch]$Shot, [switch]$Keep, [switch]$Log)
 $ErrorActionPreference = "Stop"
@@ -57,6 +57,7 @@ $env:DW3_COOP_SAVE = $saveArg
 $env:DW3_PRESS = $Press
 $env:DW3_LANGUAGE = if ($Lang) { "$Lang" } else { $null }
 $gameArgs = @("--field", $Field, "--party", "$Party")
+if ($Place) { $gameArgs += "--place", $Place }
 if ($Progress -ge 0) { $gameArgs += "--progress", "$Progress" }
 if ($Set) { $Set.Split(",") | ForEach-Object { $gameArgs += "--set", $_.Trim() } }
 $game = Start-Process "$dir\dw2003.exe" -ArgumentList $gameArgs -WorkingDirectory $dir -PassThru `
