@@ -1,11 +1,12 @@
 --- a/src/stplnmet/choice.c
 +++ b/src/stplnmet/choice.c
-@@ -11,11 +11,530 @@
+@@ -11,11 +11,548 @@
  #define CHOICE_PARTNERS(c) STPLNMET_funcs.choices[c]
  #endif
  
 +#ifdef NATIVE
 +s32 STPLNMET_lookPortrait(s32 layer, s32 depth, s32 fx, s32 fy, s32 num, s32 cover, s32 x, s32 y, s32 w, s32 h);
++void STPLNMET_lookScanlines(SpriteDrawer *sprite, s32 layer, s32 depth, s32 fx, s32 fy);
 +#endif
 +#ifdef NATIVE
 +/* The free team (platform/team.c), in place of the packs, laid out as:
@@ -167,7 +168,8 @@
 +    sprite.setLayerId(task->layer, task->depth);
 +    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 6, 0x37, 0x2F);
 +    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 2, 0x37, 0x2F);
-+    STPLNMET_lookPortrait(task->layer, task->depth - 1, 0x4A, 0x53, 5, 1, 0x3B, 0x32, 0x1E, 0x25); /* the look, not Junior */
++    STPLNMET_lookScanlines(&sprite, task->layer, task->depth - 1, 0x49, 0x4C);
++    STPLNMET_lookPortrait(task->layer, task->depth - 1, 0x49, 0x4C, 5, 1, 0x3B, 0x32, 0x1E, 0x20); /* the look, not Junior */
 +    sprite.setLayerId(task->layer, task->depth - 1);
 +    sprite.draw(FILE_CACHE.getEntry(PLNMET_MENU), 10, 0x37, 0x59);
 +    sprite.setLayerId(task->layer, task->depth);
@@ -411,6 +413,22 @@
 +    return 1;
 +}
 +
++/* Over the portrait (its feet at fx, fy) in the panels where it's drawn in front (the team's page, the confirmation),
++   the name entry's scanlines, its sprite 0x1F with its CLUT rows turning every 5 frames, so it looks as on the keyboard's
++   page; called before STPLNMET_lookPortrait (added first, drawn last), with the caller's drawer: the game binds one
++   drawer at a time, so one of our own would leave the caller's methods on it. Leaves the menu's texture (0x280, 0x100) */
++void STPLNMET_lookScanlines(SpriteDrawer *sprite, s32 layer, s32 depth, s32 fx, s32 fy) {
++    if (STPLNMET_lookMode || STPLNMET_lookLoaded <= 0) {
++        return;
++    }
++    sprite->setTexture(0x140, 0x100);
++    sprite->setLayerId(layer, depth);
++    sprite->setClutRow((GFX.funcs.getTime() / 5) % 14);
++    sprite->draw(FILE_CACHE.getEntry(PLNMET_BANK), 0x1F, fx - 0x14, fy - 0x1E);
++    sprite->setClutRow(0);
++    sprite->setTexture(0x280, 0x100);
++}
++
 +static void STPLNMET_showLook(PartnerChoice *task, PartnerChoiceWindows *windows) {
 +    const void *coop = native_coop_text(LANGUAGE);
 +    s32 i;
@@ -531,7 +549,7 @@
      windows->title = createTextWindow(task->layer, 1, 0x20, 0x1A);
      windows->title->setPalette(windows->title, PALETTE_GREEN);
      for (i = 0; i < 3; i++) {
-@@ -42,6 +561,14 @@
+@@ -42,6 +579,14 @@
      s32 *partners;
  
      if (show != 0) {
@@ -546,7 +564,7 @@
          partners = CHOICE_PARTNERS(task->choice);
          windows->title->setString(windows->title, FILE_CACHE.load(TEXT_FILE(TEXT_ONLINE)), 6);
  #ifdef NATIVE
-@@ -73,6 +600,9 @@
+@@ -73,6 +618,9 @@
          }
          return;
      }
@@ -556,7 +574,7 @@
      windows->title->setVisible(windows->title, 0);
      for (i = 0; i < 3; i++) {
          windows->labels[i]->setVisible(windows->labels[i], 0);
-@@ -92,6 +622,14 @@
+@@ -92,6 +640,14 @@
      s32 *partners = CHOICE_PARTNERS(task->choice);
      PartnerAnim *anim;
      s32 i;
@@ -571,7 +589,7 @@
  
      initSpriteDrawer(&sprite);
      sprite.setLayerId(task->layer, task->depth);
-@@ -135,6 +673,14 @@
+@@ -135,6 +691,14 @@
      s32 old = task->choice;
      s32 i;
  
@@ -586,7 +604,7 @@
      if (PAD_PRESSED(PAD_UP) || PAD_REPEATED(PAD_UP)) {
          task->choice--;
          if (task->choice < 0) {
-@@ -143,8 +689,8 @@
+@@ -143,8 +707,8 @@
      } else if (PAD_PRESSED(PAD_DOWN) || PAD_REPEATED(PAD_DOWN)) {
          task->choice++;
  #ifdef NATIVE
@@ -597,7 +615,7 @@
          }
  #else
          if (task->choice > 2) {
-@@ -209,6 +755,14 @@
+@@ -209,6 +773,14 @@
      PartnerChoice *task = createTask(STPLNMET_updateChoice, sizeof(PartnerChoice), sizeof(PartnerChoiceWindows));
  
      task->hide = STPLNMET_hideChoice;

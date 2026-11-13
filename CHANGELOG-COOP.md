@@ -4,6 +4,14 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.4.1
+Basado en el port v0.18.9. Red: versión 8, como la 1.3.x y la 1.4.0 (se juntan sin problema).
+- **Partida nueva, el retrato al elegir los compañeros:** en esa pantalla y en la confirmación, tu personaje sale
+  como en la del nombre: con la trama animada del recuadro y a la misma altura. Antes se veía más abajo, con otros
+  colores y con un fondo oscuro que se salía del marco.
+- **Tu aspecto desde la llegada al Mundo Digital:** en la escena de la Sala de Login, justo después del vídeo, ya
+  sales con el aspecto que elegiste. Antes salía Junior hasta que tomabas el control.
+
 ## v1.4.0
 Basado en el port v0.18.9, con cosas de sus versiones hasta la v0.19.7 traídas a mano. Red: versión 8, como la
 1.3.x (se juntan sin problema).
