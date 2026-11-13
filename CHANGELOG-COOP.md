@@ -7,6 +7,9 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 ## v1.4.0
 Basado en el port v0.18.9, con cosas de sus versiones hasta la v0.19.7 traídas a mano. Red: versión 8, como la
 1.3.x (se juntan sin problema).
+- **El menú del Guardromon sale siempre con el cooperativo encendido.** Si aún no estabas en una sala con nadie,
+  el Guardromon solo daba su charla de guardar de siempre. Ahora sale el menú (con "Hablar" para guardar), la
+  primera vez y las siguientes, en cualquier Guardromon.
 - **Viaje rápido al momento.** En el mapa del menú, "Sí" te lleva enseguida: la pantalla se funde y apareces en esa
   zona, sin tener que cerrar el menú. Los demás jugadores te ven llegar como si hubieras cruzado una puerta.
 - **El viaje rápido solo funciona donde podrías salir andando.** En una sala de la que solo se sale con un evento o en
@@ -20,12 +23,6 @@ Basado en el port v0.18.9, con cosas de sus versiones hasta la v0.19.7 traídas 
 - **Digilog, el Digihuevo de la Sinceridad:** el paso ya no destripa al Jefe Qing Long antes de tiempo. Se llama
   "Huevo Sinceridad", empieza preguntando a Nami en la Bahía Fénix y, con el muro del Pantano Bios abierto, te manda a
   buscar el Digihuevo.
-
-## v1.3.3
-Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problema).
-- **El menú del Guardromon sale siempre con el cooperativo encendido.** Si aún no estabas en una sala con nadie,
-  el Guardromon solo daba su charla de guardar de siempre. Ahora sale el menú (con "Hablar" para guardar), la
-  primera vez y las siguientes, en cualquier Guardromon.
 
 ## v1.3.2
 Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problema).
