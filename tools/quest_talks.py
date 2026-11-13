@@ -77,33 +77,38 @@ def main():
     # como 0x0601, un objeto como 0x8063), en lugar de las de unos modos
     global SEARCH
     SEARCH = set()
-    if len(sys.argv) > 2 and sys.argv[1] == "--busca":
-        SEARCH = {int(x, 16) for x in sys.argv[2].split(",")}
-        sys.argv[1:] = []
-    want = {int(m, 16) for m in sys.argv[1:]}
+    # (con modos, solo en esos modos)
+    args = sys.argv[1:]
+    if "--busca" in args:
+        i = args.index("--busca")
+        SEARCH = {int(x, 16) for x in args[i + 1].split(",")}
+        del args[i:i + 2]
+    want = {int(m, 16) for m in args}
     for f in sorted(glob.glob(str(DATA / "stages" / "wstag*.json"))):
         d = json.load(open(f))
         modes = [m[0] for m in d.get("euModes") or d.get("modes") or []]
-        if not SEARCH and not want & set(modes):
+        if want and not want & set(modes) or not SEARCH and not want:
             continue
         text = (DATA / "files" / ("%04d.bin" % (d["textFile"] + 4))).read_bytes()
         print(f"==== {Path(f).stem} modos {[hex(m) for m in modes]}")
-        seen = set()
-        for a in d.get("actors", []):
+        # personaje N: Actor.key1 (el que usa probar.ps1 talk:N); actorI: su índice, el actorI del wstag*.c. El mismo
+        # personaje sale en varios actorI (uno por condición); cada charla, una vez, con los actorI que la tienen
+        found = {}
+        for ai, a in enumerate(d.get("actors", [])):
             ac = [code(*c) for c in a.get("conditions", []) if code(*c)]
-            for t in a.get("talks", []):
+            for ti, t in enumerate(a.get("talks", [])):
                 tc = [code(*c) for c in t.get("conditions", []) if code(*c)]
                 ta = [code(*c) for c in t.get("actions", []) if code(*c)]
                 if SEARCH and not any((x[0] & 0xF1FF if x[0] & 0x8000 and x[0] < 0x9000 else x[0]) in SEARCH or x[0] in SEARCH for x in t.get("actions", [])):
                     continue
-                if not ta or (t["entry"], tuple(sorted(tc)), tuple(ta)) in seen:  # solo lo que hace algo, una vez
+                if not ta:  # solo lo que hace algo
                     continue
-                seen.add((t["entry"], tuple(sorted(tc)), tuple(ta)))
-                said = dec(entry(text, t["entry"]), True)[:160]
-                print(f"  actor {a['id']} [{', '.join(ac)}] talk {t['entry']} si [{', '.join(tc)}] -> [{', '.join(ta)}]")
-                print(f"      «{said}»")
-        for s in d.get("slots", []):
-            pass
+                key = (a["id"], t["entry"], tuple(sorted(tc)), tuple(ta))
+                found.setdefault(key, (ac, []))[1].append(f"actor{ai}Talk{ti}")
+        for (who, ent, tc, ta), (ac, where) in found.items():
+            said = dec(entry(text, ent), True)[:160]
+            print(f"  personaje {who} ({who:#x}) {','.join(where)} [{', '.join(ac)}] talk {ent} si [{', '.join(tc)}] -> [{', '.join(ta)}]")
+            print(f"      «{said}»")
 
 
 if __name__ == "__main__":
