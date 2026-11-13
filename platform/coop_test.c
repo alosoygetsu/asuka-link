@@ -65,6 +65,19 @@ void native_coop_auto_quiet(void) {
     s_quiet_frame = s_press_frame;
 }
 
+/* DW3_TEST="digilog,...": what scripts/probar.ps1 wants; each word a test's (state.c, ststatus/item_list.c) */
+int native_test(const char *what) {
+    const char *env = SDL_getenv("DW3_TEST");
+    size_t n = SDL_strlen(what);
+
+    for (const char *p = env; p != NULL && (p = SDL_strstr(p, what)) != NULL; p += n) {
+        if ((p == env || p[-1] == ',') && (p[n] == 0 || p[n] == ',')) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void native_coop_test_save(void *game) {
     const char *env = SDL_getenv("DW3_COOP_SAVE");
     char path[512];

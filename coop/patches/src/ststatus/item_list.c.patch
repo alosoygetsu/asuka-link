@@ -243,11 +243,11 @@
 +/* The item an entry needs and the player lacks, or 0 */
 +static s32 journalNeeds(s32 entry) {
 +    s32 req = entry < 0 ? SIDE_QUESTS[-1 - entry].req : 0;
- 
--    return FLAGS_00.checkCondition((q->mode & 0xFF) | 0x2000, 1) == 1 && GAME.progress <= (q->last ? q->last : ANY_STEP);
++
 +    return req != 0 && FLAGS_00.checkCondition(ITEM(0, req), 1) != 1 ? req : 0;
 +}
-+
+ 
+-    return FLAGS_00.checkCondition((q->mode & 0xFF) | 0x2000, 1) == 1 && GAME.progress <= (q->last ? q->last : ANY_STEP);
 +/* Whether a side quest's steps can be done in any order (JOURNAL_ALL: done when all hold, Asuka Link's card quests) */
 +static s32 sideQuestUnordered(s32 quest) {
 +    return SIDE_QUESTS[quest].done == JOURNAL_ALL;
@@ -307,7 +307,7 @@
      return entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode;
  }
  
-@@ -566,30 +721,188 @@
+@@ -566,30 +721,224 @@
      return mode >= 0x200 && mode <= 0x2D6;
  }
  
@@ -364,6 +364,42 @@
 +        }
 +    }
 +    return now;
++}
++
++/* Our tests (DW3_TEST=digilog, scripts/probar.ps1): both tabs' entries to the log, as text a script reads instead of
++   a screenshot (tools/digilog_dump.py names them): each entry, its step now (1-based, as "Step k of n"), its text
++   and field, and what it needs */
++void native_log(const char *fmt, ...);
++int native_test(const char *what);
++
++static void journalTestDump(Journal *journal) {
++    static const char *TABS[2] = {"active", "done"};
++    Journal copy = *journal;
++    s32 tab, i;
++
++    if (!native_test("digilog")) {
++        return;
++    }
++    native_log("DIGILOG begin progress %d", journal->current);
++    for (tab = 0; tab < 2; tab++) {
++        copy.tab = tab == 0 ? TAB_ACTIVE : TAB_DONE;
++        fillJournal(&copy);
++        for (i = 0; i < copy.count; i++) {
++            s32 entry = copy.entries[i];
++            s32 done = copy.tab == TAB_DONE;
++            const JournalStep *steps;
++            s32 n = journalSteps(entry, &steps);
++            s32 now = n == 0 ? 0 : done ? n - 1 : journalStepNow(steps, n, entry < 0 && sideQuestUnordered(-1 - entry));
++            s32 v = now < n ? now : n - 1;
++
++            native_log("DIGILOG %s %s %d item %X step %d/%d text %d mode %X held %d need %X", TABS[tab],
++                       entry >= 0 ? "story" : "quest", entry >= 0 ? entry : -1 - entry, entry >= 0 ? 0 : SIDE_QUESTS[-1 - entry].item,
++                       n != 0 ? v + 1 : 0, n, n != 0 ? steps[v].text : 0,
++                       n != 0 && steps[v].mode != 0 ? steps[v].mode : entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode,
++                       n != 0 && (done || journalStepDone(&steps[v])), done ? 0 : journalNeeds(entry));
++        }
++    }
++    native_log("DIGILOG end");
 +}
 +
 +/* "Step k of n", made in a one-string text file of the Digilog's words and digits: a word, a number, a word, a number */
@@ -503,7 +539,7 @@
  static void showJournalPage(Journal *journal, JournalWindows *windows) {
      TextWindow *window;
      s32 i;
-@@ -600,32 +913,19 @@
+@@ -600,32 +949,19 @@
          window = windows->entries[i];
          if (n >= journal->count) {
              window->setVisible(window, 0);
@@ -539,7 +575,7 @@
      windows->cursor->setVisible(windows->cursor, journal->count != 0);
  }
  
-@@ -633,66 +933,190 @@
+@@ -633,66 +969,190 @@
      s32 i;
  
      if (show) {
@@ -771,7 +807,7 @@
      }
  }
  
-@@ -705,6 +1129,7 @@
+@@ -705,6 +1165,7 @@
      if (PAD_PRESSED(PAD_LEFT) || PAD_PRESSED(PAD_RIGHT)) {
          SOUND.playSound(SOUND_MENU_MOVE);
          journal->tab ^= 1;
@@ -779,7 +815,7 @@
          journal->cursor = 0;
          journal->page = 0;
          fillJournal(journal);
-@@ -723,14 +1148,24 @@
+@@ -723,14 +1184,24 @@
          journal->cursor = journal->cursor < journal->count - 1 ? journal->cursor + 1 : cursor;
      }
      if (cursor == journal->cursor) {
@@ -805,7 +841,15 @@
      showJournalEntry(journal, windows);
      return 1;
  }
-@@ -799,21 +1234,36 @@
+@@ -755,6 +1226,7 @@
+         STSTATUS_data.funcs.updateFade(&journal->fades[2]);
+         if (STSTATUS_data.funcs.updateFade(&journal->fades[0])) {
+             showJournal(journal, windows, 1);
++            journalTestDump(journal);
+             journal->substate++;
+         }
+         break;
+@@ -799,21 +1271,36 @@
          if (FILE_CACHE.isLoading(TEXT_FILE(TEXT_STAGE_NAMES)) || FILE_CACHE.isLoading(TEXT_FILE(TEXT_ITEM_NAMES))) {
              break;
          }
@@ -854,7 +898,7 @@
          windows->cursor->setVisible(windows->cursor, 0);
          journal->nextState(journal);
          break;
-@@ -833,8 +1283,9 @@
+@@ -833,8 +1320,9 @@
      Journal *journal = createTask(updateJournal, sizeof(Journal), sizeof(JournalWindows));
  
      journal->layer = SCREEN_LAYER;

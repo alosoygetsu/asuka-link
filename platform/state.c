@@ -54,6 +54,10 @@ void setParty(int set);                /* main/game/party.c */
 #define GAME_MODE 0x26C4 /* EU */
 #define MODE_TITLE 0xE00
 #define MODE_LANGUAGE 0x1600
+#define MODE_STATUS 0x1000    /* STSTATUS, the field menu's screens */
+#define GAME_FIELD_MODE 0x34  /* where MODE_STATUS returns to */
+#define GAME_ITEMS 0x7C       /* s8 counts */
+extern uint8_t FIELD_MENU_CHOICE[]; /* the field menu's pick: option, extra (s32 each) */
 
 void state_key(int key) {
     if (key == SDLK_F1 || key == SDLK_F2 || key == SDLK_F3 || key == SDLK_F4 || key == SDLK_F5 || key == SDLK_F9) {
@@ -164,10 +168,35 @@ static void dump_game(void) {
     }
 }
 
+/* DW3_TEST=digilog (scripts/probar.ps1): 3 s into a field, the field menu's Digilog
+   as if picked (field_menu.c: FIELD_MENU_CHOICE, then MODE_STATUS), which
+   dumps its entries (ststatus/item_list.c) */
+static void test_frame(void) {
+    static int field_frames, done;
+    int mode = getMode();
+
+    if (done || !native_test("digilog")) {
+        return;
+    }
+    field_frames = mode >= 0x200 && mode <= 0x2FF ? field_frames + 1 : 0;
+    if (field_frames == 180) {
+        int32_t *choice = (int32_t *)FIELD_MENU_CHOICE;
+        int32_t extra = GAME[GAME_ITEMS + 0x192] != 0;
+
+        done = 1;
+        choice[0] = extra + 5; /* the journal's row (patches ststatus/menu.c) */
+        choice[1] = extra;
+        memcpy(GAME + GAME_FIELD_MODE, &mode, 4);
+        LOG("test: the Digilog, from field %04X", mode);
+        requestMode(MODE_STATUS, 0);
+    }
+}
+
 void state_frame(void) {
     int key = s_key;
 
     s_key = 0;
+    test_frame();
     if (g_field_mode != 0 && (getMode() >> 8 == MODE_TITLE >> 8 || getMode() >> 8 == MODE_LANGUAGE >> 8)) {
         int title = MODE_TITLE;
 
