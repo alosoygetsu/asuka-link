@@ -282,14 +282,14 @@ static void coopTradeStart(s32 peer, u32 session, s32 phase) {
 }
 
 /* The talk button (FIELDSTG_talkToActorAt, target what stands at pos, the tile ahead): a Guardromon, with co-op on,
-   first offers the card trade. 1 when this took the talk */
+   opens the co-op's menu (his own talk is one of its options), his first talk and the later ones alike, whether or
+   not another player is listed yet (coop_peers: none till a room is joined). 1 when this took the talk */
 s32 coopTradeTalk(Actor *actor, Point *pos, Actor *target) {
     if (g_coop_debug) {
         native_log("coop: talk at (%d, %d), you at (%d, %d): character %X", pos->x, pos->y, actor->tile.x, actor->tile.y,
                    target != NULL ? target->key1 : -1);
     }
-    if (!g_coop || coopTrade.passing || target == NULL || target->key1 != native_coop_guard_key() ||
-        native_coop_peer_slots() == 0) {
+    if (!g_coop || coopTrade.passing || target == NULL || target->key1 != native_coop_guard_key()) {
         return 0;
     }
     if (coopTrade.phase != COOP_TRADE_NONE || coopTrade.quiet > 0 || coopTrade.msgFrames > 0) {

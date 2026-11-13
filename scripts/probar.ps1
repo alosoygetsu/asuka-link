@@ -15,7 +15,7 @@
 #   -Steps pasos en orden, cada uno cuando se puede (DW3_STEPS, platform/pad.c): free (el jugador libre), talk:N
 #   (hablar con el personaje N de dw3.py charlas), text (X hasta que acaben las charlas), wait:N, un botón, f2, digilog (lo vuelca);
 #   la prueba acaba al hacer el último.
-#   -CoopAuto menu|trade|battle|raid|duel cooperativo encendido (solo, sin nadie más) y DW3_COOP_AUTO: el menú del
+#   -CoopAuto menu|trade|battle|raid|duel|talk cooperativo encendido (solo, sin nadie más) y DW3_COOP_AUTO: (talk: sin nadie en la lista, como sin sala) el menú del
 #   Guardromon abierto o su elección hecha por sí sola; todas las raids en su lista (DW3_COOP_RAID=-1).
 #   -Until expresión del log que da la prueba por buena, -Shot captura reducida en test-shots\, -Keep no cierra,
 #   -Log todas las líneas del juego.
@@ -54,7 +54,7 @@ if (-not (Test-Path "$dir\data")) { New-Item -ItemType Junction -Path "$dir\data
 Copy-Item "$build\dw2003.exe", "$build\dw2003.fill", "$build\SDL3.dll" $dir -Force
 if ($Save) { Copy-Item $Save $New -Force }
 $ini = (Get-Content "$build\native.ini" | Where-Object { $_ -notmatch '^\s*(coop\w*|scale|fullscreen|debug)\s*=' }) -join "`n"
-$coopIni = if ($CoopAuto) { "coop = 1`ncoop_port = 27509`ncoop_peers = 127.0.0.1:27508" } else { "coop = 0" }
+$coopIni = if ($CoopAuto -eq "talk") { "coop = 1`ncoop_port = 27509" } elseif ($CoopAuto) { "coop = 1`ncoop_port = 27509`ncoop_peers = 127.0.0.1:27508" } else { "coop = 0" }  # talk: como sin sala, sin nadie en la lista
 Set-Content "$dir\native.ini" "$ini`n$coopIni`nscale = 1`nfullscreen = 0`ndebug = 1`n" -NoNewline
 $out = "$dir\prueba.log"
 Remove-Item $out, "$dir\prueba.out" -ErrorAction SilentlyContinue
@@ -62,7 +62,7 @@ Remove-Item $out, "$dir\prueba.out" -ErrorAction SilentlyContinue
 $env:DW3_TEST = @{ digilog = "digilog"; campo = "" }[$Case]
 $env:DW3_COOP_SAVE = $saveArg
 $env:DW3_PRESS = $Press
-$env:DW3_COOP_AUTO = if ($CoopAuto) { $CoopAuto } else { $null }
+$env:DW3_COOP_AUTO = if ($CoopAuto -and $CoopAuto -ne "talk") { $CoopAuto } else { $null }  # talk: cooperativo sin nada solo (hablar con -Steps)
 $env:DW3_COOP_RAID = if ($CoopAuto) { "-1" } else { $null }  # todas las raids en su lista
 $env:DW3_STEPS = $Steps
 $env:DW3_LANGUAGE = if ($Lang) { "$Lang" } else { $null }

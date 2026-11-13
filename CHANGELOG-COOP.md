@@ -21,6 +21,12 @@ Basado en el port v0.18.9, con cosas de sus versiones hasta la v0.19.7 traídas 
   "Huevo Sinceridad", empieza preguntando a Nami en la Bahía Fénix y, con el muro del Pantano Bios abierto, te manda a
   buscar el Digihuevo.
 
+## v1.3.3
+Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problema).
+- **El menú del Guardromon sale siempre con el cooperativo encendido.** Si aún no estabas en una sala con nadie,
+  el Guardromon solo daba su charla de guardar de siempre. Ahora sale el menú (con "Hablar" para guardar), la
+  primera vez y las siguientes, en cualquier Guardromon.
+
 ## v1.3.2
 Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problema).
 - **Las misiones de DDNA ya no se dan por hechas antes de tiempo.** Contaban como hechas al conseguir la DDNA del
