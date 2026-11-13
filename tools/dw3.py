@@ -713,6 +713,8 @@ def cmd_digimon(args):
         for k in range(1, 6):
             if sk[k]:
                 print(f"  - {both(tname(sk[k]), tname(sk[k], 'E'))}: aprende nv{r['levels'][k - 1]}, carga nv{r['known'][k - 1]}")
+        for l in model_lines(r["id"]):
+            print(l)
         if r["pair"]:
             # pairTech (de TECHS; se llama como la forma que sale en el ataque) con pairPartner (DIGIMON_DATA desde 1):
             # al cambiar a un compañero que tenga esa forma entre sus digievoluciones (fightstg/switch_menu.c)
@@ -850,6 +852,80 @@ def enemy_places():
     return out
 
 
+@functools.lru_cache(None)
+def fighters_file():
+    """{luchador: (es_enemigo, FighterInfo)} del archivo de luchadores (0x1CC, SMDLDATA.PRO; fightstg/model.h):
+    cabecera {base, entries, partners, enemies}, FighterEntry {id, index, kind} hasta id 0 (enemigo si kind >= 0x3A),
+    FighterInfo de 196 bytes, el de un enemigo de 0x46 (0x48 alineado)"""
+    b = game_file(0x1CC)
+    _, ent, par, ene = struct.unpack_from("<4i", b, 0)
+    out, k = {}, 0
+    while True:
+        fid, idx, kind = struct.unpack_from("<hBB", b, ent + 4 * k)
+        if fid == 0:
+            break
+        enemy = kind >= 0x3A
+        off = ene + idx * 0x48 if enemy else par + idx * 196
+        model, motions, effects, face, distance = struct.unpack_from("<4ih", b, off)
+        height = struct.unpack_from("<h", b, off + 0x18)[0]
+        cams = struct.unpack_from("<h", b, off + 0x44)[0] if enemy else 12
+        out[fid] = dict(enemy=enemy, model=model, motions=motions, effects=effects, distance=distance, height=height,
+                        cams=cams, kind=kind)
+        k += 1
+    return out
+
+
+def archive_part(ref):
+    """(nombre del archivo, su parte, los bytes de la parte) de una referencia archivo << 16 | parte"""
+    f, part = ref >> 16, ref & 0xFFFF
+    a = game_file(f)
+    n = struct.unpack_from("<I", a, 0)[0] // 4
+    offs = struct.unpack_from(f"<{n}I", a, 0)
+    end = offs[part + 1] if part + 1 < n else len(a)
+    names = file_names()
+    return (names[f] if f < len(names) else f"{f:#x}"), part, a[offs[part]:end]
+
+
+def used_slots(table):
+    """los índices con algo de una tabla de posiciones (la primera palabra, su tamaño; 0, vacío)"""
+    if len(table) < 4:
+        return []
+    n = min(struct.unpack_from("<I", table, 0)[0] // 4, len(table) // 4)
+    return [i for i, v in enumerate(struct.unpack_from(f"<{n}I", table, 0)) if v]
+
+
+def ranges(ns):
+    out, start = [], None
+    for i, n in enumerate(ns):
+        if start is None:
+            start = n
+        if i + 1 == len(ns) or ns[i + 1] != n + 1:
+            out.append(f"{start}" if start == n else f"{start}-{n}")
+            start = None
+    return ",".join(out)
+
+
+def model_lines(fighter):
+    """el modelo, los movimientos y los guiones de efectos de un luchador, en dos líneas"""
+    info = fighters_file().get(fighter)
+    if not info:
+        return [f"  sin entrada en SMDLDATA.PRO (luchador {fighter})"]
+    try:
+        mfile, mpart, mdata = archive_part(info["model"])
+        _, apart, motions = archive_part(info["motions"])
+        _, epart, effects = archive_part(info["effects"])
+    except (ValueError, struct.error, IndexError, FileNotFoundError):
+        return [f"  modelo {info['model']:#x}, movimientos {info['motions']:#x}, efectos {info['effects']:#x}"]
+    mv, ef = used_slots(motions), used_slots(effects)
+    whole = game_file(info["model"] >> 16)
+    parts = struct.unpack_from("<I", whole, 0)[0] // 4
+    height = f"altura {info['height']}, " if info["height"] else ""
+    return [f"  modelo: {mfile} ({parts} partes, {len(whole) // 1024} KB), el modelo en la parte {mpart}; {height}"
+            f"distancia {info['distance']}, {info['cams']} cámaras",
+            f"  movimientos ({len(mv)}, parte {apart}): {ranges(mv)}; guiones de efectos ({len(ef)}, parte {epart}): "
+            f"{ranges(ef) or '-'}"]
+
+
 def enemy_name(fighter, lang="S"):
     e = enemy_table().get(fighter)
     ns = names_of("DIGNAM", lang)
@@ -889,6 +965,8 @@ def cmd_enemigos(args):
         print(f"  resist. (fue agu hie vie ray máq osc) {list(e['res'][:7])}  (vene par conf sue KO) {list(e['res'][7:])}")
         if e["item"]:
             print(f"  suelta: {item_name(e['item'])} ({(e['chance'] + 1) * 100 / 1024:.1f}%)")
+        for l in model_lines(f):
+            print(l)
         seen = {}
         for st, where, lv, hp, others in places.get(f, []):
             seen.setdefault((st, where, lv, hp, others), 0)
