@@ -79,7 +79,8 @@ coop = 0 en native.ini apaga el cooperativo.)
    aspecto (partida antigua, o antes de entrar al Mundo Digital) sale como Junior
    de un color (rojo, verde, morado). Todos tenéis que tener la misma versión.
    - Para intercambiar cartas: hablad cada uno con un Guardromon (el de guardar,
-     en cualquier sitio) y elegid "Intercambiar cartas". Solo salen las cartas
+     en cualquier sitio) y elegid "Intercambiar cartas" (sale cuando ya tenéis
+     la Bolsa de Carpetas). Solo salen las cartas
      que no usa ningún mazo. Los dos marcáis Listo y luego Confirmar.
    - Para combatir entre vosotros: los dos elegís "Combatir" en un Guardromon.
      Turnos alternos (empieza el más rápido). Se puede atacar, usar técnicas,

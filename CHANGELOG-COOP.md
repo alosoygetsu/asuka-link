@@ -30,8 +30,8 @@ Basado en el port v0.18.9. Red: versión 8, como la 1.3.x (se juntan sin problem
   fondo lila de Asuka Link para distinguirlas. En las listas el cursor se para en los extremos y △ cierra o vuelve
   atrás; en la de raids, el jefe elegido sale abajo con su nivel. En el intercambio, tus cartas sueltas van a la
   derecha (con lo que ofreces de cada una), la oferta del otro a la izquierda y los botones abajo.
-- **"Duelo" sale en el Guardromon cuando ya tienes la Bolsa de Carpetas**, igual que las cartas en el menú del
-  juego. Antes salía desde el principio.
+- **"Intercambiar cartas" y "Duelo" salen en el Guardromon cuando ya tienes la Bolsa de Carpetas**, igual que las
+  cartas en el menú del juego. Antes salían desde el principio.
 - **Equipo libre:** los nombres de los Digimon elegidos salían un poco bajos en su barra; ahora van centrados.
 - **Ken, Yuji y Yang:** Ken está en la primera sala del Desierto Mobius y Yuji y Yang más adentro, y sus pasos lo
   dicen.

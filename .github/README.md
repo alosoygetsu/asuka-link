@@ -47,7 +47,7 @@ conectado, el ping y los errores habituales. La guía completa está en `LEEME-C
 | Cooperativo | Hasta 4 jugadores en red, cada uno con su partida; os veis en el mismo mapa, cada uno con su personaje y su nombre encima |
 | La sala | En la pantalla principal del launcher: los de tu red aparecen solos, se invitan con un clic, o se añaden por IP; con listo, prueba de conexión, recientes y reconexión al abrir |
 | Launcher propio | Rehecho entero en la v1.3: menú lateral, Asuka City en movimiento, colores, letra (Silkscreen) e icono propios |
-| Intercambio de cartas | En cualquier Guardromon: dos jugadores que eligen "Intercambiar cartas" se cambian cartas sueltas (las que no usa ningún mazo) |
+| Intercambio de cartas | En cualquier Guardromon: dos jugadores que eligen "Intercambiar cartas" (con la Bolsa de Carpetas) se cambian cartas sueltas (las que no usa ningún mazo) |
 | Raids | En cualquier Guardromon: "Raid" junta de 2 a 4 jugadores contra un jefe (29 para elegir) en un mismo combate por turnos; al ganar, EXP y dinero x3 y un objeto seguro |
 | Combates entre jugadores | En cualquier Guardromon: "Combatir" enfrenta vuestros equipos por turnos alternos; es una exhibición, sin game over y sin cambios en la partida |
 | Duelos de cartas | En cualquier Guardromon: "Duelo" (con la Bolsa de Carpetas) os enfrenta en el juego de cartas, cada uno con uno de sus mazos; los dos ganan un sobre de cartas (mejor el del ganador) |

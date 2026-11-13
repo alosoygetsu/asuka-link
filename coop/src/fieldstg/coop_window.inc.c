@@ -80,13 +80,15 @@ static const u8 *coopCardName(s32 card) {
 #define COOP_BOX_SIZE 160
 #define COOP_SIDES 2 /* 0 the right list, 1 the left */
 
-/* What the menu offers, row by row (COOP_GUARD_*): how many. The card duel only once the game has opened the cards
-   (the Folder Bag, item 0x192: the field menu's Cards with it, main/menu/field_menu.c) */
+/* What the menu offers, row by row (COOP_GUARD_*): how many. The card trade and duel only once the game has opened the
+   cards (the Folder Bag, item 0x192: the field menu's Cards with it, main/menu/field_menu.c) */
 static s32 coopGuardOptions(s32 *rows) {
     s32 n = 0;
 
     rows[n++] = COOP_GUARD_TALK;
-    rows[n++] = COOP_GUARD_TRADE;
+    if (GAME.items[0x192] != 0) {
+        rows[n++] = COOP_GUARD_TRADE;
+    }
     rows[n++] = COOP_GUARD_BATTLE;
     if (GAME.items[0x192] != 0) {
         rows[n++] = COOP_GUARD_DUEL;
@@ -253,6 +255,10 @@ static void coopGuardList(CoopGuardMenu *task, CoopGuardMenuChildren *children, 
         if (want->list != COOP_LIST_NONE) {
             shown->list = want->list;
             shown->rows = want->rows;
+            if (g_coop_debug) {
+                native_log("coop: list %d opens with %d rows, the first %d long", want->list, want->rows,
+                           (s32)strlen((const char *)want->row[0]));
+            }
             FIELDSTG_tweenStart(&shown->tween, 1);
             shown->part = COOP_PART_OPENING;
         }
