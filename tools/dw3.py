@@ -712,7 +712,11 @@ def cmd_digimon(args):
             if sk[k]:
                 print(f"  - {both(tname(sk[k]), tname(sk[k], 'E'))}: aprende nv{r['levels'][k - 1]}, carga nv{r['known'][k - 1]}")
         if r["pair"]:
-            print(f"  técnica doble: {tname(r['pair'])} con {dname(r['pairp'] - 1) if r['pairp'] else '?'}")
+            # pairTech (de TECHS; se llama como la forma que sale en el ataque) con pairPartner (DIGIMON_DATA desde 1):
+            # al cambiar a un compañero que tenga esa forma entre sus digievoluciones (fightstg/switch_menu.c)
+            t = tech(r["pair"])
+            print(f"  técnica doble: «{tname(r['pair'])}» (#{r['pair']}, PM {t['mp']}, poder {t['power'] or '-'}) con "
+                  f"{dname(r['pairp'] - 1) if r['pairp'] else '?'}, si el compañero que entra la tiene")
         evo = evolutions()
         if i < 8:
             print(f"  especial (barra): {', '.join(dname(b - 1) for b in r['blast'] if b)}")
