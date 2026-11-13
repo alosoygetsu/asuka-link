@@ -786,6 +786,123 @@ def cmd_evos(args):
         print("  " + l)
 
 
+# ---------------------------------------------------------------- enemigos (enemigos)
+
+# BattleTableEntry (include/fightstg/battle.h), 0x46 bytes, hasta id 0: id, item, itemChance (1024avos menos uno),
+# nameId (DIGNAM), techs[3], stats[5] (ata def esp sab vel), resist[12] (7 elementos, 5 estados), family
+ENEMY_FMT = "<4h3h5h12hB"
+ENEMY_SIZE = 0x46
+
+
+@functools.lru_cache(None)
+def enemy_table():
+    """{luchador: dict} de la tabla de enemigos (archivo 0x1CF, SDIGIEDT.PRO)"""
+    b = game_file(0x1CF)
+    out = {}
+    for k in range(len(b) // ENEMY_SIZE):
+        e = struct.unpack_from(ENEMY_FMT, b, k * ENEMY_SIZE)
+        if e[0] == 0:
+            break
+        out[e[0]] = dict(k=k, id=e[0], item=e[1], chance=e[2], name=e[3], techs=e[4:7], stats=e[7:12],
+                         res=e[12:24], family=e[24])
+    return out
+
+
+@functools.lru_cache(None)
+def encounters():
+    """(enemigos: [(luchador, nivel, PV, PM, fuerza)], encuentros: [(i1, i2, i3, kind)]) del FIELDSTG.PRO europeo: el C
+    (fieldstg/data/fieldstg.c) trae los enemigos de la versión USA, 538, y el europeo tiene 523 en otro orden"""
+    syms = {s[1]: s for s in symbols_of(CFG / "symbols_fieldstg.txt")}
+    ovl = game_file("FIELDSTG.PRO")
+    vram = 0x80082CB0
+    ea, esize = syms["FIELDSTG_enemies"][0], syms["FIELDSTG_enemies"][2]
+    enemies = [struct.unpack_from("<i4h", ovl, ea - vram + k * 12) for k in range(esize // 12)]
+    ca, csize = syms["FIELDSTG_encounters"][0], syms["FIELDSTG_encounters"][2]
+    encs = []
+    for k in range(csize // 0x1C):  # Encounter: 3 punteros, ambushChance, kind, blocks[12]
+        p = struct.unpack_from("<3I", ovl, ca - vram + k * 0x1C)
+        kind = ovl[ca - vram + k * 0x1C + 0xD]
+        encs.append(tuple((x - ea) // 12 for x in p) + (kind,))
+    return enemies, encs
+
+
+@functools.lru_cache(None)
+def enemy_places():
+    """{luchador: [(mapa, zona o 'evento', nivel, PV, [otros luchadores])]} de las batallas de cada mapa (places de su
+    JSON: zonas 0-2 al azar, la 3 las de los eventos, FIELDSTG_startEventBattle)"""
+    enemies, encs = encounters()
+    out = {}
+    for st, d in stages_json().items():
+        # las batallas de evento que el mapa lanza de verdad (EVENT_BATTLE(n) en su C): muchos traen la lista llena
+        # de otras que nadie lanza
+        c = next(iter((DECOMP / "src" / "stages").rglob(st + ".c")), None)
+        used = {int(x, 0) for x in re.findall(r"EVENT_BATTLE\((0x[0-9A-Fa-f]+|\d+)\)", read(c))} if c else set()
+        for p in d.get("places") or []:
+            for ai, area in enumerate(p.get("areas", [])):
+                for bi, (enc, _, _) in enumerate(area.get("battles", [])):
+                    if not enc or enc >= len(encs) or (ai == 3 and bi not in used):
+                        continue
+                    group = [enemies[i] for i in encs[enc][:3] if i and i < len(enemies) and enemies[i][0]]
+                    for k, en in enumerate(group):
+                        where = f"evento {bi}" if ai == 3 else f"zona {ai}"
+                        others = tuple(sorted(x[0] for j, x in enumerate(group) if j != k))
+                        out.setdefault(en[0], []).append((st, where, en[1], en[2], others))
+    return out
+
+
+def enemy_name(fighter, lang="S"):
+    e = enemy_table().get(fighter)
+    ns = names_of("DIGNAM", lang)
+    return ns[e["name"]] if e and e["name"] < len(ns) else f"luchador {fighter}"
+
+
+def item_name(i):
+    ns = names_of("ITMNAM", "S")
+    return ns[i] if 0 <= i < len(ns) else f"objeto {i:#x}"
+
+
+def cmd_enemigos(args):
+    """enemigos [NOMBRE | luchador]: técnicas, stats, resistencias, lo que suelta y en qué mapas sale (sin nombre, la
+    lista)"""
+    table = enemy_table()
+    if not args:
+        lines = [f"{f} {enemy_name(f)}" for f in sorted(table, key=lambda f: enemy_name(f))]
+        print(f"{len(table)} enemigos (luchador nombre):")
+        for l in capped(lines, MAX * 5 if MAX else 0):
+            print("  " + l)
+        return
+    q = " ".join(args)
+    if q.isdigit() and int(q) in table:
+        found = [int(q)]
+    else:
+        qc = q.casefold()
+        found = [f for f in table if qc == enemy_name(f).casefold() or qc == enemy_name(f, "E").casefold()]
+        found = found or [f for f in table if qc in enemy_name(f).casefold() or qc in enemy_name(f, "E").casefold()]
+    if not found:
+        sys.exit("ningún enemigo con ese nombre (dw3.py enemigos los lista)")
+    places = enemy_places()
+    for f in found[:MAX or None]:
+        e = table[f]
+        print(f"{both(enemy_name(f), enemy_name(f, 'E'))} (luchador {f}, entrada {e['k']} de SDIGIEDT.PRO, familia {e['family']})")
+        techs = [tname(t) if tname(t) not in ("", "a") else f"#{t}" for t in e["techs"] if t]
+        print(f"  técnicas: {', '.join(techs)}  stats (ata def esp sab vel) {list(e['stats'])}")
+        print(f"  resist. (fue agu hie vie ray máq osc) {list(e['res'][:7])}  (vene par conf sue KO) {list(e['res'][7:])}")
+        if e["item"]:
+            print(f"  suelta: {item_name(e['item'])} ({(e['chance'] + 1) * 100 / 1024:.1f}%)")
+        seen = {}
+        for st, where, lv, hp, others in places.get(f, []):
+            seen.setdefault((st, where, lv, hp, others), 0)
+            seen[(st, where, lv, hp, others)] += 1
+        lines = []
+        for (st, where, lv, hp, others), n in seen.items():
+            name = stage_places().get(st, ("?", ""))[0].split(",")[0]
+            con = f" con {', '.join(enemy_name(o) for o in others)}" if others else ""
+            lines.append(f"    {st} [{stage_mode(st)}] {name}: {where} nv{lv} PV{hp}{con}" + (f" (×{n})" if n > 1 else ""))
+        print(f"  aparece en {len(lines)} batallas:" if lines else "  no aparece en las batallas de los mapas")
+        for l in capped(lines):
+            print(l)
+
+
 # ---------------------------------------------------------------- salidas de los mapas (salidas)
 
 # StageSlot (include/field_map.h), como lo traen los JSON de los mapas: conditions[2][2], type, arg, x, y, dir,
@@ -1023,6 +1140,7 @@ COMMANDS = {
     "evos": cmd_evos,
     "digilog": cmd_digilog,
     "salidas": cmd_salidas,
+    "enemigos": cmd_enemigos,
     "pasos": script_cmd("story_steps", "pasos [paso_hex ...]: conversaciones que hacen algo en cada paso de historia (story_steps.py)"),
     "eventos": script_cmd("story_events", "eventos [paso_hex ...]: cadena de eventos de cada paso de historia (story_events.py)"),
     "codigo": script_cmd("story_code", "codigo [paso_hex ...]: dónde cambia GAME.progress y qué marcas activa el código (story_code.py)"),
