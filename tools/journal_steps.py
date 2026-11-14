@@ -268,8 +268,11 @@ QUEST_STEPS.update({
         (F(0x1A, 0x23), S(235), "La carta está en la Posada de Asuka, abajo.", "The card is downstairs in the Asuka Inn."),
         (F(0x1A, 0x24), M(0x220), "Dásela: te manda a hablar con Veemon.", "Give it to him: he sends you to Veemon."),
         (F(0x1A, 0x25), S(255), "En la taberna de Asuka vieron a Veemon en la Pradera del Viento.", "At Asuka's tavern they saw Veemon on the Wind Prairie."),
-        (F(0x1A, 0x26), M(0x229), "Encuentra a Veemon pateando árboles en el Bosque de las Patadas.", "Find Veemon by kicking trees in Kicking Forest."),
-        (ITEM(0x004), M(0x229), "Veemon te da las botas para patear árboles.", "Veemon gives you the Tree Boots."),
+        # al encontrarlo (evento 1304 de wstag400) se borra F1A:26 y se activa F1A:27; de vuelta en la Pradera, el
+        # evento 1305 da las botas y activa F1A:28
+        (F(0x1A, 0x26), M(0x229), "Veemon quiere jugar en la Pradera del Viento.", "Veemon wants to play on the Wind Prairie."),
+        (F(0x1A, 0x27), M(0x22A), "Encuentra a Veemon en el Bosque de las Patadas.", "Find Veemon in Kicking Forest."),
+        (F(0x1A, 0x28), M(0x229), "De vuelta en la Pradera del Viento, Veemon te da las botas.", "Back on the Wind Prairie, Veemon gives you the Tree Boots."),
     ],
 })
 

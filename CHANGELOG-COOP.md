@@ -4,6 +4,13 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.5.2
+Basado en el port v0.18.9. Red: versión 8, como la 1.3.x, la 1.4.x y la 1.5.x (se juntan sin problema).
+- **Digilog, las Botas Árbol:** al encontrar a Veemon en el Bosque de las Patadas, el Digilog volvía a pedir que
+  lo encontraras y señalaba la Pradera del Viento. Ahora los últimos pasos siguen lo que pasa en el juego: Veemon
+  quiere jugar en la Pradera, lo encuentras en el Bosque (que es el que se marca) y, de vuelta en la Pradera, te da
+  las botas.
+
 ## v1.5.1
 Basado en el port v0.18.9. Red: versión 8, como la 1.3.x, la 1.4.x y la 1.5.0 (se juntan sin problema).
 - **El menú del Guardromon sin su ventana:** a veces salían solo las opciones y el cursor, sin la ventana lila
