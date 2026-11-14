@@ -1,0 +1,76 @@
+--- a/src/stgdglab/recipe_screen.c
++++ b/src/stgdglab/recipe_screen.c
+@@ -261,6 +261,10 @@
+     }
+ }
+ 
++#ifdef NATIVE
++#include "stgdglab/coop_forms.inc.c" /* Asuka Link: square shows the partner's forms, their lines and what each needs */
++#endif
++
+ #if VERSION_EU
+ /* Moves the third screen's cursor by step slots, to the first column with
+    an id; whether it moved */
+@@ -558,7 +562,13 @@
+         screen->arrowRight = 0;
+         win->prev->setVisible(win->prev, 0);
+         win->next->setVisible(win->next, 0);
+-    } else if (screen->found[screen->row][0][0] != -1) {
++    }
++#ifdef NATIVE
++    else if (PAD_PRESSED(PAD_SQUARE)) {
++        coopFormsOpen(screen, win);
++    }
++#endif
++    else if (screen->found[screen->row][0][0] != -1) {
+         pickRecipeId(screen);
+     }
+ }
+@@ -585,6 +595,9 @@
+             win->desc = createTextWindow(screen->layer, 1, 0x14, 0x19);
+             win->desc->setDepth(win->desc, 0);
+             checkRecipes(screen);
++#ifdef NATIVE
++            coopFormsInit(screen, win);
++#endif
+             screen->rowCount = 4;
+             screen->slots = STGDGLAB_countRowIds(screen, screen->row);
+             STGDGLAB_resetRecipeCursor(screen);
+@@ -619,6 +632,12 @@
+             }
+             break;
+         case 3:
++#ifdef NATIVE
++            if (COOP_FORMS(screen)->mode != COOP_FORMS_CHART) {
++                coopFormsRun(screen, win);
++                break;
++            }
++#endif
+             runRecipeRow(screen, win);
+             break;
+         case 4:
+@@ -652,7 +671,11 @@
+             }
+             break;
+         }
++#ifdef NATIVE
++        coopFormsDraw(screen, win);
++#else
+         STGDGLAB_drawRecipeScreen(screen, win);
++#endif
+         break;
+     case TASK_DONE:
+         changeRecipeRow(screen);
+@@ -666,7 +689,12 @@
+ /* Creates the main menu's third screen (task), the recipes, and fades the
+    menu's page out */
+ Task *STGDGLAB_createRecipeScreen(Lab *lab) {
++#ifdef NATIVE
++    /* Asuka Link: room for the forms' state and windows (coop_forms.inc.c) */
++    LabRecipeScreen *screen = createTask(STGDGLAB_updateRecipeScreen, sizeof(CoopFormsScreen), sizeof(CoopFormsWindows));
++#else
+     LabRecipeScreen *screen = createTask(STGDGLAB_updateRecipeScreen, sizeof(LabRecipeScreen), 0x1C);
++#endif
+ 
+     screen->layer = SCREEN_LAYER;
+     screen->depth = 2;

@@ -4,6 +4,17 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.5.0
+Basado en el port v0.18.9. Red: versión 8, como la 1.3.x y la 1.4.x (se juntan sin problema).
+- **Laboratorio, las formas y lo que pide cada una:** en la Tabla de digievolución, □ abre la lista de todas las
+  formas del compañero. Las que ya tiene salen en blanco, la que aprenderá en el próximo combate en amarillo, las
+  que ya cumple en verde y las que aún no en gris. Abajo, lo que pide la forma marcada (formas previas y su nivel,
+  o un stat) con ○ o ✕ y lo que tiene tu compañero. El stat que cuenta es el del propio compañero, sin equipo.
+- **Laboratorio, la línea de una forma:** con □ en la lista se ve de qué formas viene y a cuáles lleva, con sus
+  retratos; las que faltan, oscurecidas. X sobre otra forma salta a su línea.
+- Todo sale de la tabla de digievoluciones que usa el juego (con BladeGarurumon y los mods de Digimon), no de la
+  tabla dibujada a mano: si las líneas cambian, el laboratorio las enseña igual.
+
 ## v1.4.1
 Basado en el port v0.18.9. Red: versión 8, como la 1.3.x y la 1.4.0 (se juntan sin problema).
 - **Partida nueva, el retrato al elegir los compañeros:** en esa pantalla y en la confirmación, tu personaje sale

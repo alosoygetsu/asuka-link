@@ -103,6 +103,12 @@ coop = 0 en native.ini apaga el cooperativo.)
      se pueden hacer en un tramo de la historia lo avisan.
      Los investigadores DRI te piden su DDNA aunque ya tengas a ese compañero:
      así puedes combatir contra su jefe. Su paso dice qué nivel de equipo piden.
+   - LABORATORIO DE DIGIMON: en la Tabla de digievolución, □ (Cuadrado) enseña
+     todas las formas del compañero: blanco, ya la tienes; amarillo, la aprende
+     en el próximo combate; verde, ya cumple lo que pide; gris, aún no. Abajo,
+     lo que pide la forma marcada, con ○ o ✕ y lo que tiene tu compañero (el
+     stat cuenta sin el equipo). Otra vez □: su línea, de qué formas viene y a
+     cuáles lleva; X sobre otra salta a la suya.
    - VIAJE RÁPIDO: en el MAPA del menú, X sobre una zona que ya visitaste y "Sí"
      te lleva allí al momento. Solo desde donde podrías salir andando: en una sala
      de la que solo se sale con un evento, X suena a cancelar.

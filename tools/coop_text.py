@@ -66,6 +66,31 @@ BLOCKS = [
         'ger': ['Kaufen', 'Verkaufen'],
         'spn': ['Comprar', 'Vender'],
     }),
+    # FORMS the lab's chart (stgdglab/coop_forms.inc.c): the partner's forms, a form's line and what each needs.
+    # TITLE_PRE + the partner's name + TITLE_POST; STAT_1..14 as STFGTREP's Evolution.stat
+    ('FORMS', ['WORD', 'TITLE_PRE', 'TITLE_POST', 'LINE', 'LINE_TITLE', 'BACK', 'LV', 'OWNED', 'NEXT', 'READY', 'NONE',
+               'STAT_1', 'STAT_2', 'STAT_3', 'STAT_4', 'STAT_5', 'STAT_6', 'STAT_7', 'STAT_8', 'STAT_9', 'STAT_10',
+               'STAT_11', 'STAT_12', 'STAT_13', 'STAT_14'], {
+        'eng': ['Forms', '', "'s Forms", 'Line', 'Line: ', 'Back', 'Lv', 'Learned', 'Next battle', 'Ready', 'No conditions',
+                'Strength', 'Defense', 'Spirit', 'Wisdom', 'Speed', 'Charisma', 'Level', 'Fire Res.', 'Water Res.',
+                'Ice Res.', 'Wind Res.', 'Thunder Res.', 'Machine Res.', 'Dark Res.'],
+        'fra': ['Formes', 'Formes de ', '', 'Lignée', 'Lignée : ', 'Retour', 'Nv', 'Apprise', 'Prochain combat', 'Prête',
+                'Aucune condition',
+                'Force', 'Défense', 'Esprit', 'Sagesse', 'Vitesse', 'Charisme', 'Niveau', 'Rés. Feu', 'Rés. Eau',
+                'Rés. Glace', 'Rés. Vent', 'Rés. Foudre', 'Rés. Machine', 'Rés. Ténèbres'],
+        'ita': ['Forme', 'Forme di ', '', 'Linea', 'Linea: ', 'Indietro', 'Lv', 'Appresa', 'Prossima lotta', 'Pronta',
+                'Nessuna condizione',
+                'Forza', 'Difesa', 'Spirito', 'Saggezza', 'Velocità', 'Carisma', 'Livello', 'Res. Fuoco', 'Res. Acqua',
+                'Res. Ghiaccio', 'Res. Vento', 'Res. Tuono', 'Res. Macchina', 'Res. Oscurità'],
+        'ger': ['Formen', '', 's Formen', 'Linie', 'Linie: ', 'Zurück', 'Lv', 'Gelernt', 'Nächster Kampf', 'Bereit',
+                'Keine Bedingungen',
+                'Stärke', 'Abwehr', 'Geist', 'Weisheit', 'Tempo', 'Charisma', 'Level', 'Feuer-Res.', 'Wasser-Res.',
+                'Eis-Res.', 'Wind-Res.', 'Donner-Res.', 'Maschinen-Res.', 'Dunkel-Res.'],
+        'spn': ['Formas', 'Formas de ', '', 'Línea', 'Línea: ', 'Volver', 'Nv', 'Aprendida', 'Próximo combate', 'Lista',
+                'Sin condiciones',
+                'Fuerza', 'Defensa', 'Espíritu', 'Sabiduría', 'Velocidad', 'Carisma', 'Nivel', 'Res. Fuego', 'Res. Agua',
+                'Res. Hielo', 'Res. Viento', 'Res. Rayo', 'Res. Máquina', 'Res. Oscuridad'],
+    }),
 ]
 
 

@@ -54,6 +54,7 @@ conectado, el ping y los errores habituales. La guía completa está en `LEEME-C
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Creador de personaje | Al empezar partida eliges ser Junior, Chico o Chica y uno de 8 tonos de color; con todas las animaciones, también en las escenas |
 | Entrenamiento sin azar | En los gimnasios todos los intentos salen bien, cada stat sube lo máximo y ninguno baja |
+| Laboratorio de formas | En la Tabla de digievolución, □ enseña todas las formas del compañero, cuáles puede conseguir ya, lo que pide cada una (cumplido o no) y su línea: de qué formas viene y a cuáles lleva |
 | Viaje rápido seguro | En el mapa del menú, "Sí" te lleva al momento a una zona visitada, pero solo desde donde podrías salir andando (no desde salas de evento) |
 | Emblemas | Los de Búsqueda y Contraataque funcionan también junto a armas con efecto (igual para todos en PvP y raids) |
 | Multiplicador de EXP | x1 a x5 sobre la EXP de combate (compañeros y Digimon) |
@@ -119,7 +120,7 @@ see each other. You need your own European disc; nothing of the game is here. Ge
 [latest release](https://github.com/alosoygetsu/asuka-link/releases/latest). The launcher's home screen has a **room**:
 players on your network show up by themselves and you invite them, or you add someone far away by IP (Tailscale,
 ZeroTier…); then meet on a map: you see each other with your own look and name, and can trade spare cards at any Guardromon. A new game lets you pick your look (Junior, a boy or a girl, in 8 colours) and starts with a team you build yourself (any 3 of the 8 partners) instead of a starter
-pack, and there are EXP and money multipliers. From v1.3 the launcher is Asuka Link's own (side menu, a moving
+pack, and there are EXP and money multipliers. In the Digimon Lab's evolution chart, square lists every form of a partner, what each needs (met or not) and its line. From v1.3 the launcher is Asuka Link's own (side menu, a moving
 Asuka City, its own colours, font and icon), and the in-game options live in the field's pause menu. Updates come
 through the launcher's Update button.
 
