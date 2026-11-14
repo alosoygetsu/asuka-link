@@ -48,7 +48,7 @@ conectado, el ping y los errores habituales. La guía completa está en `LEEME-C
 | La sala | En la pantalla principal del launcher: los de tu red aparecen solos, se invitan con un clic, o se añaden por IP; con listo, prueba de conexión, recientes y reconexión al abrir |
 | Launcher propio | Rehecho entero en la v1.3: menú lateral, Asuka City en movimiento, colores, letra (Silkscreen) e icono propios |
 | Intercambio de cartas | En cualquier Guardromon: dos jugadores que eligen "Intercambiar cartas" (con la Bolsa de Carpetas) se cambian cartas sueltas (las que no usa ningún mazo) |
-| Raids | En cualquier Guardromon: "Raid" junta de 2 a 4 jugadores contra un jefe (29 para elegir) en un mismo combate por turnos; al ganar, EXP y dinero x3 y un objeto seguro |
+| Raids | En cualquier Guardromon: "Raid" junta de 2 a 4 jugadores contra un jefe (29 para elegir) en un mismo combate por turnos que avanza solo: juega cada uno ("Turno de…") y el jefe golpea a todos a la vez; con objetos, y huir saca solo al que huye. Al ganar, EXP y dinero x3 y un objeto seguro |
 | Combates entre jugadores | En cualquier Guardromon: "Combatir" enfrenta vuestros equipos por turnos alternos, con las mismas reglas para los dos (armas, emblemas, estados); es una exhibición, sin game over y sin cambios en la partida |
 | Duelos de cartas | En cualquier Guardromon: "Duelo" (con la Bolsa de Carpetas) os enfrenta en el juego de cartas, cada uno con uno de sus mazos; los dos ganan un sobre de cartas (mejor el del ganador) |
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
@@ -80,7 +80,8 @@ Los cambios de cada versión están en [CHANGELOG-COOP.md](https://github.com/al
 - [x] Pasos en la historia y en todas las misiones del Digilog
 - [x] Encontrar las misiones que el Digilog aún no tiene (y sus pasos, en los 5 idiomas)
 - [x] Misiones de DDNA: hechas cuando el DRI te da al compañero, y con su jefe aunque ya lo tengas
-- [ ] Raids: aviso de turno, objetos y huir
+- [x] Raids: aviso de turno, objetos y huir (v1.6)
+- [ ] Raids: ajustar al jefe según los jugadores
 - [ ] Ver a los amigos en la pantalla del mapa e ir a su mapa
 
 Todo lo del juego y del port, con su estado y las ideas, está en la [hoja de ruta completa](https://github.com/alosoygetsu/asuka-link/blob/coop/docs/HOJA-DE-RUTA.md).

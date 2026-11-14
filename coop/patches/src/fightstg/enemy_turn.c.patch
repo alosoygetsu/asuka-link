@@ -1,6 +1,6 @@
 --- a/src/fightstg/enemy_turn.c
 +++ b/src/fightstg/enemy_turn.c
-@@ -3,6 +3,139 @@
+@@ -3,6 +3,140 @@
  
  #include "fightstg.h"
  
@@ -63,6 +63,7 @@
 +
 +/* The enemy's turn in a PvP battle: waits for the other's command, then does it (an attack, a technique, a switch),
 +   or ends the battle when the other gave up or is gone */
++void WFIGHTMN_coopRaidArea(s32 tech); /* wfightmn/menu.c: the raid's boss hits every seat */
 +static s32 coopPvpQueued; /* the enemy's next turn is queued already (coopPvpEnemyTurn) */
 +
 +static void coopPvpEnemyTurn(EnemyTurn *task, BattleChild *children) {
@@ -140,7 +141,7 @@
  /* The enemy that the enemy's turn (FIGHTSTG_updateEnemyTurn) switches to:
     task->target's, or one of the others at random (not the active one), -1
     for none */
-@@ -199,6 +332,12 @@
+@@ -199,6 +333,12 @@
              showRunAway(task, children);
              break;
          case 1:
@@ -153,7 +154,25 @@
              fighter = &FIGHTSTG_battle.fighters[1][FIGHTSTG_battle.active[1]];
              if (fighter->flags & FIGHTER_ASLEEP) {
                  children->message = FIGHTSTG_createMessage();
-@@ -257,6 +396,12 @@
+@@ -232,6 +372,17 @@
+             break;
+         case 2:
+             if (task->target > 0) {
++#ifdef NATIVE
++                if (native_coop_raid() != NULL) {
++                    /* a raid: the boss's attack or technique hits every seat's active partner (wfightmn/menu.c) */
++                    fighter = &FIGHTSTG_battle.fighters[1][FIGHTSTG_battle.active[1]];
++                    if (task->target == 1) {
++                        WFIGHTMN_coopRaidArea(FIGHTSTG_battleTableFunc(fighter->id)->techs[0]);
++                    } else if (fighter->mp >= TECHS[task->target - 1].mp) {
++                        WFIGHTMN_coopRaidArea(task->target);
++                    }
++                }
++#endif
+                 useEnemyTech(task, children);
+                 task->substate = 3;
+             } else if (task->target < 0) {
+@@ -257,6 +408,12 @@
          case 3:
              if (children->message == NULL) {
                  task->state = 3;

@@ -4,6 +4,23 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.6.0
+Basado en el port v0.18.9. Red: versión 9, como la 1.5.2 (no se junta con la 1.5.1 ni las anteriores).
+- **Raids, sin pulsar nada:** los mensajes del combate pasan solos al cabo de un segundo (✕ los sigue
+  adelantando). Ya no hay que pulsar en los turnos de los demás ni en los del jefe: el combate avanza solo hasta
+  que te toca elegir. También en los combates entre jugadores.
+- **Raids, objetos:** ya se pueden usar objetos. Se ven y hacen lo mismo en el juego de todos, y solo se gastan
+  de la bolsa del que los usa. Si la raid se pierde, la partida vuelve a como estaba, objetos incluidos.
+- **Raids, "Turno de…":** al empezar cada turno sale de quién es: "¡Tu turno!", "Turno de" y el nombre del
+  jugador, o el del jefe.
+- **Raids, el cambio de jugador más rápido:** el equipo del siguiente entra con un destello corto, sin la
+  presentación entera del Digimon de antes (unos 5 segundos).
+- **Raids, el jefe ataca a todos a la vez:** en cada ronda juegan todos los jugadores y luego el jefe, una vez: su
+  ataque o técnica golpea al Digimon activo de cada jugador (daño y estados de cada uno). Antes atacaba una vez a
+  cada jugador por separado. El daño por ronda es el mismo, pero la ronda es mucho más corta.
+- **Raids, huir:** Huir saca de la raid solo a ese jugador, seguro, sin premio ni pérdida (vuelve al mapa con la
+  partida como estaba). Los demás siguen y ven "<nombre> ha huido.".
+
 ## v1.5.2
 Basado en el port v0.18.9. Red: **versión 9**: no se junta con la 1.5.1 ni las anteriores (todos tenéis que
 actualizar), porque los combates entre jugadores ahora se calculan de otra forma.

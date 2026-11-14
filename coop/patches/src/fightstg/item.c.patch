@@ -1,0 +1,37 @@
+--- a/src/fightstg/item.c
++++ b/src/fightstg/item.c
+@@ -2,6 +2,12 @@
+ 
+ #include "fightstg.h"
+ 
++#ifdef NATIVE
++s32 WFIGHTMN_coopItemOwn(void); /* wfightmn/menu.c: 0 when the item is another raid player's */
++#else
++#define WFIGHTMN_coopItemOwn() 1
++#endif
++
+ /* Item 0x58's setup: lowers the higher of the enemy's attack and defense
+    (when that is the defense, the USA version raises it instead), unless the
+    battle blocks it, and picks the script's effect */
+@@ -351,7 +357,9 @@
+         break;
+     case 2:
+         if (children[0].task == NULL) {
+-            GAME.items[task->item]--;
++            if (WFIGHTMN_coopItemOwn()) { /* a raid: another player's item comes out of its own bag, not this one */
++                GAME.items[task->item]--;
++            }
+             task->state = TASK_KILL;
+         }
+         break;
+@@ -851,7 +859,9 @@
+             break;
+         case 2:
+             if (children[0].task == NULL) {
+-                GAME.items[task->item]--;
++                if (WFIGHTMN_coopItemOwn()) { /* a raid: another player's item comes out of its own bag, not this one */
++                    GAME.items[task->item]--;
++                }
+                 if (task->item == 0x55 && FIGHTSTG_battle.kind == BATTLE_KIND_FINAL_LAST) {
+                     children[0].enemyAttack = FIGHTSTG_startEnemyAttack(1, 0);
+                     task->nextSubstate(task);

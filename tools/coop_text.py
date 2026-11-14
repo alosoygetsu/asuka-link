@@ -44,12 +44,12 @@ BLOCKS = [
         'ger': ['Reden', 'Karten tauschen', 'Warte auf einen anderen Spieler...', 'Kämpfen', 'Der Kampf wird vorbereitet...', 'Raid', 'Verlassen', 'Duell'],
         'spn': ['Hablar', 'Intercambiar cartas', 'Esperando a otro jugador...', 'Combatir', 'Preparando el combate...', 'Raid', 'Salir', 'Duelo'],
     }),
-    ('RAID', ['LEVEL', 'OF_FOUR', 'WAITING', 'DOTS', 'GONE'], {
-        'eng': ['Lv', ' of 4', 'Waiting for ', '...', ' disconnected.'],
-        'fra': ['Nv', ' sur 4', 'On attend ', '...', " s'est déconnecté."],
-        'ita': ['Lv', ' su 4', 'In attesa di ', '...', ' ha perso la connessione.'],
-        'ger': ['Lv', ' von 4', 'Warte auf ', '...', ' hat die Verbindung verloren.'],
-        'spn': ['Nv', ' de 4', 'Esperando a ', '...', ' se ha desconectado.'],
+    ('RAID', ['LEVEL', 'OF_FOUR', 'WAITING', 'DOTS', 'GONE', 'TURN', 'YOUR_TURN', 'FLED'], {
+        'eng': ['Lv', ' of 4', 'Waiting for ', '...', ' disconnected.', 'Turn: ', 'Your turn!', ' ran away.'],
+        'fra': ['Nv', ' sur 4', 'On attend ', '...', " s'est déconnecté.", 'Au tour de ', "C'est ton tour !", " s'est enfui."],
+        'ita': ['Lv', ' su 4', 'In attesa di ', '...', ' ha perso la connessione.', 'Turno di ', 'Tocca a te!', ' è fuggito.'],
+        'ger': ['Lv', ' von 4', 'Warte auf ', '...', ' hat die Verbindung verloren.', 'Am Zug: ', 'Du bist dran!', ' ist geflohen.'],
+        'spn': ['Nv', ' de 4', 'Esperando a ', '...', ' se ha desconectado.', 'Turno de ', '¡Tu turno!', ' ha huido.'],
     }),
     ('MENU', ['OPTIONS'], {
         'eng': ['OPTIONS'],

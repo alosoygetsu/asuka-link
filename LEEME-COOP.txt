@@ -86,6 +86,7 @@ coop = 0 en native.ini apaga el cooperativo.)
      Turnos alternos (empieza el más rápido). Se puede atacar, usar técnicas,
      digievolucionar, cambiar de Digimon y rendirse (Huir); sin objetos. Es una exhibición: al
      terminar volvéis al mapa con la partida como estaba, sin game over.
+     Los mensajes del combate pasan solos (aquí y en las raids); X los adelanta.
      Si tu Digimon está dormido (aquí y en las raids), Atacar pasa el turno.
    - Para un duelo de cartas: los dos elegís "Duelo" en un Guardromon (sale cuando
      ya tenéis la Bolsa de Carpetas, como las cartas del juego) y cada uno
@@ -97,7 +98,9 @@ coop = 0 en native.ini apaga el cooperativo.)
    - Para una raid (2 a 4 jugadores): uno elige "Raid" en un Guardromon y escoge
      el jefe (salen los de hasta 5 niveles por encima de su mejor Digimon; el
      Kuwagamon, siempre); los demás eligen "Raid" también y entran en su sala.
-     Combate por turnos, uno detrás de otro, y el jefe ataca una vez a cada uno.
+     Combate por turnos: juega cada uno ("Turno de..." dice de quién es) y luego
+     el jefe, que golpea a todos a la vez. Se pueden usar objetos (se gastan de
+     tu bolsa). Huir te saca solo a ti, sin premio ni pérdida; los demás siguen.
      Al ganar: EXP y dinero x3 y un objeto seguro; perder no da game over.
    - DIGILOG (en el menú del mapa): cada misión dice en qué paso vas ("Paso 2 de
      5") y qué toca hacer; con □ (Cuadrado) ves todos sus pasos. Las que solo

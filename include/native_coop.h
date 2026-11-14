@@ -84,6 +84,8 @@ typedef struct NativeCoopCommand {
     unsigned char active[2], pad[2];
 } NativeCoopCommand;
 #define COOP_RAID_SEATS 4
+/* the co-op's battles: a message's last line stays this many frames, then it goes on by itself (fightstg/message.c) */
+#define COOP_MESSAGE_FRAMES 60
 #define COOP_TEAM_MAX 3072 /* a CoopTeam's room */
 typedef struct NativeCoopPvp {
     int on, peer;
@@ -129,6 +131,9 @@ int native_coop_reward_mult(void); /* COOP_RAID_REWARD after a raid won, else 1 
 int native_coop_start_delay(void); /* DW3_COOP_START_DELAY=<frames> (tests): the raid starts that much later here */
 int native_coop_raid_test(void); /* DW3_COOP_RAID=<encounter> (tests): the Guardromon's battle is that raid; 0 none */
 int native_coop_test_tech(int n); /* DW3_COOP_TECH=id,id,... (tests): the auto battle's n-th technique, 0 none */
+/* DW3_COOP_<name>=<number> (tests), -1 unset: ITEM=id the raid's auto battle uses that item at its second command,
+   FLEE=seat that seat's player runs away from the raid at its third (fightstg/player_turn.c) */
+int native_coop_test_env(const char *name);
 /* DW3_COOP_EQUIP=slot:item,... and DW3_COOP_HP=n (tests): on each partner sent to a battle */
 void native_coop_test_partner(short *stats, short *equip);
 void native_coop_pvp_begin(int peer, const void *team, int size, const void *save, int battle, int first);

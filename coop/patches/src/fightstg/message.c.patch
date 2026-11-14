@@ -1,0 +1,24 @@
+--- a/src/fightstg/message.c
++++ b/src/fightstg/message.c
+@@ -55,6 +55,21 @@
+         }
+         break;
+     case 3:
++#ifdef NATIVE
++        /* the co-op's battles (PvP and raids): each message goes on by itself after a second, cross still skips it;
++           no one has to press for another player's turn or the boss's (the games wait for commands, not for this) */
++        if ((native_coop_pvp() != NULL || native_coop_raid() != NULL) &&
++            GFX.funcs.getTime() - task->shownTime > COOP_MESSAGE_FRAMES) {
++            if (task->queue[++task->next] == 0) {
++                task->state = 3;
++            } else {
++                task->show(task, task->queue[task->next], 0);
++                task->setSubstate(task, 0);
++            }
++            task->showArrow = 0;
++            break;
++        }
++#endif
+         if (PAD.getPressed(0) & (1 << PAD_CROSS)) {
+             SOUND.playSound(SOUND_MENU_CONFIRM);
+             if (task->queue[++task->next] == 0) {

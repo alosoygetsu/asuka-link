@@ -8,8 +8,9 @@
 #   -Mode trade abre el intercambio de cartas entre dos (con cartas de sobra) y saca capturas a los 20 s quietos.
 #   -Press "fotograma:botón,..." los mismos botones en todas las copias (DW3_PRESS).
 #   -Mode see | battle | raid | duel | trade; -Keep deja las copias abiertas al terminar.
+#   -ShotAt "60,75" captura todas las ventanas a esos segundos del arranque (test-shots\<modo>-<s>-<copia>.png).
 param([ValidateSet("see", "battle", "raid", "duel", "trade")][string]$Mode = "see", [ValidateRange(2, 4)][int]$Players = 2,
-      [int]$Raid = 200, [int]$Timeout = 900, [string]$Press, [switch]$Keep)
+      [int]$Raid = 200, [int]$Timeout = 900, [string]$Press, [string]$ShotAt, [switch]$Keep)
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot)  # la carpeta del proyecto: native\, test2..test5
 $build = "$root\native\build"
@@ -73,8 +74,21 @@ Remove-Item Env:DW3_COOP_AUTO, Env:DW3_COOP_RAID, Env:DW3_TEST_WINDOW, Env:DW3_C
 
 $logs = $dirs | ForEach-Object { "$_\coop.log" }
 $end = (Get-Date).AddSeconds($Timeout); $last = ''; $quiet = 0; $stalled = $false
+$start = Get-Date; $shotTimes = @(if ($ShotAt) { $ShotAt -split ',' | ForEach-Object { [int]$_ } })
 while ((Get-Date) -lt $end) {
-    Start-Sleep 5
+    if ($shotTimes.Count -gt 0) {
+        Start-Sleep 1
+        $t = ((Get-Date) - $start).TotalSeconds
+        $due = @($shotTimes | Where-Object { $_ -le $t })
+        if ($due.Count -gt 0) {
+            New-Item -ItemType Directory -Force $shots | Out-Null
+            for ($i = 0; $i -lt $Players; $i++) { Capture $dirs[$i] "$shots\$Mode-$($due[0])-$($i + 2).png" }
+            $shotTimes = @($shotTimes | Where-Object { $_ -gt $t })
+        }
+        if (((Get-Date) - $start).TotalSeconds % 5 -ge 1) { continue }
+    } else {
+        Start-Sleep 5
+    }
     $found = @($logs | Where-Object { (Test-Path $_) -and (Select-String -Path $_ -Pattern $done -Quiet) }).Count
     if ($found -ge $Players) { break }
     $now = ($logs | ForEach-Object { if (Test-Path $_) { Get-Content $_ | Select-String -NotMatch 'ping' | Select-Object -Last 1 } }) -join '|'

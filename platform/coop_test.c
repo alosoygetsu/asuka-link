@@ -48,6 +48,16 @@ int native_coop_raid_test(void) {
 }
 
 /* DW3_COOP_TECH=id,id,... (tests): the auto battle's techniques, the n-th command's the list's (n % its length) */
+/* DW3_COOP_<name>=<number> (tests): its number, -1 unset */
+int native_coop_test_env(const char *name) {
+    char key[64];
+    const char *env;
+
+    SDL_snprintf(key, sizeof key, "DW3_COOP_%s", name);
+    env = SDL_getenv(key);
+    return env != NULL && *env != 0 ? (int)SDL_strtol(env, NULL, 0) : -1;
+}
+
 int native_coop_test_tech(int n) {
     const char *env = SDL_getenv("DW3_COOP_TECH");
     int ids[16];

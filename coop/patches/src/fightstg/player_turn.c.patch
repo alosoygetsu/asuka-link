@@ -1,6 +1,6 @@
 --- a/src/fightstg/player_turn.c
 +++ b/src/fightstg/player_turn.c
-@@ -3,6 +3,73 @@
+@@ -3,6 +3,87 @@
  
  #include "fightstg.h"
  
@@ -42,6 +42,20 @@
 +            return 1;
 +        }
 +    }
++    if (native_coop_raid() != NULL && native_coop_raid()->sent == 1 && native_coop_test_env("ITEM") > 0) {
++        task->action = 3; /* DW3_COOP_ITEM=id: the raid's second command uses it (one given when the bag has none) */
++        task->arg = native_coop_test_env("ITEM");
++        if (GAME.items[task->arg] == 0) {
++            GAME.items[task->arg] = 1;
++        }
++        native_coop_note("PvP test: item %X (%d in the bag)", task->arg, GAME.items[task->arg]);
++        return 1;
++    }
++    if (native_coop_raid() != NULL && native_coop_raid()->sent == 2 && native_coop_test_env("FLEE") == native_coop_raid()->me) {
++        task->action = 1; /* DW3_COOP_FLEE=seat: that seat's player runs away at its third command */
++        native_coop_note("PvP test: running away");
++        return 1;
++    }
 +    if (native_coop_auto_battle() == 2 && (native_coop_pvp() != NULL ? native_coop_pvp() : native_coop_raid())->sent >= 4) {
 +        task->action = 1; /* DW3_COOP_AUTO=giveup: the fifth command gives up */
 +        native_coop_note("PvP test: giving up");
@@ -74,7 +88,7 @@
  /* Opens the command menu with the HUD, the partner view and the shot camera,
     then goes to the menu of the command picked */
  static inline void runCommandMenu(PlayerTurn *task, PlayerTurnChild *children) {
-@@ -24,11 +91,23 @@
+@@ -24,11 +105,23 @@
          task->result = -1;
          task->tickCounter(task);
      case 1:
@@ -98,13 +112,13 @@
                  task->setSubstate(task, 0);
                  break;
              case BATTLE_COMMAND_TECH:
-@@ -42,9 +121,23 @@
+@@ -42,6 +135,13 @@
                  task->switchLine = 0;
                  break;
              case BATTLE_COMMAND_ITEM:
 +#ifdef NATIVE
-+                if (native_coop_pvp() != NULL || native_coop_raid() != NULL) {
-+                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's PvP battle and raid: no items */
++                if (native_coop_pvp() != NULL) {
++                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's PvP battle: no items (a raid has them) */
 +                    task->setSubstate(task, 2);
 +                    break;
 +                }
@@ -112,17 +126,7 @@
                  task->setStep(task, 2);
                  break;
              case BATTLE_COMMAND_RUN:
-+#ifdef NATIVE
-+                if (native_coop_raid() != NULL) {
-+                    SOUND.playSound(SOUND_MENU_CANCEL); /* the co-op's raid: no running away */
-+                    task->setSubstate(task, 2);
-+                    break;
-+                }
-+#endif
-                 task->action = 1;
-                 task->setSubstate(task, 0);
-                 break;
-@@ -168,6 +261,11 @@
+@@ -168,6 +268,11 @@
                  task->switchLine = 0;
              } else {
                  task->action = 6;
@@ -134,7 +138,7 @@
                  task->digimon = task->result >> 4;
                  task->setSubstate(task, 0);
                  task->switchLine = 0;
-@@ -226,6 +324,24 @@
+@@ -226,6 +331,24 @@
          }
          task->tickCounter(task);
      case 1:
