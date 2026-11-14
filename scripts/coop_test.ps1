@@ -42,6 +42,18 @@ function Stop-Copies {  # solo las de test2..test5, nunca la de native\build
 Stop-Copies; Start-Sleep 1
 $base = (Get-Content "$build\native.ini" | Where-Object { $_ -notmatch '^\s*(coop|coop_peer|coop_peers|coop_port|scale|fullscreen)\s*=' }) -join "`n"
 $auto = @{ see = $null; battle = 'battle'; raid = 'raid'; duel = 'duel'; trade = 'trade' }[$Mode]
+# el juego es un programa de consola: Start-Process le abriría una consola en la pantalla principal que le quita el
+# foco al jugador. Sin consola (CreateNoWindow) y con el log en un archivo (DW3_TEST_LOG, platform/main.c)
+function Start-Copy($exe, [string[]]$arguments, $dir, $log) {
+    $si = New-Object System.Diagnostics.ProcessStartInfo $exe
+    $si.Arguments = $arguments -join ' '
+    $si.WorkingDirectory = $dir
+    $si.UseShellExecute = $false
+    $si.CreateNoWindow = $true
+    $si.EnvironmentVariables["DW3_TEST_LOG"] = $log
+    [System.Diagnostics.Process]::Start($si)
+}
+$env:DW3_TEST_WINDOW = "1"  # las copias en la segunda pantalla, sin foco ni teclado o mando reales (platform/coop_test.c)
 for ($i = 0; $i -lt $Players; $i++) {
     $d = $dirs[$i]
     New-Item -ItemType Directory -Force "$d\saves" | Out-Null
@@ -54,10 +66,10 @@ for ($i = 0; $i -lt $Players; $i++) {
     $env:DW3_PRESS = $Press
     if ($Mode -eq "trade") { $env:DW3_COOP_CARDS = "3" } else { Remove-Item Env:DW3_COOP_CARDS -ErrorAction SilentlyContinue }
     if ($Mode -eq "raid") { $env:DW3_COOP_RAID = "$Raid" } else { Remove-Item Env:DW3_COOP_RAID -ErrorAction SilentlyContinue }
-    Start-Process "$d\dw2003.exe" -ArgumentList "--field 0x230 --progress 10 --party $($parties[$i])" -WorkingDirectory $d
+    Start-Copy "$d\dw2003.exe" @("--field", "0x230", "--progress", "10", "--party", "$($parties[$i])") $d "$d\prueba.log" | Out-Null
     Start-Sleep -Milliseconds 800
 }
-Remove-Item Env:DW3_COOP_AUTO, Env:DW3_COOP_RAID, Env:DW3_COOP_CARDS, Env:DW3_PRESS -ErrorAction SilentlyContinue
+Remove-Item Env:DW3_COOP_AUTO, Env:DW3_COOP_RAID, Env:DW3_TEST_WINDOW, Env:DW3_COOP_CARDS, Env:DW3_PRESS -ErrorAction SilentlyContinue
 
 $logs = $dirs | ForEach-Object { "$_\coop.log" }
 $end = (Get-Date).AddSeconds($Timeout); $last = ''; $quiet = 0; $stalled = $false

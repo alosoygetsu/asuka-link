@@ -62,6 +62,7 @@ Remove-Item $out, "$dir\prueba.out" -ErrorAction SilentlyContinue
 $env:DW3_TEST = @{ digilog = "digilog"; campo = "" }[$Case]
 $env:DW3_COOP_SAVE = $saveArg
 $env:DW3_PRESS = $Press
+$env:DW3_TEST_WINDOW = "1"  # en la segunda pantalla, sin foco ni teclado o mando reales (platform/coop_test.c)
 $env:DW3_COOP_AUTO = if ($CoopAuto -and $CoopAuto -ne "talk") { $CoopAuto } else { $null }  # talk: cooperativo sin nada solo (hablar con -Steps)
 $env:DW3_COOP_RAID = if ($CoopAuto) { "-1" } else { $null }  # todas las raids en su lista
 $env:DW3_STEPS = $Steps
@@ -70,9 +71,19 @@ $gameArgs = @("--field", $Field, "--party", "$Party")
 if ($Place) { $gameArgs += "--place", $Place }
 if ($Progress -ge 0) { $gameArgs += "--progress", "$Progress" }
 if ($Set) { $Set.Split(",") | ForEach-Object { $gameArgs += "--set", $_.Trim() } }
-$game = Start-Process "$dir\dw2003.exe" -ArgumentList $gameArgs -WorkingDirectory $dir -PassThru `
-    -RedirectStandardError $out -RedirectStandardOutput "$dir\prueba.out"
-Remove-Item Env:DW3_TEST, Env:DW3_COOP_AUTO, Env:DW3_COOP_RAID, Env:DW3_COOP_SAVE, Env:DW3_PRESS, Env:DW3_STEPS, Env:DW3_LANGUAGE -ErrorAction SilentlyContinue
+# el juego es un programa de consola: Start-Process le abriría una consola en la pantalla principal que le quita el
+# foco al jugador. Sin consola (CreateNoWindow) y con el log en un archivo (DW3_TEST_LOG, platform/main.c)
+function Start-Copy($exe, [string[]]$arguments, $dir, $log) {
+    $si = New-Object System.Diagnostics.ProcessStartInfo $exe
+    $si.Arguments = $arguments -join ' '
+    $si.WorkingDirectory = $dir
+    $si.UseShellExecute = $false
+    $si.CreateNoWindow = $true
+    $si.EnvironmentVariables["DW3_TEST_LOG"] = $log
+    [System.Diagnostics.Process]::Start($si)
+}
+$game = Start-Copy "$dir\dw2003.exe" $gameArgs $dir $out
+Remove-Item Env:DW3_TEST, Env:DW3_TEST_WINDOW, Env:DW3_COOP_AUTO, Env:DW3_COOP_RAID, Env:DW3_COOP_SAVE, Env:DW3_PRESS, Env:DW3_STEPS, Env:DW3_LANGUAGE -ErrorAction SilentlyContinue
 
 $done = @{ digilog = 'DIGILOG end'; campo = $null }[$Case]
 if ($Steps -and -not $done) { $done = if ($Steps -match 'digilog') { 'DIGILOG end' } else { 'steps: \w+, done' } }

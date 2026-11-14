@@ -28,7 +28,59 @@ void video_resize(int scale) {
         SDL_SetWindowFullscreen(s_window, false);
     }
     SDL_SetWindowSize(s_window, video_window_width(scale), 240 * scale);
-    SDL_SetWindowPosition(s_window, SDL_WINDOWPOS_CENTERED_DISPLAY(display), SDL_WINDOWPOS_CENTERED_DISPLAY(display));
+    if (!native_test_window()) { /* a test copy keeps its place (test_window_place) */
+        SDL_SetWindowPosition(s_window, SDL_WINDOWPOS_CENTERED_DISPLAY(display), SDL_WINDOWPOS_CENTERED_DISPLAY(display));
+    }
+}
+
+/* A test copy's window (DW3_TEST_WINDOW, coop_test.c): on a screen that isn't the main one, if there is one, else
+   at the back of the others; shown without being activated, and never focusable, so the player's game keeps the
+   focus. Several copies on that screen go side by side, one per test folder (test2..test5) */
+#ifdef _WIN32
+__declspec(dllimport) int __stdcall SetWindowPos(void *, void *, int, int, int, int, unsigned);
+#endif
+static void test_window_place(void) {
+    int count = 0, slot = 0;
+    SDL_DisplayID *ids = SDL_GetDisplays(&count);
+    SDL_DisplayID other = 0;
+    char cwd[512];
+    const char *base = SDL_GetCurrentDirectory();
+
+    for (int i = 0; ids != NULL && i < count; i++) {
+        if (ids[i] != SDL_GetPrimaryDisplay()) {
+            other = ids[i];
+            break;
+        }
+    }
+    SDL_free(ids);
+    SDL_snprintf(cwd, sizeof cwd, "%s", base != NULL ? base : "");
+    SDL_free((void *)base);
+    for (char *p = cwd; *p; p++) {
+        if (SDL_strncmp(p, "test", 4) == 0 && p[4] >= '2' && p[4] <= '9') {
+            slot = p[4] - '2';
+        }
+    }
+    if (other != 0) {
+        SDL_Rect r;
+        int w, h;
+
+        SDL_GetDisplayUsableBounds(other, &r);
+        SDL_GetWindowSize(s_window, &w, &h);
+        /* side by side, then a second row: the windows' title bars stay in sight */
+        int per_row = SDL_max(1, r.w / SDL_max(w, 1));
+        SDL_SetWindowPosition(s_window, r.x + (slot % per_row) * SDL_min(w, r.w), r.y + 32 + (slot / per_row) * (h / 2));
+    }
+    SDL_ShowWindow(s_window);
+#ifdef _WIN32
+    if (other == 0) {
+        void *hwnd = SDL_GetPointerProperty(SDL_GetWindowProperties(s_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+
+        if (hwnd != NULL) {
+            SetWindowPos(hwnd, (void *)1 /* HWND_BOTTOM */, 0, 0, 0, 0, 0x1 | 0x2 | 0x10); /* no size, move or activation */
+        }
+    }
+#endif
+    LOG("test window: %s, copy %d", other != 0 ? "on the second screen" : "at the back", slot + 2);
 }
 
 int video_init(int scale, int fullscreen) {
@@ -40,11 +92,20 @@ int video_init(int scale, int fullscreen) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    if (native_test_window()) {
+        SDL_SetHint(SDL_HINT_WINDOW_ACTIVATE_WHEN_SHOWN, "0");
+        fullscreen = 0;
+    }
     s_window = SDL_CreateWindow("Digimon World 2003", video_window_width(scale), 240 * scale,
-                                SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | (fullscreen ? SDL_WINDOW_FULLSCREEN : 0) | (g_render_sounds ? SDL_WINDOW_HIDDEN : 0));
+                                SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | (fullscreen ? SDL_WINDOW_FULLSCREEN : 0) |
+                                    (g_render_sounds || native_test_window() ? SDL_WINDOW_HIDDEN : 0) |
+                                    (native_test_window() ? SDL_WINDOW_NOT_FOCUSABLE : 0));
     if (s_window == NULL) {
         LOG("window: %s", SDL_GetError());
         return 0;
+    }
+    if (native_test_window()) {
+        test_window_place();
     }
     if (!gl_init(s_window)) {
         LOG("this needs OpenGL 3.3");
@@ -67,6 +128,10 @@ int pump_events(void) {
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_EVENT_QUIT) {
             return 0;
+        }
+        /* a test copy: the keyboard, the mouse and the pads are the player's, not its (coop_test.c) */
+        if (native_test_window() && e.type >= SDL_EVENT_KEY_DOWN && e.type < SDL_EVENT_FINGER_DOWN) {
+            continue;
         }
         /* the window lost its focus: sound muted, or the game held until it is back */
         if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST && g_inactive_window) {

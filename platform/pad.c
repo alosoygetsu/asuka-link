@@ -185,6 +185,9 @@ static void rumble(void) {
 static void open_gamepad(void) {
     SDL_JoystickID *ids;
 
+    if (native_test_window()) {
+        return; /* a test copy opens no pad (coop_test.c) */
+    }
     if (s_gamepad != NULL && !SDL_GamepadConnected(s_gamepad)) {
         LOGC(LOG_PAD, "pad: %s unplugged", SDL_GetGamepadName(s_gamepad));
         SDL_CloseGamepad(s_gamepad);
@@ -359,7 +362,7 @@ void pad_update(void) {
     for (i = 0; i < 16; i++) {
         int src = s_pad[i];
 
-        if ((s_keys[i][0] && keys[s_keys[i][0]]) || (s_keys[i][1] && keys[s_keys[i][1]])) {
+        if (!native_test_window() && ((s_keys[i][0] && keys[s_keys[i][0]]) || (s_keys[i][1] && keys[s_keys[i][1]]))) {
             held |= 1 << i;
         }
         if (s_gamepad != NULL && src != PAD_NONE &&
@@ -396,6 +399,9 @@ void PadInitDirect(uint8_t *a, uint8_t *b) {
     s_buf[1] = b;
     /* SDL's own HIDAPI drivers, Xbox pads included, rather
        than RawInput, whose XInput pairing for the motors can miss */
+    if (native_test_window()) {
+        return; /* a test copy: no pads, the player's are theirs (coop_test.c) */
+    }
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
     SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI, "1");
     SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "0");

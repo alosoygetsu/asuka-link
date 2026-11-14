@@ -229,6 +229,11 @@ int main(int argc, char **argv) {
 
     char exe[1100];
 
+    /* DW3_TEST_LOG=<file> (scripts/probar.ps1, coop_test.ps1): the log there, for a test copy started with no
+       console window, which would take the player's focus (coop_test.c's DW3_TEST_WINDOW) */
+    if (getenv("DW3_TEST_LOG") != NULL && freopen(getenv("DW3_TEST_LOG"), "w", stderr) != NULL) {
+        setvbuf(stderr, NULL, _IONBF, 0);
+    }
     install_crash_handler();
     read_ini(1);
     if (env != NULL) {

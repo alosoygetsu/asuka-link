@@ -81,6 +81,20 @@ void native_coop_auto_quiet(void) {
     s_quiet_frame = s_press_frame;
 }
 
+/* DW3_TEST_WINDOW=1 (scripts/probar.ps1, coop_test.ps1): a test copy, run while the player plays their own: its
+   window on the second screen (else at the back), never focused, and deaf to the real keyboard, mouse and pads; only
+   the script's presses (DW3_PRESS, DW3_STEPS, DW3_COOP_AUTO) drive it (video.c, pad.c) */
+int native_test_window(void) {
+    static int on = -1;
+
+    if (on < 0) {
+        const char *env = SDL_getenv("DW3_TEST_WINDOW");
+
+        on = env != NULL && env[0] != 0 && env[0] != '0';
+    }
+    return on;
+}
+
 /* DW3_TEST="digilog,...": what scripts/probar.ps1 wants; each word a test's (state.c, ststatus/item_list.c) */
 int native_test(const char *what) {
     const char *env = SDL_getenv("DW3_TEST");

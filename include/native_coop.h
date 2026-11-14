@@ -55,7 +55,8 @@ int native_coop_test_cards(void); /* DW3_COOP_CARDS (tests) */
 int native_coop_auto(void); /* DW3_COOP_AUTO (tests): 0 trade, 1 battle, -1 none */
 int native_coop_auto_battle(void); /* DW3_COOP_AUTO=battle: and in the PvP battle, the commands picked by themselves; =giveup (2): the third gives up */
 void native_coop_test_save(void *game); /* DW3_COOP_SAVE=card.mcd@0x2300: --field starts with that save (tests) */
-int native_test(const char *what); /* DW3_TEST="digilog,...": what a test (scripts/probar.ps1) wants done or dumped */
+int native_test(const char *what);
+int native_test_window(void); /* DW3_TEST_WINDOW=1: a test copy, out of the player's way (video.c, pad.c) */ /* DW3_TEST="digilog,...": what a test (scripts/probar.ps1) wants done or dumped */
 int native_coop_auto_press(void);
 void native_coop_auto_quiet(void); /* no presses now: the test picks the command itself */ /* and cross pressed now and then, for its messages (platform/pad.c) */
 int native_coop_guard_key(void); /* the character whose talk offers the trade: Guardromon */
