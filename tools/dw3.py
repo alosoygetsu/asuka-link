@@ -1166,6 +1166,10 @@ def run_script(name, argv):
 
 def script_cmd(name, usage):
     def f(args):
+        if name == "quest_talks":  # sus modos también como el archivo del mapa: wstag875 → su modo
+            args = [stage_mode(a.lower()) if a.lower().startswith("wstag") else a for a in args]
+            if "?" in args:
+                sys.exit("ese wstag no es un mapa del juego extraído")
         run_script(name, args)
     f.__doc__ = usage
     return f
