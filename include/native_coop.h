@@ -167,6 +167,11 @@ void native_coop_vram_copy(int from_x, int from_y, int to_x, int to_y, int w, in
 void native_coop_vram_tint(int x, int y, int n);
 /* the game's menu CLUTs (x, y, w x h) copied to (to_x, to_y) with their dark blues lilac: the co-op's windows */
 void native_coop_vram_lilac(int x, int y, int to_x, int to_y, int w, int h);
+/* a box's words as one number (has something written over it?), and a box blanked (tests) */
+unsigned native_coop_vram_hash(int x, int y, int w, int h);
+void native_coop_vram_clear(int x, int y, int w, int h);
+void native_coop_vram_forget(int x, int y); /* a box of ours the game wrote over: not ours any more */
+int native_coop_test_stomp(void); /* DW3_COOP_STOMP=<frames> (tests): 1 once, that long after the first call */
 /* the character creator's tones: src's 16 colours turned for tone (0 as drawn, 1-7) into dst; and a CLUT into VRAM */
 #define NATIVE_TONES 8
 void native_tone_clut(unsigned short *dst, const unsigned short *src, int tone);

@@ -164,9 +164,14 @@ static void coopCopy(u8 *to, const u8 *from, s32 size) {
 }
 
 /* ---- the lilac CLUTs: the frames' 4-bit parts' CLUTs, copied once a field into a free box of VRAM and turned
-   (native_coop_vram_lilac); the drawer's CLUT base moved so each part finds its copy ---- */
+   (native_coop_vram_lilac); the drawer's CLUT base moved so each part finds its copy. A blank box can still be
+   the game's: one of the map's tile slots not loaded yet (coopReserveMapSlots), so those are kept first, as the
+   ghosts keep them; and while a window shows, the copy is checked each frame: written over (v1.5.0: the window
+   showed with no ground), it is left to the game and made again in another box ---- */
 
 static s32 coopLilacX, coopLilacY; /* the drawer's CLUT base for the copies; coopLilacOn (coop_trade.inc.c) */
+static s32 coopLilacBox[4]; /* the copy's box: x, y, w, h */
+static u32 coopLilacHash; /* its words as made */
 
 static void coopLilacPrepare(void) {
     static const s32 FRAMES[5] = {28, 27, 25, 36, COOP_BOX_FRAME};
@@ -209,6 +214,10 @@ static void coopLilacPrepare(void) {
     }
     w = x1 - x0;
     h = y1 - y0;
+    coopReserveMapSlots(); /* the tiles' slots and the characters', blank or not (the ghosts' own, coop_ghosts.inc.c) */
+    for (i = -2; i < 4; i++) {
+        coopReserveSlot(i);
+    }
     if (w <= 0 || h <= 0 || w > 256 || h > 64 || !native_coop_find_vram_any(w, h, &x, &y, &px, &py)) {
         native_log("coop: no VRAM for the windows' lilac (%d x %d)", w, h);
         return;
@@ -218,9 +227,35 @@ static void coopLilacPrepare(void) {
     native_coop_vram_lilac(0x140 + x0, y0, x, y, w, h); /* the sheet's CLUTs are at its texture, (0x140, 0) */
     coopLilacX = x - x0;
     coopLilacY = y - y0;
+    coopLilacBox[0] = x;
+    coopLilacBox[1] = y;
+    coopLilacBox[2] = w;
+    coopLilacBox[3] = h;
+    coopLilacHash = native_coop_vram_hash(x, y, w, h);
     coopLilacOn = 1;
     if (g_coop_debug) {
         native_log("coop: the windows' lilac CLUTs: %d x %d from (%d, %d) at (%d, %d)", w, h, 0x140 + x0, y0, x, y);
+    }
+}
+
+/* Each frame a window shows: the lilac CLUTs made this field, and made again elsewhere if the game wrote over them
+   (the box stays kept: it is the game's now) */
+static void coopLilacCheck(void) {
+    if (coopLilacOn == 0) {
+        coopLilacPrepare();
+        return;
+    }
+    if (coopLilacOn < 0) {
+        return;
+    }
+    if (native_coop_test_stomp()) {
+        native_coop_vram_clear(coopLilacBox[0], coopLilacBox[1], coopLilacBox[2], coopLilacBox[3]);
+    }
+    if (native_coop_vram_hash(coopLilacBox[0], coopLilacBox[1], coopLilacBox[2], coopLilacBox[3]) != coopLilacHash) {
+        native_coop_note("map %X: the Guardromon's windows' colours at VRAM (%d, %d) were written over: made again elsewhere",
+                         GAME.funcs.getMode(), coopLilacBox[0], coopLilacBox[1]);
+        native_coop_vram_forget(coopLilacBox[0], coopLilacBox[1]);
+        coopLilacPrepare();
     }
 }
 
@@ -350,9 +385,7 @@ static void coopGuardMenuRun(CoopGuardMenu *task, CoopGuardMenuChildren *childre
     case TASK_INIT:
     default:
         task->nextState(task);
-        if (coopLilacOn == 0) {
-            coopLilacPrepare();
-        }
+        coopLilacCheck();
         task->boxTween.duration = 10;
         for (side = 0; side < COOP_SIDES; side++) {
             task->sides[side].tween.duration = 10;
@@ -367,6 +400,7 @@ static void coopGuardMenuRun(CoopGuardMenu *task, CoopGuardMenuChildren *childre
         children->message->setLines(children->message, 3);
         break;
     case TASK_RUN:
+        coopLilacCheck(); /* written over while it shows: made again before it's drawn */
         for (side = 0; side < COOP_SIDES; side++) {
             coopGuardList(task, children, side);
         }

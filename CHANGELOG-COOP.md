@@ -4,6 +4,12 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.5.1
+Basado en el port v0.18.9. Red: versión 8, como la 1.3.x, la 1.4.x y la 1.5.0 (se juntan sin problema).
+- **El menú del Guardromon sin su ventana:** a veces salían solo las opciones y el cursor, sin la ventana lila
+  detrás. Sus colores se guardaban en un hueco de la memoria de vídeo que el mapa podía usar más tarde. Ahora van
+  donde el mapa no carga nada, y si algo los pisa igualmente se vuelven a poner en otro sitio.
+
 ## v1.5.0
 Basado en el port v0.18.9. Red: versión 8, como la 1.3.x y la 1.4.x (se juntan sin problema).
 - **Laboratorio, las formas y lo que pide cada una:** en la Tabla de digievolución, □ abre la lista de todas las

@@ -25,6 +25,22 @@ int native_coop_start_delay(void) {
     return env != NULL ? SDL_atoi(env) : 0;
 }
 
+/* DW3_COOP_STOMP=<frames> (tests): 1 once, that many calls after the first (the Guardromon's window blanks its lilac
+   CLUTs then, as a map loading over them would) */
+int native_coop_test_stomp(void) {
+    static int calls = -1;
+    const char *env = SDL_getenv("DW3_COOP_STOMP");
+
+    if (env == NULL || calls == -2) {
+        return 0;
+    }
+    if (++calls < SDL_atoi(env)) {
+        return 0;
+    }
+    calls = -2;
+    return 1;
+}
+
 int native_coop_raid_test(void) {
     const char *env = SDL_getenv("DW3_COOP_RAID");
 

@@ -296,6 +296,30 @@ void native_coop_vram_lilac(int x, int y, int to_x, int to_y, int w, int h) {
     gl_refresh(to_x, to_y, w, h);
 }
 
+/* A box's words as one number: whether something wrote over it since */
+unsigned native_coop_vram_hash(int x, int y, int w, int h) {
+    return box_hash(x, y, w, h);
+}
+
+/* A box of ours (mine) that the game has written over: no longer ours, so reclaim never blanks the game's words */
+void native_coop_vram_forget(int x, int y) {
+    for (int k = 0; k < COOP_MINE; k++) {
+        if (s_mine[k].w != 0 && s_mine[k].x == x && s_mine[k].y == y) {
+            s_mine[k].w = 0;
+        }
+    }
+}
+
+/* A box blanked (tests: something writing over the windows' lilac CLUTs) */
+void native_coop_vram_clear(int x, int y, int w, int h) {
+    soft_write(x, y, w, h);
+    for (int j = 0; j < h; j++) {
+        memset(&g_vram[(y + j) * VRAM_W + x], 0, (size_t)w * 2);
+    }
+    gl_vram_dirty(x, y, w, h);
+    gl_refresh(x, y, w, h);
+}
+
 /* The page as text, one character per 4 x 8 words: '.' free, '#' taken (when
    no box was found, to see why) */
 void native_coop_vram_dump(int page_x, int page_y) {
