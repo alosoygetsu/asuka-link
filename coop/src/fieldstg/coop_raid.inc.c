@@ -60,6 +60,7 @@ static void coopTeamBuild(CoopTeam *team) {
             }
         }
         if (member >= 0 && member < PARTNER_COUNT) {
+            native_coop_test_partner(GAME.partners[member].info.stats, GAME.partners[member].info.equip); /* tests */
             team->partners[i] = GAME.partners[member];
         }
     }

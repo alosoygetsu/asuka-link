@@ -86,6 +86,7 @@ coop = 0 en native.ini apaga el cooperativo.)
      Turnos alternos (empieza el más rápido). Se puede atacar, usar técnicas,
      digievolucionar, cambiar de Digimon y rendirse (Huir); sin objetos. Es una exhibición: al
      terminar volvéis al mapa con la partida como estaba, sin game over.
+     Si tu Digimon está dormido (aquí y en las raids), Atacar pasa el turno.
    - Para un duelo de cartas: los dos elegís "Duelo" en un Guardromon (sale cuando
      ya tenéis la Bolsa de Carpetas, como las cartas del juego) y cada uno
      escoge uno de sus mazos. Se juega como contra la máquina, pero el rival es

@@ -11,7 +11,28 @@
  
  /* Whether a physical hit is critical: a chance of 4 in 128 with the
     technique's critical boost or the accessory's, more against the target's
-@@ -452,6 +456,11 @@
+@@ -138,6 +142,20 @@
+     atk = &FIGHTSTG_battleFuncs.stats[0];
+     def = &FIGHTSTG_battleFuncs.stats[1];
+     entry = &TECHS[id - 1];
++#ifdef NATIVE
++    if (native_coop_pvp() != NULL) {
++        /* the co-op's PvP battle: both sides are partners, one rule for both (the player's, with the target's
++           evasion too), so that a hit lands or misses alike in both games */
++        diff = atk->stats[BATTLE_STAT_SPEED] + atk->accuracy - def->stats[BATTLE_STAT_SPEED] - def->evasion;
++        level = atk->level - def->level;
++        if (entry->effect < TECH_EFFECT_FIRST) {
++            chance = entry->accuracy + entry->accuracy * (diff / 8 + (level - atk->criticalBonus)) / 128;
++        } else {
++            chance = entry->accuracy + entry->accuracy * (diff / 8 + level) / 128;
++        }
++        return (RANDOM.next() & 0x7F) < chance;
++    }
++#endif
+     if (side == 0) {
+         if (FIGHTSTG_battle.kind == BATTLE_KIND_FINAL_LAST) {
+             return (RANDOM.next() & 0x7F) >= 0x2B;
+@@ -452,6 +470,11 @@
      BattleStats *def;
      s32 chance;
      s32 *active;

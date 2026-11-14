@@ -11,3 +11,15 @@
  
  /* the element whose boost (FIGHTSTG_getElementBoost) weakens each one */
  s32 FIGHTSTG_opposedElements[] = {
+@@ -242,6 +246,11 @@
+         fighter = &FIGHTSTG_battle.fighters[1][FIGHTSTG_battle.active[1]];
+         FIGHTSTG_battleTableFunc(fighter->id);
+         own = 0;
++#ifdef NATIVE
++        if (native_coop_pvp() != NULL) {
++            own = id == GET_DIGIMON(fighter->id)->skills[0]; /* the PvP's other partner counters as a player's */
++        }
++#endif
+     }
+     if (side == 0) {
+         FIGHTSTG_computeStats(SIDE_PLAYER, 1, FIGHTSTG_battle.active[0]);

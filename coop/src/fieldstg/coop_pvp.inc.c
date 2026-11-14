@@ -167,6 +167,7 @@ static void coopPvpUpdate(const NativeCoopTrade *in) {
                 }
             }
             if (member >= 0 && member < PARTNER_COUNT) {
+                native_coop_test_partner(GAME.partners[member].info.stats, GAME.partners[member].info.equip); /* tests */
                 coopTeamMine.partners[i] = GAME.partners[member];
             }
         }

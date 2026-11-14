@@ -49,14 +49,14 @@ conectado, el ping y los errores habituales. La guía completa está en `LEEME-C
 | Launcher propio | Rehecho entero en la v1.3: menú lateral, Asuka City en movimiento, colores, letra (Silkscreen) e icono propios |
 | Intercambio de cartas | En cualquier Guardromon: dos jugadores que eligen "Intercambiar cartas" (con la Bolsa de Carpetas) se cambian cartas sueltas (las que no usa ningún mazo) |
 | Raids | En cualquier Guardromon: "Raid" junta de 2 a 4 jugadores contra un jefe (29 para elegir) en un mismo combate por turnos; al ganar, EXP y dinero x3 y un objeto seguro |
-| Combates entre jugadores | En cualquier Guardromon: "Combatir" enfrenta vuestros equipos por turnos alternos; es una exhibición, sin game over y sin cambios en la partida |
+| Combates entre jugadores | En cualquier Guardromon: "Combatir" enfrenta vuestros equipos por turnos alternos, con las mismas reglas para los dos (armas, emblemas, estados); es una exhibición, sin game over y sin cambios en la partida |
 | Duelos de cartas | En cualquier Guardromon: "Duelo" (con la Bolsa de Carpetas) os enfrenta en el juego de cartas, cada uno con uno de sus mazos; los dos ganan un sobre de cartas (mejor el del ganador) |
 | Equipo libre | Al empezar partida no se elige un pack: formas tu equipo con 3 de los 8 Digimon, sin repetir, viendo la descripción de cada uno. Los demás se siguen desbloqueando en la historia como siempre |
 | Creador de personaje | Al empezar partida eliges ser Junior, Chico o Chica y uno de 8 tonos de color; con todas las animaciones, también en las escenas |
 | Entrenamiento sin azar | En los gimnasios todos los intentos salen bien, cada stat sube lo máximo y ninguno baja |
 | Laboratorio de formas | En la Tabla de digievolución, □ enseña todas las formas del compañero, cuáles puede conseguir ya, lo que pide cada una (cumplido o no) y su línea: de qué formas viene y a cuáles lleva |
 | Viaje rápido seguro | En el mapa del menú, "Sí" te lleva al momento a una zona visitada, pero solo desde donde podrías salir andando (no desde salas de evento) |
-| Emblemas | Los de Búsqueda y Contraataque funcionan también junto a armas con efecto (igual para todos en PvP y raids) |
+| Emblemas | Los de Búsqueda y Contraataque funcionan también junto a armas con efecto (igual para todos en PvP y raids); en PvP, las armas y los emblemas del rival funcionan igual que los tuyos |
 | Multiplicador de EXP | x1 a x5 sobre la EXP de combate (compañeros y Digimon) |
 | Multiplicador de dinero | x1 a x5 sobre el dinero de combate |
 | Opciones | Dentro del juego, en el menú de pausa (OPCIONES, con Start en el mapa): pantalla completa, ventana, resolución, pantalla ancha en combates, iconos, vibración y botones. Los mods del port van fijos (viaje rápido, Digilog, texto rápido, EXP compartida completa, entrenamiento sin azar…) y EXP y dinero se cambian en el launcher |

@@ -1,17 +1,71 @@
 --- a/src/fightstg/events.c
 +++ b/src/fightstg/events.c
-@@ -5,6 +5,10 @@
+@@ -5,6 +5,54 @@
     one's. */
  
  #include "fightstg.h"
 +#ifdef NATIVE
 +/* the co-op's PvP battle: the rolls the same on both games (platform/coop.c) */
 +#define RANDOM (*native_coop_random(&RANDOM))
++
++/* DW3_COOP_DEBUG=1 (tests): each event of a battle in lockstep, popped, with the battle as it stands then (the roll,
++   the fighters and their statuses, the statuses' events): the games of a PvP battle or a raid compared line by line */
++#include <stdio.h>
++s32 WFIGHTMN_coopRaidShown(void);
++
++static void coopSyncLine(const QueuedEvent *event, s32 index) {
++    static s32 count;
++    char line[1024];
++    s32 n;
++    s32 side;
++    s32 i;
++
++    if (!g_coop_debug || !native_coop_lockstep()) {
++        return;
++    }
++    n = snprintf(line, sizeof line, "Sync %d: event %d (%d %d) at %d, roll %08X, seat %d |", ++count, event->type,
++                 event->args[0], event->args[1], index, native_coop_roll_peek(), WFIGHTMN_coopRaidShown());
++    for (side = 0; side < 2; side++) {
++        for (i = 0; i < 3 && n < (s32)sizeof line - 80; i++) {
++            BattleFighter *f = &FIGHTSTG_battle.fighters[side][i];
++
++            if (f->id == 0) {
++                continue;
++            }
++            n += snprintf(line + n, sizeof line - n, " %c%d%s %d hp%d mp%d f%X p%d s%d c%d b%d,%d,%d,%d ch%d sp%d;",
++                          side ? 'E' : 'P', i, FIGHTSTG_battle.active[side] == i ? "*" : "", f->id, f->hp, f->mp, f->flags,
++                          f->paralysis, f->sleep, f->confusion, f->boosts[0], f->boosts[1], f->boosts[2], f->boosts[3],
++                          f->charge, f->special);
++        }
++    }
++    n += snprintf(line + n, sizeof line - n, " |");
++    for (i = 0; i < 99 && n < (s32)sizeof line - 24; i++) {
++        const QueuedEvent *e = &FIGHTSTG_events.events[i];
++
++        if (e->type >= EVENT_PLAYER_TURN && e != event) {
++            n += snprintf(line + n, sizeof line - n, " %d/%d/%d@%d", e->type, e->args[0], e->args[1], e->time);
++        }
++    }
++    /* in pieces: a note holds 400 characters; the ones after the first start "Sync+ " */
++    for (i = 0; i < n; i += 360) {
++        native_coop_note("%s%.360s", i == 0 ? "" : "Sync+ ", line + i);
++    }
++}
 +#endif
  
  /* FIGHTSTG_events.funcs.push: queues an event in the first free one of the
     99 slots, due after its delay */
-@@ -224,6 +228,12 @@
+@@ -137,6 +185,9 @@
+             FIGHTSTG_events.events[i].time -= time;
+         }
+     }
++#ifdef NATIVE
++    coopSyncLine(event, best);
++#endif
+     FIGHTSTG_events.curType = event->type;
+     switch (FIGHTSTG_eventPopModes[FIGHTSTG_events.curType]) {
+     case 0:
+@@ -224,6 +275,12 @@
  s32 FIGHTSTG_getEventDelay(u8 side, s32 kind) {
      s32 delay;
  

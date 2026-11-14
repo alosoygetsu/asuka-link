@@ -5,7 +5,21 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
 ## v1.5.2
-Basado en el port v0.18.9. Red: versión 8, como la 1.3.x, la 1.4.x y la 1.5.x (se juntan sin problema).
+Basado en el port v0.18.9. Red: **versión 9**: no se junta con la 1.5.1 ni las anteriores (todos tenéis que
+actualizar), porque los combates entre jugadores ahora se calculan de otra forma.
+- **Combates entre jugadores, los dos juegos iguales:** el juego trataba distinto al que ataca desde tu lado y al
+  que ataca desde el otro, y así el mismo combate podía salir distinto en cada juego (e incluso quedarse parado).
+  Ahora los dos Digimon cuentan como compañeros en los dos juegos:
+  - los efectos de las armas (veneno, parálisis, confusión, KO, drenaje) y el Emblema Triple funcionan también
+    cuando ataca el otro jugador;
+  - el Emblema Contraataque y los contraataques preparados del otro también responden, con el mismo daño;
+  - acertar o fallar un golpe sale igual en los dos (cuentan la precisión del arma del que ataca y la evasión del
+    que recibe);
+  - tras un KO, los turnos siguientes van a la vez en los dos juegos (un estado podía durar un turno más en uno).
+- **Dormido, en combates entre jugadores y raids:** un Digimon dormido puede elegir Atacar para pasar el turno
+  ("está dormido"). Antes solo podía cambiar, usar objetos o huir, y en una raid sin nadie a quien cambiar la
+  partida se quedaba parada.
+- **Raids, los PM de los demás:** los PM que gasta otro jugador en una técnica ahora también bajan en tu juego.
 - **Digilog, las Botas Árbol:** al encontrar a Veemon en el Bosque de las Patadas, el Digilog volvía a pedir que
   lo encontraras y señalaba la Pradera del Viento. Ahora los últimos pasos siguen lo que pasa en el juego: Veemon
   quiere jugar en la Pradera, lo encuentras en el Bosque (que es el que se marca) y, de vuelta en la Pradera, te da

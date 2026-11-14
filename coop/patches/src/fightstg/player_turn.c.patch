@@ -1,6 +1,6 @@
 --- a/src/fightstg/player_turn.c
 +++ b/src/fightstg/player_turn.c
-@@ -3,6 +3,57 @@
+@@ -3,6 +3,73 @@
  
  #include "fightstg.h"
  
@@ -25,6 +25,11 @@
 +    }
 +    coopAutoFrames = 0;
 +    task->action = 0;
++    if (fighter->flags & FIGHTER_ASLEEP) {
++        task->action = -1; /* asleep: Attack passes the turn */
++        native_coop_note("PvP test: asleep, the turn passes");
++        return 1;
++    }
 +    if ((native_coop_pvp() != NULL ? native_coop_pvp() : native_coop_raid())->sent == 0) {
 +        s16 slots[4];
 +
@@ -40,6 +45,17 @@
 +    if (native_coop_auto_battle() == 2 && (native_coop_pvp() != NULL ? native_coop_pvp() : native_coop_raid())->sent >= 4) {
 +        task->action = 1; /* DW3_COOP_AUTO=giveup: the fifth command gives up */
 +        native_coop_note("PvP test: giving up");
++        return 1;
++    }
++    tech = native_coop_test_tech(coopAutoCount);
++    if (tech > 0) {
++        /* DW3_COOP_TECH (tests): that technique, whatever the partner knows, its MP taken as far as it goes */
++        coopAutoCount++;
++        mp = FIGHTSTG_battleFuncs.getTechCost(0, tech | 0x8000);
++        fighter->mp -= fighter->mp >= mp ? mp : fighter->mp;
++        task->action = 4;
++        task->arg = tech;
++        native_coop_note("PvP test: technique %d", tech);
 +        return 1;
 +    }
 +    if ((++coopAutoCount % 3 == 0 || native_coop_auto_battle() == 3) && fighter->id == DIGIMON_DATA[member].id) {
@@ -58,7 +74,7 @@
  /* Opens the command menu with the HUD, the partner view and the shot camera,
     then goes to the menu of the command picked */
  static inline void runCommandMenu(PlayerTurn *task, PlayerTurnChild *children) {
-@@ -24,6 +75,12 @@
+@@ -24,11 +91,23 @@
          task->result = -1;
          task->tickCounter(task);
      case 1:
@@ -71,7 +87,18 @@
          if (task->result != -1) {
              task->command = task->result;
              switch (task->result) {
-@@ -42,9 +99,23 @@
+             case BATTLE_COMMAND_ATTACK:
+                 task->action = 0;
++#ifdef NATIVE
++                if ((FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]].flags & FIGHTER_ASLEEP) &&
++                    (native_coop_pvp() != NULL || native_coop_raid() != NULL)) {
++                    task->action = -1; /* asleep in the co-op's battles: the turn passes (command_menu.c) */
++                }
++#endif
+                 task->setSubstate(task, 0);
+                 break;
+             case BATTLE_COMMAND_TECH:
+@@ -42,9 +121,23 @@
                  task->switchLine = 0;
                  break;
              case BATTLE_COMMAND_ITEM:
@@ -95,7 +122,7 @@
                  task->action = 1;
                  task->setSubstate(task, 0);
                  break;
-@@ -168,6 +239,11 @@
+@@ -168,6 +261,11 @@
                  task->switchLine = 0;
              } else {
                  task->action = 6;
@@ -107,7 +134,7 @@
                  task->digimon = task->result >> 4;
                  task->setSubstate(task, 0);
                  task->switchLine = 0;
-@@ -226,6 +302,24 @@
+@@ -226,6 +324,24 @@
          }
          task->tickCounter(task);
      case 1:

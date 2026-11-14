@@ -1,0 +1,30 @@
+--- a/src/fightstg/counterattack.c
++++ b/src/fightstg/counterattack.c
+@@ -123,6 +123,27 @@
+             task->state = TASK_DONE;
+             break;
+         }
++#ifdef NATIVE
++        if (task->side != 0 && native_coop_pvp() != NULL) {
++            /* the co-op's PvP battle: the other player's partner answers as this side's would, from its queued
++               technique or its Counter Crest (its stats, stats.c), rolled as rollCounter does for the player's:
++               both games the same, whichever side the partner is on */
++            s32 index = FIGHTSTG_events.funcs.find(EVENT_PARTNER_TECH, SIDE_ENEMY, FIGHTSTG_battle.active[1]);
++
++            if (index >= 0) {
++                task->tech = FIGHTSTG_events.events[index].args[2];
++                task->substate = 0;
++                FIGHTSTG_events.events[index].type = 0;
++            } else if (FIGHTSTG_battleFuncs.computeStats(SIDE_ENEMY, 1, FIGHTSTG_battle.active[1])->counter != 0 &&
++                       (native_coop_random(&RANDOM)->next() & 0x7F) < (task->received << 6) / fighter->maxHp + 32) {
++                task->tech = GET_DIGIMON(fighter->id)->skills[0];
++                task->substate = 1;
++            } else {
++                task->state = TASK_DONE;
++                break;
++            }
++        } else
++#endif
+         if (task->side == 0) {
+             s32 index = FIGHTSTG_events.funcs.find(EVENT_PARTNER_TECH, 0, FIGHTSTG_battle.active[0]);
+ 

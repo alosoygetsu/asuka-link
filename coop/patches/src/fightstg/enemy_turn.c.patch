@@ -1,6 +1,6 @@
 --- a/src/fightstg/enemy_turn.c
 +++ b/src/fightstg/enemy_turn.c
-@@ -3,6 +3,126 @@
+@@ -3,6 +3,139 @@
  
  #include "fightstg.h"
  
@@ -63,11 +63,14 @@
 +
 +/* The enemy's turn in a PvP battle: waits for the other's command, then does it (an attack, a technique, a switch),
 +   or ends the battle when the other gave up or is gone */
++static s32 coopPvpQueued; /* the enemy's next turn is queued already (coopPvpEnemyTurn) */
++
 +static void coopPvpEnemyTurn(EnemyTurn *task, BattleChild *children) {
 +    NativeCoopCommand c;
 +    BattleFighter *enemies = FIGHTSTG_battle.fighters[1];
 +    s32 got = native_coop_pvp_take(&c);
 +
++    coopPvpQueued = 0; /* a battle that ended in the middle of a turn left none */
 +    if (got == 0) {
 +        return; /* the other still picking */
 +    }
@@ -119,15 +122,25 @@
 +        break;
 +    default:
 +        task->substate = 3; /* nothing: asleep, paralysed, confused */
++        if (enemies[FIGHTSTG_battle.active[1]].flags & FIGHTER_ASLEEP) {
++            children->message = FIGHTSTG_createMessage(); /* "<the other's> is asleep", as on its own side */
++            task->lines[0] = 0x90;
++            task->lines[1] = 0x10;
++            children->message->show(children->message, 2, task->lines);
++        }
 +        break;
 +    }
++    /* its next turn queued now, as the other game's player turn queues it once its action starts: both before a
++       knockout the action may bring (which puts off what is queued, pushEventFirst), so the turns stay the same */
++    FIGHTSTG_queueEnemyTurn(FIGHTSTG_events.funcs.getDelay(SIDE_ENEMY, 0));
++    coopPvpQueued = 1;
 +}
 +#endif
 +
  /* The enemy that the enemy's turn (FIGHTSTG_updateEnemyTurn) switches to:
     task->target's, or one of the others at random (not the active one), -1
     for none */
-@@ -199,6 +319,12 @@
+@@ -199,6 +332,12 @@
              showRunAway(task, children);
              break;
          case 1:
@@ -140,3 +153,16 @@
              fighter = &FIGHTSTG_battle.fighters[1][FIGHTSTG_battle.active[1]];
              if (fighter->flags & FIGHTER_ASLEEP) {
                  children->message = FIGHTSTG_createMessage();
+@@ -257,6 +396,12 @@
+         case 3:
+             if (children->message == NULL) {
+                 task->state = 3;
++#ifdef NATIVE
++                if (coopPvpQueued && native_coop_pvp() != NULL) {
++                    coopPvpQueued = 0;
++                    break;
++                }
++#endif
+                 FIGHTSTG_queueEnemyTurn(FIGHTSTG_events.funcs.getDelay(SIDE_ENEMY, 0));
+             }
+             break;

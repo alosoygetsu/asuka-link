@@ -11,3 +11,17 @@
  
  /* TECH_EFFECT_POISON: poisons the target when rollPoison lets it, twice as
     strongly when the acting fighter is special */
+@@ -426,7 +430,13 @@
+             FIGHTSTG_action.damage = FIGHTSTG_battleFuncs.computeDamage(side, tech);
+             /* the match depends on the second test of TECH_EFFECT_MULTI_HIT,
+                which the compiler merges with the first and with case 3's */
++#ifdef NATIVE
++            /* the co-op's PvP battle: the other player's partner is a partner too, its weapon's effects and Triple
++               Crest as this side's (stats[0] is the user's, whichever side), so both games roll the same */
++            if (side == 0 || native_coop_pvp() != NULL) {
++#else
+             if (side == 0) {
++#endif
+                 if (entry->effect < TECH_EFFECT_FIRST) {
+                     if (entry->script == 11 || entry->script == 12) {
+                         break;

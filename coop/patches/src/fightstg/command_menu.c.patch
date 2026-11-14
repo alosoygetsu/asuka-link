@@ -1,0 +1,26 @@
+--- a/src/fightstg/command_menu.c
++++ b/src/fightstg/command_menu.c
+@@ -20,6 +20,11 @@
+         fighter = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
+         if (fighter->flags & FIGHTER_ASLEEP) {
+             for (i = 0; i < BATTLE_COMMAND_SWITCH; i++) {
++#ifdef NATIVE
++                if (i == BATTLE_COMMAND_ATTACK && (native_coop_pvp() != NULL || native_coop_raid() != NULL)) {
++                    continue; /* the co-op's battles: Attack passes the turn (player_turn.c) */
++                }
++#endif
+                 w->lines[0]->setPalette(w->lines[i], PALETTE_GREY);
+             }
+         }
+@@ -58,6 +63,11 @@
+             SOUND.playSound(SOUND_MENU_CONFIRM);
+             fighter = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
+             if ((fighter->flags & FIGHTER_ASLEEP) && w->cursor->sel < BATTLE_COMMAND_SWITCH) {
++#ifdef NATIVE
++                /* the co-op's PvP battle and raid have no items, and the raid no running away: an asleep partner
++                   with no one to switch to would have nothing to pick, so Attack passes its turn there */
++                if (!(w->cursor->sel == BATTLE_COMMAND_ATTACK && (native_coop_pvp() != NULL || native_coop_raid() != NULL)))
++#endif
+                 break;
+             }
+             if ((fighter->flags & FIGHTER_NO_DIGIVOLVE) && w->cursor->sel == BATTLE_COMMAND_DIGIVOLVE) {

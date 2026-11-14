@@ -128,6 +128,9 @@ extern int g_coop_raid_reward;
 int native_coop_reward_mult(void); /* COOP_RAID_REWARD after a raid won, else 1 */
 int native_coop_start_delay(void); /* DW3_COOP_START_DELAY=<frames> (tests): the raid starts that much later here */
 int native_coop_raid_test(void); /* DW3_COOP_RAID=<encounter> (tests): the Guardromon's battle is that raid; 0 none */
+int native_coop_test_tech(int n); /* DW3_COOP_TECH=id,id,... (tests): the auto battle's n-th technique, 0 none */
+/* DW3_COOP_EQUIP=slot:item,... and DW3_COOP_HP=n (tests): on each partner sent to a battle */
+void native_coop_test_partner(short *stats, short *equip);
 void native_coop_pvp_begin(int peer, const void *team, int size, const void *save, int battle, int first);
 void native_coop_pvp_end(void);
 unsigned int native_coop_coin(void); /* a number of this copy's own, for who goes first */
@@ -140,6 +143,7 @@ int native_coop_pvp_take(NativeCoopCommand *c);
 struct Random;
 struct Random *native_coop_random(struct Random *game);
 void native_coop_pvp_seed(unsigned int seed);
+unsigned int native_coop_roll_peek(void); /* the battle's roll as it stands (DW3_COOP_DEBUG's sync lines) */
 /* the other's commands as they came (coop_net.c) */
 int native_coop_commands_in(int peer, NativeCoopCommand *out); /* how many (COOP_COMMANDS), 0 when it's gone */
 void native_coop_commands_out(int peer, const NativeCoopCommand *c);

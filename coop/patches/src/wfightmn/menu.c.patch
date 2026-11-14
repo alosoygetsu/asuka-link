@@ -607,7 +607,7 @@
              } else {
                  FIGHTSTG_setPlayerTurnStep(2);
                  task->step = 2;
-@@ -268,7 +831,22 @@
+@@ -268,7 +831,46 @@
          }
          break;
      case 2:
@@ -617,6 +617,16 @@
 +            children->commands->action = coopRaid.command.action;
 +            children->commands->arg = coopRaid.command.arg;
 +            children->commands->digimon = coopRaid.command.digimon;
++            {
++                /* its partners' MP as its player's game has them: its tech menu took the technique's there only */
++                s32 i;
++
++                for (i = 0; i < 3; i++) {
++                    if (FIGHTSTG_battle.fighters[0][i].id != 0) {
++                        FIGHTSTG_battle.fighters[0][i].mp = coopRaid.command.mp[0][i];
++                    }
++                }
++            }
 +            coopRaidUseCommand();
 +        } else if (FIGHTSTG_isPlayerChoosing() != 0) {
 +            break;
@@ -627,10 +637,24 @@
 +#else
          if (FIGHTSTG_isPlayerChoosing() == 0) {
 +#endif
++#ifdef NATIVE
++            unit = &FIGHTSTG_battle.fighters[0][FIGHTSTG_battle.active[0]];
++            if (children->commands->action == -1 && (unit->flags & FIGHTER_ASLEEP) &&
++                (native_coop_pvp() != NULL || native_coop_raid() != NULL)) {
++                /* asleep in the co-op's battles: the turn passed (fightstg/player_turn.c), as the enemy's does */
++                children->task.message = FIGHTSTG_createMessage();
++                task->args[0] = 0x90;
++                task->args[1] = 0;
++                children->task.message->show(children->task.message, 2, task->args);
++                task->setSubstate(task, 2);
++                FIGHTSTG_queuePlayerTurn(FIGHTSTG_events.funcs.getDelay(0, 0));
++                break;
++            }
++#endif
              switch (children->commands->action) {
              case 1:
                  FIGHTSTG_battle.runAttempts++;
-@@ -481,6 +1059,11 @@
+@@ -481,6 +1083,11 @@
              break;
          }
  #endif
@@ -642,7 +666,7 @@
          if (FIGHTSTG_events.funcs.result != BATTLE_FLED) {
              count = 0;
              battle = &FIGHTSTG_battle;
-@@ -514,6 +1097,14 @@
+@@ -514,6 +1121,14 @@
              if (BATTLE_SETUP.hasPrize == 1) {
                  BATTLE_RESULT.item = BATTLE_SETUP.prize;
              }
@@ -657,7 +681,7 @@
          }
          for (member = 0; member < 3; member++) {
              partner = GAME.funcs.getPartyMember(member);
-@@ -552,6 +1143,51 @@
+@@ -552,6 +1167,51 @@
          break;
      case 2:
          WFIGHTMN_cancelBlast();
@@ -709,7 +733,7 @@
          switch (FIGHTSTG_events.funcs.result) {
          case BATTLE_FLED:
          default:
-@@ -825,11 +1461,29 @@
+@@ -825,11 +1485,29 @@
      switch (task->step) {
      case 0:
      default:
@@ -739,7 +763,7 @@
              if (children->commands->action == 0) {
                  children->task.attack = FIGHTSTG_startFirstTech(0);
                  task->setSubstate(task, 2);
-@@ -1105,11 +1759,70 @@
+@@ -1105,11 +1783,70 @@
                      break;
                  }
              }
@@ -810,7 +834,7 @@
                      unit = FIGHTSTG_battle.fighters[1] + slot;
                      task->step = 3;
                      task->args[0] = slot;
-@@ -1125,6 +1838,11 @@
+@@ -1125,6 +1862,11 @@
          break;
      case 2:
          if (FIGHTSTG_isPlayerChoosing() == 0) {
@@ -822,7 +846,7 @@
              task->setSubstate(task, 5);
              task->step = 1;
          }
-@@ -1375,6 +2093,17 @@
+@@ -1375,6 +2117,17 @@
  #endif
          break;
      case 1:
@@ -840,7 +864,7 @@
          switch (task->step) {
          default:
              task->setSubstate(task, 3);
-@@ -1456,6 +2185,14 @@
+@@ -1456,6 +2209,14 @@
              task->setSubstate(task, 0);
          }
          break;

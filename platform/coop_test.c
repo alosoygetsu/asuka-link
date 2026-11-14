@@ -47,6 +47,54 @@ int native_coop_raid_test(void) {
     return env != NULL ? (int)SDL_strtol(env, NULL, 0) : 0;
 }
 
+/* DW3_COOP_TECH=id,id,... (tests): the auto battle's techniques, the n-th command's the list's (n % its length) */
+int native_coop_test_tech(int n) {
+    const char *env = SDL_getenv("DW3_COOP_TECH");
+    int ids[16];
+    int count = 0;
+    char *end;
+
+    for (const char *p = env; p != NULL && *p != 0 && count < 16; p = *end == ',' ? end + 1 : end) {
+        ids[count] = (int)SDL_strtol(p, &end, 0);
+        if (end == p) {
+            break;
+        }
+        count++;
+    }
+    return count > 0 ? ids[(n < 0 ? 0 : n) % count] : 0;
+}
+
+/* DW3_COOP_EQUIP=slot:item,... (tests): those slots of a partner's equipment (0 head ... 4 and 5 accessories);
+   DW3_COOP_HP=n: its HP and MP n times (longer battles) */
+void native_coop_test_partner(short *stats, short *equip) {
+    const char *env = SDL_getenv("DW3_COOP_EQUIP");
+    const char *hp = SDL_getenv("DW3_COOP_HP");
+    char *end;
+
+    if (hp != NULL && SDL_atoi(hp) > 1) {
+        for (int i = 2; i <= 5; i++) {
+            stats[i] = (short)SDL_min(stats[i] * SDL_atoi(hp), 9999);
+        }
+    }
+
+    for (const char *p = env; p != NULL && *p != 0; p = *end == ',' ? end + 1 : end) {
+        int slot = (int)SDL_strtol(p, &end, 0);
+        int item;
+
+        if (end == p || *end != ':') {
+            break;
+        }
+        p = end + 1;
+        item = (int)SDL_strtol(p, &end, 0);
+        if (end == p) {
+            break;
+        }
+        if (slot >= 0 && slot < 6) {
+            equip[slot] = (short)item;
+        }
+    }
+}
+
 /* DW3_COOP_AUTO=trade or battle (tests): a field waits at a Guardromon for that by itself, once; -1 none */
 int native_coop_auto(void) {
     static int done;

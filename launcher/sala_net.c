@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include "launcher.h"
 
-#define NET_VERSION 8 /* the game's COOP_VERSION (platform/coop_net.c): both change together */
+#define NET_VERSION 9 /* the game's COOP_VERSION (platform/coop_net.c): both change together */
 #define LOBBY_PORT 27499
 #define KNOWN 24
 #define RECENTS 6

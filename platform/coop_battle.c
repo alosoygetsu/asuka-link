@@ -269,6 +269,10 @@ void native_coop_pvp_seed(unsigned int seed) {
     s_roll = seed;
 }
 
+unsigned int native_coop_roll_peek(void) {
+    return s_roll;
+}
+
 unsigned int native_coop_coin(void) {
     Uint64 t = SDL_GetPerformanceCounter();
 
