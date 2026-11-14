@@ -5,7 +5,8 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
 ## v1.6.0
-Basado en el port v0.18.9. Red: versión 9, como la 1.5.2 (no se junta con la 1.5.1 ni las anteriores).
+Basado en el port v0.18.9. Red: **versión 9**: no se junta con la 1.5.1 ni las anteriores (todos tenéis que
+actualizar), porque los combates entre jugadores ahora se calculan de otra forma.
 - **Raids, sin pulsar nada:** los mensajes del combate pasan solos al cabo de un segundo (✕ los sigue
   adelantando). Ya no hay que pulsar en los turnos de los demás ni en los del jefe: el combate avanza solo hasta
   que te toca elegir. También en los combates entre jugadores.
@@ -20,10 +21,6 @@ Basado en el port v0.18.9. Red: versión 9, como la 1.5.2 (no se junta con la 1.
   cada jugador por separado. El daño por ronda es el mismo, pero la ronda es mucho más corta.
 - **Raids, huir:** Huir saca de la raid solo a ese jugador, seguro, sin premio ni pérdida (vuelve al mapa con la
   partida como estaba). Los demás siguen y ven "<nombre> ha huido.".
-
-## v1.5.2
-Basado en el port v0.18.9. Red: **versión 9**: no se junta con la 1.5.1 ni las anteriores (todos tenéis que
-actualizar), porque los combates entre jugadores ahora se calculan de otra forma.
 - **Combates entre jugadores, los dos juegos iguales:** el juego trataba distinto al que ataca desde tu lado y al
   que ataca desde el otro, y así el mismo combate podía salir distinto en cada juego (e incluso quedarse parado).
   Ahora los dos Digimon cuentan como compañeros en los dos juegos:
