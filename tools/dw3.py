@@ -981,6 +981,101 @@ def cmd_enemigos(args):
             print(l)
 
 
+# ---------------------------------------------------------------- personajes del campo (personaje)
+
+FIELD_PARTNERS = 3  # FIELD_CHARACTER_PARTNERS (field_map.h): los personajes 3-10 son los 8 compañeros
+
+
+@functools.lru_cache(None)
+def character_sprites():
+    """[(archivo, fotogramas)] por personaje (Actor.key1) de FIELDSTG_fileEntries, del FIELDSTG.PRO europeo: cada valor,
+    archivo << 16 | número de fotogramas"""
+    syms = {s[1]: s for s in symbols_of(CFG / "symbols_fieldstg.txt")}
+    a, size = syms["FIELDSTG_fileEntries"][0], syms["FIELDSTG_fileEntries"][2]
+    ovl = game_file("FIELDSTG.PRO")
+    vals = struct.unpack_from(f"<{size // 4}i", ovl, a - 0x80082CB0)
+    names = file_names()
+    return [((names[v >> 16] if 0 < v >> 16 < len(names) else "") if v else "", v & 0xFFFF if v else 0) for v in vals]
+
+
+@functools.lru_cache(None)
+def character_uses():
+    """{personaje: [(mapa, actorI, [nombres que dice], nº de charlas)]} de los actores de los mapas"""
+    out = {}
+    for st, d in stages_json().items():
+        try:
+            text = game_file(d["textFile"] + 4)  # el español
+        except (KeyError, FileNotFoundError):
+            text = b""
+        for i, a in enumerate(d.get("actors", [])):
+            said = []
+            for t in a.get("talks", []):
+                if not t.get("entry") or not text:
+                    continue
+                try:
+                    o = struct.unpack_from("<I", text, 4 * (t["entry"] + 1))[0]
+                    s = decode(text[o:o + 200])
+                except struct.error:
+                    continue
+                if ": " in s[:40]:
+                    said.append(s.split(": ")[0].strip())
+            out.setdefault(a["id"], []).append((st, i, said, len(a.get("talks", []))))
+    return out
+
+
+def character_names(n):
+    """[(nombre, veces)] de quien habla en sus charlas, de más a menos (un sprite genérico lo usan NPC distintos)"""
+    import collections
+    return collections.Counter(x for _, _, said, _ in character_uses().get(n, []) for x in said).most_common()
+
+
+def character_name(n, top=3):
+    if FIELD_PARTNERS <= n < FIELD_PARTNERS + 8:
+        return f"compañero {n - FIELD_PARTNERS} ({dname(n - FIELD_PARTNERS)})"
+    names = character_names(n)
+    if len(names) == 1:
+        return names[0][0]
+    return ", ".join(f"{x} ×{c}" for x, c in names[:top]) + (" …" if len(names) > top else "")
+
+
+def cmd_personaje(args):
+    """personaje [N | P###XXXX | nombre]: el sprite de un personaje del campo (el N de charlas y de probar.ps1
+    talk:N), sus fotogramas, su nombre y en qué mapas sale (sin nada, la lista)"""
+    sprites = character_sprites()
+    uses = character_uses()
+    if not args:
+        lines = [f"{n} {f} {fr} fotogramas  {character_name(n)}" for n, (f, fr) in enumerate(sprites) if f]
+        print(f"{len(lines)} personajes con sprite (de {len(sprites)}):")
+        for l in capped(lines, MAX * 5 if MAX else 0):
+            print("  " + l)
+        return
+    q = " ".join(args)
+    if q.isdigit() or q.lower().startswith("0x"):
+        found = [int(q, 0)]
+    else:
+        qc = q.casefold()
+        found = [n for n, (f, _) in enumerate(sprites) if f and qc in f.casefold()]
+        every = set(range(len(sprites))) | set(uses)
+        found = (found or [n for n in every if any(qc == x.casefold() for x, _ in character_names(n))]
+                 or [n for n in every if any(qc in x.casefold() for x, _ in character_names(n))])
+    if not found:
+        sys.exit("ningún personaje con ese número, sprite o nombre")
+    for n in sorted(found)[:MAX or None]:
+        f, fr = sprites[n] if n < len(sprites) else ("", 0)
+        print(f"personaje {n} ({n:#x}): {f or 'sin sprite'}" + (f", {fr} fotogramas" if f else "") +
+              (f"  {character_name(n)}" if character_name(n) else ""))
+        shared = [m for m, (g, _) in enumerate(sprites) if g == f and m != n] if f else []
+        if shared:
+            print(f"  el mismo sprite: personajes {', '.join(map(str, shared[:12]))}" + (" …" if len(shared) > 12 else ""))
+        lines = []
+        for st, i, said, talks in uses.get(n, []):
+            name = stage_places().get(st, ("?", ""))[0].split(",")[0]
+            lines.append(f"    {st} [{stage_mode(st)}] {name}: actor{i}, {talks} charlas")
+        print(f"  sale en {len(lines)} actores:" if lines else "  no sale como actor en los mapas")
+        for l in capped(lines):
+            print(l)
+
+
 # ---------------------------------------------------------------- salidas de los mapas (salidas)
 
 # StageSlot (include/field_map.h), como lo traen los JSON de los mapas: conditions[2][2], type, arg, x, y, dir,
@@ -1223,6 +1318,7 @@ COMMANDS = {
     "digilog": cmd_digilog,
     "salidas": cmd_salidas,
     "enemigos": cmd_enemigos,
+    "personaje": cmd_personaje,
     "pasos": script_cmd("story_steps", "pasos [paso_hex ...]: conversaciones que hacen algo en cada paso de historia (story_steps.py)"),
     "eventos": script_cmd("story_events", "eventos [paso_hex ...]: cadena de eventos de cada paso de historia (story_events.py)"),
     "codigo": script_cmd("story_code", "codigo [paso_hex ...]: dónde cambia GAME.progress y qué marcas activa el código (story_code.py)"),
