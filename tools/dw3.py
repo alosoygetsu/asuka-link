@@ -1244,8 +1244,9 @@ def run_script(name, argv):
     try:
         with contextlib.redirect_stdout(out):
             runpy.run_path(str(TOOLS / f"{name}.py"), run_name="__main__")
-    except SystemExit:
-        pass
+    except SystemExit as e:
+        if isinstance(e.code, str):  # su mensaje de error, que si no se perdería
+            print(e.code, file=out)
     finally:
         sys.argv = old
     lines = out.getvalue().rstrip("\n").split("\n")

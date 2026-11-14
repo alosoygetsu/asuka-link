@@ -71,6 +71,7 @@ def code(c, v):
     if c & 0x8000 and c < 0x9000: return f"{'+' if v else '-'}{item(c & 0x1FF)}"
     if 0x9000 <= c < 0x9200: return f"EVENTO {c & 0x1FF}"
     if 0x9200 <= c < 0x9400: return f"CARTA {c & 0x1FF}={v}"
+    if 0x9400 <= c < 0x9600: return f"GIMNASIO {c & 0x1FF}"  # FIELDSTG_leaveField(MODE_TRAINING, n)
     if 0x7400 <= c < 0x7600: return f"COMBATE {c & 0x1FF}"
     if 0x7600 <= c < 0x7A00: return f"DUELO {c:#x}"
     if 0x6000 <= c < 0x7000: return f"historia{'=' if v else '!='}{c & 0xFFF:#x}"
@@ -85,12 +86,30 @@ def main():
     global SEARCH
     SEARCH = set()
     # (con modos, solo en esos modos)
+    # un código terminado en xx (94xx, 0x1Cxx): todo su grupo
     args = sys.argv[1:]
-    if "--busca" in args:
-        i = args.index("--busca")
-        SEARCH = {int(x, 16) for x in args[i + 1].split(",")}
-        del args[i:i + 2]
-    want = {int(m, 16) for m in args}
+    if not args or any(a in ("-h", "--help") for a in args):
+        print("uso: quest_talks.py MODO_hex ... | wstagNNN (desde dw3.py) | --busca CÓDIGO[,..] (hex; 94xx = el grupo 0x94)")
+        return
+    groups = set()
+    try:
+        if "--busca" in args:
+            i = args.index("--busca")
+            for x in args[i + 1].split(","):
+                if x.lower().endswith("xx"):
+                    groups.add(int(x[:-2], 16))
+                else:
+                    SEARCH.add(int(x, 16))
+            del args[i:i + 2]
+        want = {int(m, 16) for m in args}
+    except (ValueError, IndexError):
+        sys.exit("uso: quest_talks.py MODO_hex ... | --busca CÓDIGO[,..] (hex; 94xx = el grupo 0x94)")
+
+    def hit(c):
+        c0 = c & 0xF1FF if c & 0x8000 and c < 0x9000 else c
+        return c0 in SEARCH or c in SEARCH or (c >> 8) in groups
+    if groups:
+        SEARCH.add(-1)  # que SEARCH no esté vacío: se busca
     for f in sorted(glob.glob(str(DATA / "stages" / "wstag*.json"))):
         d = json.load(open(f))
         modes = [m[0] for m in d.get("euModes") or d.get("modes") or []]
@@ -106,7 +125,7 @@ def main():
             for ti, t in enumerate(a.get("talks", [])):
                 tc = [code(*c) for c in t.get("conditions", []) if code(*c)]
                 ta = [code(*c) for c in t.get("actions", []) if code(*c)]
-                if SEARCH and not any((x[0] & 0xF1FF if x[0] & 0x8000 and x[0] < 0x9000 else x[0]) in SEARCH or x[0] in SEARCH for x in t.get("actions", [])):
+                if SEARCH and not any(hit(x[0]) for x in t.get("actions", [])):
                     continue
                 if not ta:  # solo lo que hace algo
                     continue
