@@ -711,7 +711,9 @@ def digimon_rows():
                          res=struct.unpack_from("<7H", e, o + 0x0E), skills=struct.unpack_from("<7H", e, o + 0x1C),
                          pair=struct.unpack_from("<H", e, o + 0x2A)[0], levels=list(e[o + 0x31:o + 0x37]),
                          known=list(e[o + 0x37:o + 0x3C]), pairp=e[o + 0x3D], hp=e[o + 0x3F], mp=e[o + 0x40],
-                         blast=list(e[o + 0x50:o + 0x55]), name_id=e[o + 0x55]))
+                         blast=list(e[o + 0x50:o + 0x55]), name_id=e[o + 0x55],
+                         exp_level=e[o + 0x3C], exp_rate=e[o + 0x3E], hp_growth=e[o + 0x41], mp_growth=e[o + 0x42],
+                         stat_growth=list(e[o + 0x43:o + 0x49]), resist_growth=list(e[o + 0x49:o + 0x50])))
     return rows
 
 
@@ -802,6 +804,12 @@ def cmd_digimon(args):
         print(f"#{i} {both(dname(i), dname(i, 'E'))}  (id {r['id']:#x}, DIGIMON_DATA+{i * 0x58:#x} = {DIGI + i * 0x58:#x})")
         pv = f"PV {r['hp']} PM {r['mp']}  " if i < 8 else ""
         print(f"  {pv}stats (fue def esp sab vel car) {list(r['stats'])}  resist. (fue agu hie vie ray máq osc) {list(r['res'])}")
+        if i < 8:  # el crecimiento por nivel (DigimonData +0x3C..+0x4F)
+            print(f"  crece por nivel: PV +{r['hp_growth']}, PM +{r['mp_growth']}, columnas de stats {r['stat_growth']} "
+                  f"(STFGTREP_statGains), resist. {r['resist_growth']} (1-5); exp ×{r['exp_rate'] / 10} por nivel, "
+                  f"más deprisa tras nv{r['exp_level']}"
+                  + (" (columna 5: el juego lee fuera de la tabla y crece menos que con 4)"
+                     if 5 in r["stat_growth"] or 5 in r["resist_growth"] else ""))
         sk = r["skills"]
         lv6 = f" (nv{r['levels'][5]})" if r["levels"][5] else ""
         print(f"  característica: {tname(sk[6])}{lv6}" + (f"  ataque básico #{sk[0]}" if sk[0] else ""))
@@ -943,7 +951,7 @@ def enemy_places():
                     for k, en in enumerate(group):
                         where = f"evento {bi}" if ai == 3 else f"zona {ai}"
                         others = tuple(sorted(x[0] for j, x in enumerate(group) if j != k))
-                        out.setdefault(en[0], []).append((st, where, en[1], en[2], others))
+                        out.setdefault(en[0], []).append((st, where, en[1], en[2], others, en[4]))
     return out
 
 
@@ -1089,14 +1097,15 @@ def cmd_enemigos(args):
         for l in model_lines(f):
             print(l)
         seen = {}
-        for st, where, lv, hp, others in places.get(f, []):
-            seen.setdefault((st, where, lv, hp, others), 0)
-            seen[(st, where, lv, hp, others)] += 1
+        for key in places.get(f, []):
+            seen[key] = seen.get(key, 0) + 1
         lines = []
-        for (st, where, lv, hp, others), n in seen.items():
+        for (st, where, lv, hp, others, strength), n in seen.items():
             name = stage_places().get(st, ("?", ""))[0].split(",")[0]
             con = f" con {', '.join(enemy_name(o) for o in others)}" if others else ""
-            lines.append(f"    {st} [{stage_mode(st)}] {name}: {where} nv{lv} PV{hp}{con}" + (f" (×{n})" if n > 1 else ""))
+            # el combate usa stats × fuerza / 16, y el poder de sus técnicas igual (BattleEnemy.strength)
+            eff = "" if strength == 16 else f" fuerza {strength}/16: stats {[v * strength // 16 for v in e['stats']]}"
+            lines.append(f"    {st} [{stage_mode(st)}] {name}: {where} nv{lv} PV{hp}{eff}{con}" + (f" (×{n})" if n > 1 else ""))
         print(f"  aparece en {len(lines)} batallas:" if lines else "  no aparece en las batallas de los mapas")
         for l in capped(lines):
             print(l)
