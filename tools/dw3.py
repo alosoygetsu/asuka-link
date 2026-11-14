@@ -125,8 +125,9 @@ def overlays():
             end = vram + int(ends[-1], 16) - start + (int(bss.group(1), 16) if bss else 0) if ends else vram
         syms = [DECOMP / s for s in re.findall(r"^\s*- (config/eu/\S+\.txt)", t, re.M)]
         src = re.search(r"src_path: (\S+)", t).group(1)
-        out.append(dict(name=name, vram=vram, end=end, subs=subs, syms=syms,
-                        src=DECOMP / src))
+        target = re.search(r"target_path: \S*/(\S+)", t)
+        out.append(dict(name=name, vram=vram, end=end, subs=subs, syms=syms, start=start,
+                        disc=target.group(1) if target else None, src=DECOMP / src))
     # los escenarios: config/eu/stages.txt, en STAGE_VRAM
     sv = stage_vram()
     for l in read(CFG / "stages.txt").split("\n"):
@@ -144,7 +145,8 @@ def overlays():
             subs = [(sv, "head", name), (sv + int(m.group(2), 16), "text", name), (sv + int(m.group(3), 16), "data", name)]
         else:
             subs = [(sv, "data", name)]
-        out.append(dict(name=name, vram=sv, end=sv + size, subs=subs, stage=True, cfile=c,
+        out.append(dict(name=name, vram=sv, end=sv + size, subs=subs, stage=True, cfile=c, start=0,
+                        disc=m.group(1) + ".PRO",
                         syms=[CFG / "symbols.txt", CFG / "symbols_fieldstg.txt", CFG / "stages" / f"{name}.txt"],
                         src=c.parent if c else DECOMP / "src" / "stages"))
     return out
@@ -230,6 +232,99 @@ def cmd_addr(args):
         print(f"{a:#x}:")
     for l in capped([h[1] for h in hits], more="--max N o --ovl NOMBRE"):
         print("  " + l)
+
+
+PRIMS = {"s8": "b", "u8": "B", "char": "b", "s16": "h", "u16": "H", "short": "h", "s32": "i", "u32": "I", "int": "i",
+         "long": "i", "u_char": "B", "u_short": "H", "u_long": "I", "uint8_t": "B", "int8_t": "b", "uint16_t": "H",
+         "int16_t": "h", "uint32_t": "I", "int32_t": "i"}
+FLAGS_FMT = {"--i8": "b", "--u8": "B", "--i16": "h", "--u16": "H", "--i32": "i", "--u32": "I"}
+
+
+def c_type_of(name, files):
+    """([(campo, formato struct)], tipo) del elemento de la tabla name según su declaración en C, o None: un tipo
+    primitivo, o una struct de campos primitivos (sin arrays)"""
+    d = def_line(name, files)
+    if not d:
+        return None
+    line = read(d[0]).split("\n")[d[1] - 1]
+    m = re.match(r"\s*(?:static\s+)?(?:const\s+)?(\w+)\s+\**%s\b" % re.escape(name), line)
+    if not m:
+        return None
+    t = m.group(1)
+    if t in PRIMS:
+        return [("", PRIMS[t])], t
+    for f in [DECOMP / "include"] + [DECOMP / "src"]:
+        for h in f.rglob("*.h"):
+            s = read(h)
+            sm = re.search(r"typedef struct \w*\s*\{([^{}]*)\}\s*%s;" % t, s)
+            if sm:
+                fields = []
+                for fm in re.finditer(r"^\s*(?:/\*.*?\*/\s*)?(\w+)\s+(\w+)\s*(\[[^\]]*\])?\s*;", sm.group(1), re.M):
+                    if fm.group(1) not in PRIMS or fm.group(3):
+                        return None
+                    fields.append((fm.group(2), PRIMS[fm.group(1)]))
+                return (fields, t) if fields else None
+    return None
+
+
+def cmd_dato(args):
+    """dato SÍMBOLO [n] [--i8|--u8|--i16|--u16|--i32|--u32] [--hex] [--cols N]: los valores de una tabla tal como están en el
+    disco europeo (overlay o ejecutable), con el tipo de su declaración en C si la hay"""
+    fmt = next((FLAGS_FMT[a] for a in args if a in FLAGS_FMT), None)
+    hexa = "--hex" in args
+    args = [a for a in args if a != "--hex"]
+    cols = 0
+    if "--cols" in args:
+        i = args.index("--cols")
+        cols = int(args[i + 1])
+        del args[i:i + 2]
+    args = [a for a in args if a not in FLAGS_FMT]
+    if not args:
+        sys.exit("uso: dw3.py dato SÍMBOLO [n] [--i16 …] [--cols N]")
+    name = args[0]
+    count = int(args[1], 0) if len(args) > 1 else None
+    hit = None
+    for ov in overlays():
+        for s in (s for f in ov["syms"] for s in symbols_of(f)):
+            if s[1] == name and ov["vram"] <= s[0] < ov["end"] and (ov["name"] != "main" or s[0] < 0x80082CB0):
+                if s[5].name == "symbols.txt" and ov["name"] != "main":
+                    continue  # un símbolo del ejecutable, que se lee en main
+                hit = (ov, s)
+                break
+        if hit:
+            break
+    if not hit:
+        sys.exit(f"{name}: no está en los símbolos de config/eu (dw3.py sym {name} busca en el código)")
+    ov, (addr, _, size, _, line, symfile) = hit
+    if ov["name"] == "main":
+        blob, off = exe(), at(addr)
+    else:
+        blob, off = game_file(ov["disc"]), addr - ov["vram"] + ov["start"]
+    # hasta dónde: n elementos, su tamaño en los símbolos, o hasta el símbolo siguiente
+    nxt = min((s[0] for f in ov["syms"] for s in symbols_of(f) if addr < s[0] < ov["end"]), default=ov["end"])
+    end = addr + size if size else nxt
+    srcs = [p for p in source_files(with_patched=False) if str(p).startswith(str(DECOMP))]
+    ctype = None if fmt else c_type_of(name, [ov["src"] / f for f in []] or srcs)
+    short = {"b": "s8", "B": "u8", "h": "s16", "H": "u16", "i": "s32", "I": "u32"}
+    fields, tname_ = ctype if ctype else ([("", fmt or "i")], short[fmt or "i"])
+    if ctype is None and not fmt:
+        tname_ = "s32 (sin tipo simple en C: --i16 … para otro)"
+    elem = struct.calcsize("<" + "".join(f for _, f in fields))
+    n = count if count is not None else max(1, (end - addr) // elem)
+    print(f"{name} = {addr:#x} ({ov['name']}, {ov['disc'] or 'SLES_039.36'}+{off:#x}), {n} × {tname_}"
+          + (f" {{{', '.join(f for f, _ in fields)}}}" if len(fields) > 1 else "") + f"  [{rel(symfile, line)}]")
+    vals = []
+    for k in range(n):
+        o = off + k * elem
+        if o + elem > len(blob):
+            break
+        v = struct.unpack_from("<" + "".join(f for _, f in fields), blob, o)
+        v = [f"{x:#x}" for x in v] if hexa else [str(x) for x in v]
+        vals.append("{" + ", ".join(v) + "}" if len(v) > 1 else v[0])
+    per = cols or (8 if len(fields) == 1 else 3)
+    rows = [f"  [{k}] " + ", ".join(vals[k:k + per]) for k in range(0, len(vals), per)]
+    for l in capped(rows):
+        print(l)
 
 
 SRC_ROOTS = [DECOMP / "src", DECOMP / "include", NATIVE / "coop", NATIVE / "platform", NATIVE / "launcher",
@@ -938,9 +1033,35 @@ def item_name(i):
 
 
 def cmd_enemigos(args):
-    """enemigos [NOMBRE | luchador]: técnicas, stats, resistencias, lo que suelta y en qué mapas sale (sin nombre, la
-    lista)"""
+    """enemigos [NOMBRE | luchador | --suelta OBJETO]: técnicas, stats, resistencias, lo que suelta y en qué mapas sale
+    (sin nombre, la lista; --suelta: quién suelta ese objeto, por nombre o número)"""
     table = enemy_table()
+    if args and args[0] == "--suelta":
+        q = " ".join(args[1:])
+        if not q:
+            sys.exit("uso: dw3.py enemigos --suelta NOMBRE|0x3E")
+        items = names_of("ITMNAM", "S")
+        en = names_of("ITMNAM", "E")
+        if re.fullmatch(r"0x[0-9a-fA-F]+|\d+", q):
+            want = {int(q, 0)}
+        else:  # el nombre exacto primero: "Chip V" no es "Chip Viento"
+            qc = q.casefold()
+            want = {i for i, s in enumerate(items) if s.casefold() == qc or (i < len(en) and en[i].casefold() == qc)}
+            want = want or {i for i, s in enumerate(items) if qc in s.casefold() or (i < len(en) and qc in en[i].casefold())}
+        if not want:
+            sys.exit("ningún objeto con ese nombre")
+        places = enemy_places()
+        lines = []
+        for f, e in sorted(table.items(), key=lambda kv: -kv[1]["chance"]):
+            if e["item"] in want:
+                where = sorted({f"{st} [{stage_mode(st)}]" for st, *_ in places.get(f, [])})
+                lines.append(f"  {item_name(e['item'])} ({e['item']:#x}): {enemy_name(f)} (luchador {f}) "
+                             f"{(e['chance'] + 1) * 100 / 1024:.1f}%  en " + (", ".join(where[:4]) + (" …" if len(where) > 4 else "")
+                                                                         if where else "ninguna batalla de mapa"))
+        print(f"{len(lines)} enemigos sueltan {', '.join(f'{item_name(i)} ({i:#x})' for i in sorted(want)[:6])}")
+        for l in capped(lines):
+            print(l)
+        return
     if not args:
         lines = [f"{f} {enemy_name(f)}" for f in sorted(table, key=lambda f: enemy_name(f))]
         print(f"{len(table)} enemigos (luchador nombre):")
@@ -979,6 +1100,78 @@ def cmd_enemigos(args):
         print(f"  aparece en {len(lines)} batallas:" if lines else "  no aparece en las batallas de los mapas")
         for l in capped(lines):
             print(l)
+
+
+# ---------------------------------------------------------------- volcados de GAME (estado)
+
+# GameState, versión europea (include/dw3/game_state.h): party s32[3] en 0x70, partners en 0x75C (Partner, 0x3DC:
+# unlocked +4, info +0xC: PartnerStats con stats s16[19] +0x1C, status +0x42, slots s16[4] +0x48, equip +0x3C0,
+# lastBonus +0x3CC), progress 0x263C
+GS_PARTY, GS_PARTNERS, PARTNER_SIZE, GS_PROGRESS = 0x70, 0x75C, 0x3DC, 0x263C
+STAT_NAMES = ["nivel", "PE", "PV", "PVmáx", "PM", "PMmáx", "fue", "def", "esp", "sab", "vel", "car"]
+
+
+@functools.lru_cache(None)
+def eu_flag_groups():
+    """{grupo: offset en GAME} de las marcas flags02-flags40 del bloque VERSION_EU de game_state.h"""
+    h = read(DECOMP / "include" / "dw3" / "game_state.h")
+    eu = h[h.index("#elif VERSION_EU", h.index("u8 flags02")):]
+    eu = eu[:eu.index("#endif")]
+    return {int(g, 16): int(o, 16) for o, g in re.findall(r"/\* (0x[0-9A-F]+) \*/ u8 flags([0-9A-F]{2})\[", eu)}
+
+
+def latest_dump():
+    dumps = [p for d in ("test5", "test4", "test3", "test2") for p in (ROOT / d).glob("game_*.bin")]
+    return max(dumps, key=lambda p: p.stat().st_mtime) if dumps else None
+
+
+def cmd_estado(args):
+    """estado [volcado.bin] [--todos] [--marca F1C:0F,...]: un volcado de GAME (probar.ps1 -Press "500:f2", testN/
+    game_*.bin; sin archivo, el más reciente): historia, equipo y, por compañero, nivel, PE, stats, formas, lastBonus"""
+    marks = []
+    if "--marca" in args:
+        i = args.index("--marca")
+        marks = args[i + 1].split(",")
+        del args[i:i + 2]
+    every = "--todos" in args
+    args = [a for a in args if a != "--todos"]
+    path = Path(args[0]) if args else latest_dump()
+    if not path or not path.exists():
+        sys.exit("no hay volcado (probar.ps1 campo -Press \"500:f2\" lo deja en test5/game_<vsync>.bin)")
+    g = path.read_bytes()
+    if len(g) < GS_PROGRESS + 4:
+        sys.exit(f"{path}: {len(g)} bytes, no es un volcado de GAME")
+    s32 = lambda o: struct.unpack_from("<i", g, o)[0]
+    party = [s32(GS_PARTY + 4 * k) for k in range(3)]
+    print(f"{rel(path)} ({len(g)} bytes): {decode(g[0x54:0x6C]) or '?'}, dinero {s32(0x6C)}, historia {s32(GS_PROGRESS):#x}, "
+          f"equipo {', '.join(dname(p) if 0 <= p < 8 else str(p) for p in party)}")
+    ids = {r["id"]: r["i"] for r in digimon_rows() if r["id"]}
+    for p in range(8):
+        base = GS_PARTNERS + p * PARTNER_SIZE
+        unlocked = s32(base + 4)
+        if not every and p not in party:
+            continue
+        info = base + 0xC
+        st = struct.unpack_from("<19h", g, info + 0x1C)
+        slots = [x for x in struct.unpack_from("<4h", g, info + 0x48) if x]
+        equip = [x for x in struct.unpack_from("<6h", g, info + 0x3C0) if x]
+        bonus = g[info + 0x3CC]
+        mark = "*" if p in party else " "
+        print(f"{mark}{dname(p)}{'' if unlocked else ' (bloqueado)'} «{decode(g[info:info + 0x18])}»: "
+              + ", ".join(f"{n} {v}" for n, v in zip(STAT_NAMES, st)) + f", lastBonus {bonus}")
+        print(f"    resist. (fue agu hie vie ray máq osc) {list(st[12:19])}  formas "
+              f"{', '.join(dname(ids[x]) if x in ids else hex(x) for x in slots) or '-'}"
+              f"  equipo {', '.join(item_name(x) for x in equip) or '-'}")
+    if marks:
+        groups = eu_flag_groups()
+        for m in marks:
+            code = parse_flag(m)
+            grp, n = code >> 8 & 0xFE, code & 0x1FF
+            if grp not in groups:
+                print(f"  {flag_text(code)}: grupo {grp:#x} no está en GAME (FLAGS_00 u otro)")
+                continue
+            o = groups[grp] + (n >> 3)
+            print(f"  {flag_text(code)} = {1 if g[o] & 1 << (n & 7) else 0}  (byte {o:#x}, bit {1 << (n & 7):#x})")
 
 
 # ---------------------------------------------------------------- personajes del campo (personaje)
@@ -1311,6 +1504,7 @@ def cmd_digilog(args):
 COMMANDS = {
     "addr": cmd_addr,
     "sym": cmd_sym,
+    "dato": cmd_dato,
     "texto": cmd_texto,
     "marca": cmd_marca,
     "digimon": cmd_digimon,
@@ -1320,6 +1514,7 @@ COMMANDS = {
     "salidas": cmd_salidas,
     "enemigos": cmd_enemigos,
     "personaje": cmd_personaje,
+    "estado": cmd_estado,
     "pasos": script_cmd("story_steps", "pasos [paso_hex ...]: conversaciones que hacen algo en cada paso de historia (story_steps.py)"),
     "eventos": script_cmd("story_events", "eventos [paso_hex ...]: cadena de eventos de cada paso de historia (story_events.py)"),
     "codigo": script_cmd("story_code", "codigo [paso_hex ...]: dónde cambia GAME.progress y qué marcas activa el código (story_code.py)"),
