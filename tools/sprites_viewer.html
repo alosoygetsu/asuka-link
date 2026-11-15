@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprites de campo</title>
+<!-- Copied next to data.js and sheets/ by tools/sprites.py; it shows what that export read from the game. -->
+<style>
+:root { --bg: #16181d; --panel: #1f2229; --line: #2e323c; --text: #d8dbe2; --dim: #8a90a0; --acc: #f0a640; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px system-ui, sans-serif; display: flex; height: 100vh; }
+#side { width: 300px; min-width: 220px; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+#search { margin: 10px; padding: 7px 9px; background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: 6px; }
+#count { margin: 0 10px 6px; color: var(--dim); font-size: 12px; }
+#list { overflow-y: auto; flex: 1; }
+.item { padding: 6px 10px; cursor: pointer; border-bottom: 1px solid var(--line); }
+.item:hover { background: var(--panel); }
+.item.sel { background: #2b2f3a; border-left: 3px solid var(--acc); padding-left: 7px; }
+.item b { font-family: ui-monospace, monospace; font-weight: 600; }
+.item small { display: block; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#main { flex: 1; overflow-y: auto; padding: 14px 18px; }
+h1 { font-size: 18px; margin: 0 0 4px; font-family: ui-monospace, monospace; }
+#meta { color: var(--dim); font-size: 13px; margin-bottom: 10px; }
+#meta div { margin: 2px 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 8px 0; }
+.bar label { color: var(--dim); font-size: 13px; display: flex; gap: 6px; align-items: center; }
+select, button, input[type=number] { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; font: inherit; }
+button { cursor: pointer; }
+button:hover { border-color: var(--acc); }
+#sets { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+#sets button.sel, #dirs button.sel { border-color: var(--acc); color: var(--acc); }
+#stage { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+canvas { image-rendering: pixelated; border: 1px solid var(--line); border-radius: 6px; }
+#compass { cursor: pointer; }
+#sheet, #compass, #view { max-width: 100%; }
+#info { font-family: ui-monospace, monospace; font-size: 12px; color: var(--dim); white-space: pre-wrap; max-width: 520px; margin-top: 6px; }
+#sheetBox { margin-top: 16px; }
+#sheetBox h2 { font-size: 14px; color: var(--dim); font-weight: 500; }
+</style>
+</head>
+<body>
+<div id="side">
+  <input id="search" placeholder="Buscar: archivo, nombre, nº, mapa…" autofocus>
+  <div id="count"></div>
+  <div id="list"></div>
+</div>
+<div id="main">
+  <h1 id="title">—</h1>
+  <div id="meta"></div>
+  <div id="sets"></div>
+  <div class="bar">
+    <button id="play">⏸ Pausa</button>
+    <button id="prev">◀ Fotograma</button>
+    <button id="next">Fotograma ▶</button>
+    <label>Velocidad <input id="speed" type="range" min="-2" max="2" step="1" value="0"> <span id="speedTxt">×1</span></label>
+    <label>Zoom <input id="zoom" type="range" min="1" max="8" value="4"> <span id="zoomTxt">×4</span></label>
+    <label><input id="shadow" type="checkbox" checked> Sombra</label>
+    <label><input id="origin" type="checkbox"> Origen y caja</label>
+    <label>Fondo <select id="bgSel"><option value="#3a6b3a">hierba</option><option value="#2a2d36">oscuro</option><option value="#c8c8c8">claro</option><option value="check">cuadros</option></select></label>
+  </div>
+  <div id="stage">
+    <div>
+      <canvas id="view" width="320" height="320"></canvas>
+      <div id="info"></div>
+    </div>
+    <div>
+      <canvas id="compass" width="312" height="312" title="Clic: esa dirección"></canvas>
+      <div id="info2" style="color:var(--dim);font-size:12px;margin-top:6px">Las 8 direcciones (5-7 son el espejo de 3-1)</div>
+    </div>
+  </div>
+  <div id="sheetBox">
+    <h2 id="sheetTitle"></h2>
+    <canvas id="sheet" width="10" height="10"></canvas>
+  </div>
+</div>
+<script src="data.js"></script>
+<script>
+"use strict";
+const D = window.SPRITES;
+if (!D) document.body.textContent = "Falta data.js: genera la carpeta con python tools/sprites.py";
+const DIR_NAMES = ["abajo", "abajo-izq.", "izquierda", "arriba-izq.", "arriba", "arriba-der.", "derecha", "abajo-der."];
+const COMPASS = [[1, 2], [0, 2], [0, 1], [0, 0], [1, 0], [2, 0], [2, 1], [2, 2]]; // dir -> [col, row]
+const $ = id => document.getElementById(id);
+const images = {};
+const S = { char: null, set: 0, dir: 0, tick: 0, playing: true, speed: 1, zoom: 4 };
+const hex = n => "0x" + n.toString(16).toUpperCase();
+const store = (k, v) => { try { localStorage.setItem("sprites." + k, v); } catch (e) {} };
+const load = k => { try { return localStorage.getItem("sprites." + k); } catch (e) { return null; } };
+
+function sheetImg(file) {
+  if (!images[file]) { images[file] = new Image(); images[file].src = D.files[file].sheet; }
+  return images[file];
+}
+
+// The step a direction's list shows at `tick` vsyncs: each step lasts its time; a list ending in 0 loops,
+// one ending in -1 holds its last step (FIELDSTG_animateActor)
+function stepAt(list, tick) {
+  const steps = list.steps;
+  if (!steps.length) return null;
+  const total = steps.reduce((a, s) => a + s[0], 0);
+  let t = Math.floor(tick);
+  if (list.loop) t = ((t % total) + total) % total;
+  else if (t >= total) return { i: steps.length - 1, done: true };
+  for (let i = 0; i < steps.length; i++) { if (t < steps[i][0]) return { i, done: false }; t -= steps[i][0]; }
+  return { i: steps.length - 1, done: true };
+}
+
+function curSet() { return S.char.sets[S.set]; }
+function dirList(dir) { const s = curSet(); return s.dirs[dir < 5 ? dir : 8 - dir]; }
+
+// Draws a step at (cx, cy), the actor's place: mirrored for the directions 5 to 7 (FIELDSTG_drawActor)
+function drawStep(ctx, file, step, dir, cx, cy, z) {
+  const f = D.files[file].frames[step[1]];
+  const img = sheetImg(file);
+  const [fx, fy, fw, fh] = f;
+  const ox = step[2], oy = step[3];
+  if ($("shadow").checked) {
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.beginPath(); ctx.ellipse(cx, cy, 13 * z, 5 * z, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (dir >= 5) ctx.scale(-1, 1);
+  if (img.complete) ctx.drawImage(img, fx, fy, fw, fh, ox * z, oy * z, fw * z, fh * z);
+  if ($("origin").checked) {
+    ctx.strokeStyle = "rgba(240,166,64,0.8)"; ctx.lineWidth = 1;
+    ctx.strokeRect(ox * z + 0.5, oy * z + 0.5, fw * z - 1, fh * z - 1);
+  }
+  ctx.restore();
+  if ($("origin").checked) {
+    ctx.strokeStyle = "#ff4d6d"; ctx.beginPath();
+    ctx.moveTo(cx - 6, cy + 0.5); ctx.lineTo(cx + 6, cy + 0.5); ctx.moveTo(cx + 0.5, cy - 6); ctx.lineTo(cx + 0.5, cy + 6); ctx.stroke();
+  }
+}
+
+function paintBg(ctx, w, h) {
+  const v = $("bgSel").value;
+  if (v !== "check") { ctx.fillStyle = v; ctx.fillRect(0, 0, w, h); return; }
+  for (let y = 0; y < h; y += 8) for (let x = 0; x < w; x += 8) {
+    ctx.fillStyle = ((x + y) / 8) % 2 ? "#9a9a9a" : "#bdbdbd"; ctx.fillRect(x, y, 8, 8);
+  }
+}
+
+// The biggest box a set's frames take around the origin, to size the views
+function setBox(set) {
+  let x0 = 0, y0 = 0, x1 = 1, y1 = 1;
+  for (const d of set.dirs) for (const s of d.steps) {
+    const f = D.files[set.file].frames[s[1]];
+    x0 = Math.min(x0, s[2], -(s[2] + f[2])); x1 = Math.max(x1, s[2] + f[2], -s[2]);
+    y0 = Math.min(y0, s[3]); y1 = Math.max(y1, s[3] + f[3]);
+  }
+  return { x0, y0, x1, y1 };
+}
+
+function render() {
+  if (!S.char) return;
+  const set = curSet();
+  const box = setBox(set);
+  // the selected direction, big
+  const z = S.zoom, pad = 16;
+  const v = $("view"), vc = v.getContext("2d");
+  const w = Math.max(160, (box.x1 - box.x0) * z + pad * 2), h = Math.max(160, (box.y1 - box.y0 + 8) * z + pad * 2);
+  if (v.width !== w || v.height !== h) { v.width = w; v.height = h; }
+  vc.imageSmoothingEnabled = false;
+  paintBg(vc, w, h);
+  const cx = Math.round(w / 2 - (box.x0 + box.x1) / 2 * z), cy = Math.round(pad - box.y0 * z);
+  const list = dirList(S.dir);
+  const at = stepAt(list, S.tick);
+  if (at) {
+    const st = list.steps[at.i];
+    drawStep(vc, set.file, st, S.dir, cx, cy, z);
+    const f = D.files[set.file].frames[st[1]];
+    $("info").textContent =
+      `${DIR_NAMES[S.dir]} (${S.dir}${S.dir >= 5 ? ", espejo de " + (8 - S.dir) : ""})  ·  paso ${at.i + 1}/${list.steps.length}` +
+      `${at.done ? "  ·  fin (-1)" : list.loop ? "  ·  en bucle" : ""}\n` +
+      `fotograma: entrada ${f[4]} del archivo, ${f[2]}x${f[3]}  ·  dura ${st[0]} vsync (${(st[0] / 60 * 1000).toFixed(0)} ms)\n` +
+      `desplazamiento ${st[2]}, ${st[3]}  ·  ciclo ${list.steps.reduce((a, s) => a + s[0], 0)} vsync`;
+  } else $("info").textContent = "esta dirección no tiene fotogramas";
+  // the compass: 8 directions at x2
+  const c = $("compass"), cc = c.getContext("2d");
+  const cz = 2, cell = Math.max(80, Math.max(box.x1 - box.x0, box.y1 - box.y0 + 8) * cz + 12);
+  if (c.width !== cell * 3) { c.width = c.height = cell * 3; }
+  cc.imageSmoothingEnabled = false;
+  paintBg(cc, c.width, c.height);
+  for (let d = 0; d < 8; d++) {
+    const [col, row] = COMPASS[d];
+    const l = dirList(d), a = stepAt(l, S.tick);
+    const ox = col * cell, oy = row * cell;
+    if (d === S.dir) { cc.strokeStyle = "#f0a640"; cc.lineWidth = 2; cc.strokeRect(ox + 1, oy + 1, cell - 2, cell - 2); }
+    if (a) drawStep(cc, set.file, l.steps[a.i], d, Math.round(ox + cell / 2 - (box.x0 + box.x1) / 2 * cz),
+      Math.round(oy + (cell - (box.y1 - box.y0) * cz) / 2 - box.y0 * cz), cz);
+  }
+  cc.fillStyle = "rgba(255,255,255,0.5)"; cc.font = "11px system-ui"; cc.textAlign = "center";
+  cc.fillText(set.name || hex(set.id), cell * 1.5, cell * 1.5);
+  drawSheetMark(set, at ? list.steps[at.i][1] : -1);
+}
+
+let sheetFile = null;
+function drawSheet(file) {
+  sheetFile = file;
+  const fd = D.files[file], img = sheetImg(file), z = 2;
+  const c = $("sheet");
+  const draw = () => {
+    c.width = img.width * z; c.height = img.height * z;
+    const ctx = c.getContext("2d"); ctx.imageSmoothingEnabled = false;
+    paintBg(ctx, c.width, c.height);
+    ctx.drawImage(img, 0, 0, img.width * z, img.height * z);
+  };
+  if (img.complete) draw(); else img.onload = () => { draw(); render(); };
+  $("sheetTitle").textContent = `${file}.BIN: ${fd.frames.length} fotogramas (clic en uno para ver su entrada)`;
+}
+function drawSheetMark(set, n) {
+  if (sheetFile !== set.file) drawSheet(set.file);
+  const c = $("sheet"), ctx = c.getContext("2d"), fd = D.files[set.file], img = sheetImg(set.file), z = 2;
+  if (!img.complete) return;
+  ctx.imageSmoothingEnabled = false;
+  paintBg(ctx, c.width, c.height);
+  ctx.drawImage(img, 0, 0, img.width * z, img.height * z);
+  ctx.lineWidth = 1;
+  fd.frames.forEach((f, i) => {
+    ctx.strokeStyle = i === n ? "#f0a640" : "rgba(255,255,255,0.12)";
+    ctx.lineWidth = i === n ? 2 : 1;
+    ctx.strokeRect(f[0] * z + 0.5, f[1] * z + 0.5, f[2] * z - 1, f[3] * z - 1);
+  });
+}
+$("sheet").addEventListener("click", e => {
+  if (!S.char) return;
+  const fd = D.files[curSet().file], r = e.target.getBoundingClientRect(), z = 2;
+  const k = e.target.width / r.width;
+  const x = (e.clientX - r.left) * k / z, y = (e.clientY - r.top) * k / z;
+  const i = fd.frames.findIndex(f => x >= f[0] && x < f[0] + f[2] && y >= f[1] && y < f[1] + f[3]);
+  if (i < 0) return;
+  const f = fd.frames[i];
+  const where = [];
+  S.char.sets.forEach(s => s.file === curSet().file && s.dirs.forEach((d, di) => d.steps.forEach((st, si) => {
+    if (st[1] === i) where.push(`${s.name || hex(s.id)} dir ${di} paso ${si + 1}`);
+  })));
+  $("sheetTitle").textContent = `Fotograma: entrada ${f[4]}, ${f[2]}x${f[3]}; sale en ${where.join(", ") || "ninguna animación"}`;
+});
+
+function selectChar(ch) {
+  S.char = ch; S.tick = 0;
+  const keep = ch.sets.findIndex(s => s.id === (S.lastSetId ?? 1));
+  S.set = keep >= 0 ? keep : 0;
+  document.querySelectorAll(".item").forEach(el => { el.classList.toggle("sel", el._ch === ch); if (el._ch === ch) el.scrollIntoView({ block: "nearest" }); });
+  $("title").textContent = ch.label + ".BIN";
+  const keys = ch.keys.map(k => `${k} (${hex(k)})`).join(", ");
+  $("meta").innerHTML = "";
+  const add = (t) => { const d = document.createElement("div"); d.textContent = t; $("meta").appendChild(d); };
+  add(`Personaje${ch.keys.length > 1 ? "s" : ""} ${keys}`);
+  if (ch.names.length) add("Nombres: " + ch.names.slice(0, 12).join(", ") + (ch.names.length > 12 ? " …" : ""));
+  add(ch.maps.length ? `Sale en ${ch.maps.length} mapa${ch.maps.length > 1 ? "s" : ""}: ` + ch.maps.slice(0, 8).join(" · ") + (ch.maps.length > 8 ? " …" : "")
+    : "No sale como actor en los mapas");
+  buildSets();
+  store("char", ch.label); location.hash = encodeURIComponent(ch.label);
+  render();
+}
+
+function buildSets() {
+  const box = $("sets"); box.innerHTML = "";
+  S.char.sets.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.textContent = (s.name ? s.name + " " : "") + hex(s.id) + (S.char.label.includes("jugador") ? ` · ${s.file}` : "");
+    b.classList.toggle("sel", i === S.set);
+    b.onclick = () => { S.set = i; S.lastSetId = s.id; S.tick = 0; buildSets(); render(); };
+    box.appendChild(b);
+  });
+}
+
+function buildList() {
+  const q = $("search").value.trim().toLowerCase();
+  const list = $("list"); list.innerHTML = "";
+  let n = 0;
+  for (const ch of D.chars) {
+    const hay = [ch.label, ...ch.names, ...ch.maps, ...ch.keys.map(String), ...ch.keys.map(hex)].join(" ").toLowerCase();
+    if (q && !q.split(/\s+/).every(w => hay.includes(w))) continue;
+    n++;
+    const el = document.createElement("div");
+    el.className = "item" + (ch === S.char ? " sel" : "");
+    el._ch = ch;
+    const b = document.createElement("b"); b.textContent = ch.label;
+    const sm = document.createElement("small");
+    sm.textContent = `${ch.keys[0]}${ch.keys.length > 1 ? "+" : ""} · ${ch.sets.length} anim. · ${ch.names.slice(0, 3).join(", ") || "sin nombre"}`;
+    el.append(b, sm);
+    el.onclick = () => selectChar(ch);
+    list.appendChild(el);
+  }
+  $("count").textContent = `${n} de ${D.chars.length} sprites`;
+}
+
+// a frame boundary of the selected direction, forwards or backwards
+function stepTick(dirn) {
+  const l = dirList(S.dir), total = l.steps.reduce((a, s) => a + s[0], 0);
+  if (!total) return;
+  const bounds = []; let acc = 0;
+  for (const s of l.steps) { bounds.push(acc); acc += s[0]; }
+  const base = l.loop ? Math.floor(S.tick / total) * total : 0, t = Math.floor(S.tick) - base;
+  let i = bounds.findIndex(b => b > t); if (i < 0) i = bounds.length;
+  let target = dirn > 0 ? (i < bounds.length ? bounds[i] : total) : (bounds[Math.max(0, i - 2)] ?? 0);
+  if (!l.loop) target = Math.min(target, total);
+  S.tick = base + target;
+  S.playing = false; $("play").textContent = "▶ Seguir";
+  render();
+}
+
+$("search").addEventListener("input", buildList);
+$("play").onclick = () => { S.playing = !S.playing; $("play").textContent = S.playing ? "⏸ Pausa" : "▶ Seguir"; };
+$("next").onclick = () => stepTick(1);
+$("prev").onclick = () => stepTick(-1);
+$("speed").oninput = e => { S.speed = Math.pow(2, +e.target.value); $("speedTxt").textContent = "×" + S.speed; };
+$("zoom").oninput = e => { S.zoom = +e.target.value; $("zoomTxt").textContent = "×" + S.zoom; store("zoom", S.zoom); render(); };
+["shadow", "origin", "bgSel"].forEach(id => $(id).addEventListener("change", () => { store(id, $(id).type === "checkbox" ? $(id).checked : $(id).value); render(); }));
+$("compass").addEventListener("click", e => {
+  const c = e.target, r = c.getBoundingClientRect(), cell = c.width / 3;
+  const col = Math.floor((e.clientX - r.left) * c.width / r.width / cell), row = Math.floor((e.clientY - r.top) * c.height / r.height / cell);
+  const d = COMPASS.findIndex(([x, y]) => x === col && y === row);
+  if (d >= 0) { S.dir = d; render(); }
+});
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" && e.target.type !== "range" && e.target.type !== "checkbox") return;
+  const map = { ArrowDown: 0, ArrowLeft: 2, ArrowUp: 4, ArrowRight: 6 };
+  if (e.key in map) { S.dir = map[e.key]; render(); e.preventDefault(); }
+  else if (e.key === " ") { $("play").click(); e.preventDefault(); }
+  else if (e.key === ".") stepTick(1);
+  else if (e.key === ",") stepTick(-1);
+});
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (S.playing && S.char) { S.tick += dt * 60 * S.speed; render(); }
+  requestAnimationFrame(loop);
+}
+
+if (D) {
+  const z = +load("zoom"); if (z) { S.zoom = z; $("zoom").value = z; $("zoomTxt").textContent = "×" + z; }
+  ["shadow", "origin"].forEach(id => { const v = load(id); if (v !== null) $(id).checked = v === "true"; });
+  const bg = load("bgSel"); if (bg) $("bgSel").value = bg;
+  buildList();
+  const want = decodeURIComponent(location.hash.slice(1)) || load("char");
+  selectChar(D.chars.find(c => c.label === want) || D.chars.find(c => c.label.startsWith("P006")) || D.chars[0]);
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>

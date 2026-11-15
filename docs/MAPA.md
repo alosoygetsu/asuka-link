@@ -61,4 +61,5 @@ mapas (`WSTAGnnn.PRO`) en 0x800A5DE0, encima de FIELDSTG.
 | Textos de los packs, Digilog del port, viaje rápido | `tools/packs_text/<idioma>.toml` → `tools/packs_text.py --sin-mklang` |
 | La sala o el launcher | `launcher/sala*.c`, `home.c`; textos en `launcher/lang_*.c` (comprobar con `--check`) |
 | Mods de mapas o de Digimon | `platform/stagemods.c`, `digimon_mods.c` |
+| Ver los sprites de campo y sus animaciones | `python native/tools/sprites.py [--gif] [--only VMON]` → abrir `native/build/sprites/index.html` (local, ignorado por git: las imágenes son del juego). Formato en el docstring de `tools/sprites.py` |
 | Estudiar una misión | `dw3.py marca`, `texto`, `charlas`, `pasos`, `eventos`, `dialogo`; `docs/MISIONES.md` |
