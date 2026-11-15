@@ -14,6 +14,7 @@ def num(s):
     return int(s, 0)
 
 by_step = collections.defaultdict(list)
+JUMPS = {}  # (mapa, evento): los modos a los que salta su guion
 for f in sorted(STAGES.rglob("wstag*.c")):
     if f.stem.startswith("wstag9") or f.stem == "wstag586":
         continue
@@ -43,6 +44,35 @@ for f in sorted(STAGES.rglob("wstag*.c")):
                     break
             for p in steps or [-1]:
                 by_step[p].append((f.stem, flag, ev, ends.get(ev, "")))
+    # los que lanza pisar un sitio (SLOT_EVENT de stageSlots): su paso, PROGRESS(x), y sus marcas en las condiciones
+    for m in re.finditer(r"\{ \{ \{ ([^}]*) \}, \{ ([^}]*) \} \}, SLOT_EVENT, (0x[0-9A-Fa-f]+|\d+),", src):
+        ev, conds, steps, flag = num(m.group(3)), [], [], ""
+        for c in (m.group(1), m.group(2)):
+            pm = re.match(r"PROGRESS\((0x[0-9A-Fa-f]+|\d+)\), 1", c)
+            fm = re.match(r"FLAG\((0x[0-9A-Fa-f]+|\d+), (0x[0-9A-Fa-f]+|\d+)\), (\d+)", c)
+            if pm:
+                steps.append(num(pm.group(1)))
+            elif fm:
+                g, k, v = num(fm.group(1)), num(fm.group(2)), fm.group(3)
+                if g == 0x40 and v == "0" and not flag:
+                    flag = f"F40:{k:02x}"
+                else:
+                    conds.append(f"F{g:02X}:{k:02X}={v}")
+            elif not c.startswith("CODES_END"):
+                conds.append(c.replace(" ", ""))
+        what = ("al pisar un sitio" + (f" si {', '.join(conds)}" if conds else "") + "; " + ends.get(ev, "")).strip("; ")
+        for p in steps or [-1]:
+            by_step[p].append((f.stem, flag, ev, what))
+    # adónde lleva cada evento: los saltos de mapa de su guion (0x304, modo, x, y, dir)
+    scripts = dict(re.findall(r"\{\s*(\d+),\s*(script\w+),", src))
+    for st_ev in [x for p in by_step for x in by_step[p] if x[0] == f.stem]:
+        name = scripts.get(str(st_ev[2]))
+        if not name:
+            continue
+        body = re.search(r"s16 %s\[\] = \{(.*?)\};" % name, src, re.S)
+        if body:
+            for j in re.finditer(r"0x304,\s*(0x[0-9A-Fa-f]+|\d+),\s*(0x[0-9A-Fa-f]+|\d+),\s*(0x[0-9A-Fa-f]+|\d+),", body.group(1)):
+                JUMPS.setdefault((f.stem, st_ev[2]), []).append(f"{num(j.group(1)):#x} ({num(j.group(2))}, {num(j.group(3))})")
 
 want = {int(x, 16) for x in sys.argv[1:]}
 for p in sorted(by_step):
@@ -50,4 +80,6 @@ for p in sorted(by_step):
         continue
     print(f"######## historia {p:#x}")
     for stage, flag, ev, what in by_step[p]:
-        print(f"  {stage} ({PLACES.get(stage, '')[:40]}) evento {ev} {flag}: {what[:170]}")
+        jump = JUMPS.get((stage, ev))
+        jump = f" → lleva a {', '.join(dict.fromkeys(jump))}" if jump else ""
+        print(f"  {stage} ({PLACES.get(stage, '')[:40]}) evento {ev} {flag}: {what[:170]}{jump}")

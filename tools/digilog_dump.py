@@ -41,8 +41,13 @@ def main():
         if t != tab:
             tab = t
             print("  ACTIVAS" if t == "active" else "  HECHAS")
+        # los títulos del propio Digilog: los objetos con su nombre corregido (ITEM_NAMES) y las misiones sin objeto
+        # (TITLED_QUESTS), como los dibuja el juego
+        key = int(item, 16)
+        fixed = {i: es for i, es, _ in journal_steps.ITEM_NAMES}
+        titled = {q[0]: q[3] for q in journal_steps.TITLED_QUESTS}
         title = f"historia {n}" if kind == "story" else (
-            items[int(item, 16)] if int(item, 16) < 0x200 else f"misión propia {n}")
+            fixed.get(key) or (items[key] if key < 0x200 else titled.get(key, f"misión propia {n}")))
         line = f"    {title} [mapa {mode}]"
         if int(total):
             i = int(text) - journal_steps.FIRST_STEP_TEXT
