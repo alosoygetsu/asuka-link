@@ -495,7 +495,8 @@ def text_index():
 @functools.lru_cache(None)
 def stages_json():
     out = {}
-    for f in sorted((data_dir() / "stages").glob("wstag*.json")):
+    import virtual_stages  # los que no tienen JSON en el juego extraído (la Torre de Carga, 0x210)
+    for f in sorted((data_dir() / "stages").glob("wstag*.json")) + virtual_stages.paths():
         out[f.stem] = json.loads(f.read_text())
     return out
 
@@ -612,6 +613,36 @@ def talk_text(stage, actor, talk):
         return ""
 
 
+@functools.lru_cache(None)
+def story_choices():
+    """las filas de FIELDSTG_progressEvents (fieldstg/data/fieldstg.c: en un paso de la historia, con su marca a 0 y su
+    condición, lanzan un evento y luego otro: las subastas de la Torre de Carga) con las respuestas que ponen su marca
+    (END_CHOICE(n, a, b) de fieldstg/field_stage.c: las dos ponen 0x400 + n; la primera, también a y b)"""
+    import quest_talks as q
+    data = DECOMP / "src" / "fieldstg" / "data" / "fieldstg.c"
+    t = read(data)
+    i = t.index("ProgressEvent FIELDSTG_progressEvents[] = {")
+    rows = []
+    for m in re.finditer(r"\{(-?\d+), (0x[0-9A-Fa-f]+|\d+), (0x[0-9A-Fa-f]+|\d+), (0x[0-9A-Fa-f]+|\d+), (0x[0-9A-Fa-f]+|\d+)\}",
+                         t[i:t.index("};", i)]):
+        p, flag, cond, s1, s2 = (int(x, 0) for x in m.groups())
+        if p < 0:
+            break
+        line = t[:i + m.start()].count("\n") + 1
+        rows.append(dict(k=len(rows), progress=p, flag=flag, cond=q.code(cond, 1) or f"{cond:#x}", script=s1, next=s2,
+                         where=rel(data, line)))
+    fs = DECOMP / "src" / "fieldstg" / "field_stage.c"
+    for n, l in enumerate(read(fs).split("\n"), 1):
+        m = re.match(r"END_CHOICE\((\d+), (0x[0-9A-Fa-f]+), (0x[0-9A-Fa-f]+)\)", l)
+        if m:
+            k, a, b = int(m.group(1)), int(m.group(2), 16), int(m.group(3), 16)
+            for r in rows:
+                if r["flag"] == 0x400 + k:
+                    act = [f"+{item_name(c & 0x1FF)}" if 0x8000 <= c < 0x9000 else (q.code(c, 1) or hex(c)) for c in (a, b)]
+                    r.update(answer=rel(fs, n), codes=(a, b), actions=act)
+    return rows
+
+
 def cmd_marca(args):
     """marca F40:05: dónde se activa, se borra y se comprueba una marca (código, conversaciones, guiones, Digilog)"""
     if not args:
@@ -634,7 +665,8 @@ def cmd_marca(args):
                 if (int(m.group(2), 0) << 8 | int(m.group(3), 0)) == code:
                     found, val = True, m.group(5)
                     break
-            if not found and raw.search(l) and (l.lstrip().startswith(("/*", "*", "//")) or "flag" in l.lower()):
+            if (not found and raw.search(l) and (l.lstrip().startswith(("/*", "*", "//")) or "flag" in l.lower())
+                    and not re.match(r"\s*/\* 0x[0-9A-Fa-f]+ \*/", l)):  # no los offsets de las structs
                 # el número suelto, en los comentarios ("sets flag 0x4005"); en el código suele ser otra cosa (un
                 # opcode de guion como 0x601)
                 notes.append(f"{rel(f, n)}  {l.strip(' /*').strip()[:90]}")
@@ -655,6 +687,16 @@ def cmd_marca(args):
                 tests.append(f"comprueba{v} {where} {ctx}{say}")
             else:
                 other.append(f"usa{v} {where} {ctx}  {l.strip()[:70]}")
+    # las marcas que van en tablas como números (los eventos de la historia, las respuestas de las preguntas)
+    for r in story_choices():
+        if r["flag"] == code:
+            tests.append(f"comprueba=0 {r['where']} FIELDSTG_progressEvents: en el paso {r['progress']:#x} lanza el "
+                         f"evento {r['script']} si {r['cond']}")
+        if r.get("answer") and r["flag"] == code:
+            sets.append(f"activa=1 {r['answer']} FIELDSTG_endChoice{r['k']}Answer0/1 (las dos respuestas; la primera "
+                        f"también {', '.join(r['actions'])})")
+        if code in r.get("codes", ()):
+            sets.append(f"activa=1 {r['answer']} FIELDSTG_endChoice{r['k']}Answer0 (al aceptar la pregunta {r['k']})")
     import journal_steps as j
     for steps_of, steps in j.STORY:
         for c, _, es, _ in steps:
@@ -1296,6 +1338,7 @@ def stage_places():
         m = re.match(r"- `(wstag\d+)`: (.*)", l)
         if m:
             out[m.group(1)] = (m.group(2), zone)
+    out.setdefault("wstag260", ("Cargo Tower, Asuka City (el campo de FIELDSTG)", "Asuka City"))
     return out
 
 
@@ -1510,6 +1553,20 @@ def cmd_digilog(args):
         print(l)
 
 
+def cmd_eventos(args):
+    """eventos [paso_hex ...]: cadena de eventos de cada paso de historia (story_events.py) y los eventos de la tabla
+    de la historia de ese paso (FIELDSTG_progressEvents: las subastas, con su precio y lo que dan)"""
+    run_script("story_events", args)
+    want = {int(a, 16) for a in args if re.fullmatch(r"(0x)?[0-9A-Fa-f]+", a)}
+    rows = [r for r in story_choices() if not want or r["progress"] in want]
+    if rows:
+        print("tabla de la historia (FIELDSTG_progressEvents, en la Torre de Carga 0x210):")
+    for r in rows:
+        ans = f"; aceptar: {', '.join(r['actions'])}" if r.get("actions") else ""
+        print(f"  paso {r['progress']:#x}: si {flag_text(r['flag'])}=0 y {r['cond']}, eventos {r['script']} y {r['next']}"
+              f"{ans}  [{r['where']}]")
+
+
 COMMANDS = {
     "addr": cmd_addr,
     "sym": cmd_sym,
@@ -1525,7 +1582,7 @@ COMMANDS = {
     "personaje": cmd_personaje,
     "estado": cmd_estado,
     "pasos": script_cmd("story_steps", "pasos [paso_hex ...]: conversaciones que hacen algo en cada paso de historia (story_steps.py)"),
-    "eventos": script_cmd("story_events", "eventos [paso_hex ...]: cadena de eventos de cada paso de historia (story_events.py)"),
+    "eventos": cmd_eventos,
     "codigo": script_cmd("story_code", "codigo [paso_hex ...]: dónde cambia GAME.progress y qué marcas activa el código (story_code.py)"),
     "dialogo": script_cmd("story_dialogue", "dialogo EVENTO|wstagNNN:EVENTO ...: frases de un evento, en español (story_dialogue.py)"),
     "charlas": script_cmd("quest_talks", "charlas MODO_hex ... | --busca CÓDIGO[,..]: conversaciones con condiciones y acciones (quest_talks.py)"),

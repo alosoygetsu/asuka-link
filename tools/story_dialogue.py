@@ -36,6 +36,17 @@ def find(event, only=None):
         eu = re.findall(r"#define EVENT_TEXT_FILE (0x[0-9A-Fa-f]+)", src)
         script = re.search(r"s16 %s\[\] = \{(.*?)\};" % m.group(1), src, re.S)
         return f.stem, int(eu[-1], 16) if eu else None, int(m.group(3), 0) if m.group(3) else None, script.group(1) if script else ""
+    # los eventos de la historia (FIELDSTG_events de fieldstg/data/fieldstg.c): sus guiones, WSTAG260_scriptN en
+    # wstag260.c, y sus textos en STORY_TEXT_FILE (el europeo, el último #define)
+    if only in (None, "wstag260", "fieldstg"):
+        data = (STAGES.parent / "fieldstg" / "data" / "fieldstg.c").read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"\{\s*%d,\s*WSTAG260_(\w+),\s*(STORY_TEXT\((0x[0-9A-Fa-f]+|\d+)\)|0|NULL)" % event, data)
+        if m:
+            eu = re.findall(r"#define STORY_TEXT_FILE (0x[0-9A-Fa-f]+)", data)
+            src = next(STAGES.rglob("wstag260.c")).read_text(encoding="utf-8", errors="replace")
+            script = re.search(r"s16 %s\[\] = \{(.*?)\};" % m.group(1), src, re.S)
+            return ("wstag260 (eventos de la historia)", int(eu[-1], 16) if eu else None,
+                    int(m.group(3), 0) if m.group(3) else None, script.group(1) if script else "")
     return None
 
 for arg in sys.argv[1:]:

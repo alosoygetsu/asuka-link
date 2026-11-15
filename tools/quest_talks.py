@@ -38,6 +38,9 @@ SPECIALS = {_nums[i]: (_nums[i + 1], _nums[i + 2]) for i in range(0, len(_nums) 
 _rg = _ev[_ev.index("u8 PROGRESS_RANGES[][2] = {"):]
 _rg = [int(x, 16) for x in re.findall(r"0x([0-9A-Fa-f]+)", _rg[:_rg.index("};")])]
 RANGES = [(_rg[i], _rg[i + 1]) for i in range(0, len(_rg), 2)]
+# las cantidades de checkMoney (events.c)
+MONEY = {name: [int(x) for x in re.findall(r"\d+", body)]
+         for name, body in re.findall(r"s32 (MONEY_\w+)\[\] = \{([^}]*)\}", _ev)}
 # las condiciones 0x72 (checkPartyStat): el Carisma del equipo (battle[5] de los tres, con su equipo) frente a un umbral
 _th = _ev[_ev.index("s32 PARTY_STAT_THRESHOLDS[] = {"):]
 CHARISMA = [int(x) for x in re.findall(r"\d+", _th[_th.index("{"):_th.index("};")])]
@@ -60,7 +63,10 @@ def special(i, v):
         return {0: f"{n}empezó con el pack {arg}", 1: f"{n}tiene a {p}", 2: f"{n}lleva a {p} en el equipo", 3: f"desbloquea a {p}",
                 4: f"{n}{p} a nivel 45", 5: f"{n}suma de niveles del equipo >= {arg * 15 + 30}", 6: f"{n}le falta {p}",
                 7: f"{n}todos a nivel 45", 8: "cura al equipo", 9: f"{n}tiene a los 8"}.get(op, f"compañero op{op} {arg}")
-    if kind == 0x20: return f"{n}dinero (op{op} {arg})"
+    if kind == 0x20:  # checkMoney: tener MONEY_REQUIRED[arg], ganar MONEY_GAINS[arg] o pagar MONEY_LOSSES[arg]
+        table = MONEY.get(("MONEY_REQUIRED", "MONEY_GAINS", "MONEY_LOSSES")[op] if op < 3 else "", [])
+        amount = table[arg] if arg < len(table) else f"[{arg}]"
+        return {0: f"{n}tiene {amount} BIT", 1: f"gana {amount} BIT", 2: f"paga {amount} BIT"}.get(op, f"dinero op{op} {arg}")
     if kind == 0x30: return f"{n}historia entre {RANGES[arg][0]:#x} y {RANGES[arg][1]:#x}"
     if kind == 0x40: return f"{n}recuento de marcas {op}/{arg}"
     if kind == 0x50: return f"icono {arg}"
@@ -110,7 +116,8 @@ def main():
         return c0 in SEARCH or c in SEARCH or (c >> 8) in groups
     if groups:
         SEARCH.add(-1)  # que SEARCH no esté vacío: se busca
-    for f in sorted(glob.glob(str(DATA / "stages" / "wstag*.json"))):
+    import virtual_stages  # y los que no tienen JSON en el juego extraído (la Torre de Carga, 0x210)
+    for f in sorted(glob.glob(str(DATA / "stages" / "wstag*.json"))) + [str(p) for p in virtual_stages.paths()]:
         d = json.load(open(f))
         modes = [m[0] for m in d.get("euModes") or d.get("modes") or []]
         if want and not want & set(modes) or not SEARCH and not want:

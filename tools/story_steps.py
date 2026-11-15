@@ -11,7 +11,8 @@ import quest_talks as q  # noqa: E402  (decodifica códigos y textos)
 DATA = q.DATA
 want = {int(x, 16) for x in sys.argv[1:]}
 by_step = collections.defaultdict(list)
-for f in sorted(glob.glob(str(DATA / "stages" / "wstag*.json"))):
+import virtual_stages  # noqa: E402  (la Torre de Carga, 0x210, que no tiene JSON)
+for f in sorted(glob.glob(str(DATA / "stages" / "wstag*.json"))) + [str(p) for p in virtual_stages.paths()]:
     d = json.load(open(f))
     stage = Path(f).stem
     if stage == "wstag586" or stage.startswith("wstag9"):
