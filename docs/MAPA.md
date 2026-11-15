@@ -1,7 +1,7 @@
 # Mapa del código
 
 Para orientarse rápido. Las consultas concretas (direcciones, símbolos, textos, marcas, Digimon), con
-`python native/tools/dw3.py` (sin argumentos lista los subcomandos).
+`python native/tools/dw3.py` (sin argumentos lista los subcomandos). Cómo probar cada cosa: [PRUEBAS.md](PRUEBAS.md).
 
 ## El juego: `dw3_decomp/src` (el original, no se edita)
 El ejecutable (`main`) siempre está cargado; los overlays (`*.PRO`) cargan todos en 0x80082CB0, uno cada vez, y los

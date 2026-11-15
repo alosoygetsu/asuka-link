@@ -6,54 +6,26 @@ responsabilidad nuestra.
 
 **Coste:** **bajo** (unos días), **medio** (una o dos semanas), **alto** (varias semanas, con riesgo de atascarse).
 
-## En marcha
-- **v1.1.0:**
-  - proyecto independiente (scripts en git, sin depender del port);
-  - el launcher ya no descarga programas de fuera, y comprueba las actualizaciones;
-  - entradas de red validadas;
-  - el avance rápido se apaga en los combates en red;
-  - quitadas del todo "Curar al subir de nivel", "Guardar en cualquier sitio" y los packs extra.
-- **v1.2.0:** el Digilog completo: paneles de lista y detalle, fotos de los mapas, el objeto que pide cada misión y los
-  iconos de las teclas.
-- **v1.2.x:** pasos en todas las misiones del Digilog (y en 5 idiomas), misiones de cartas, arreglos de red.
-- **v1.2.3, transición:** un solo zip por release (`asuka-link-<versión>.zip`, también para actualizar), el
-  cooperativo activado por defecto. Es la última que sube además el `dw2003-native-<versión>.zip` de los launchers
-  anteriores.
-- **v1.3.0, la versión base** (publicada el 12-11-2026): a partir de su lanzamiento es el punto de partida del proyecto.
-  - **Opciones dentro del juego, en el menú de pausa del mapa:** una fila "Opciones" antes de "Salir". Select/Back y
-    Esc ya no abren nada.
-  - **Mods fijos:**
-    - Desaparece la pestaña Mods (en el launcher y en el juego).
-    - Activados: Digilog, viaje rápido, texto rápido, EXP compartida, entrenamiento sin azar, BladeGarurumon, efectos,
-      sonidos y scripts propios y el cooperativo. El objetivo en el mapa va apagado.
-    - Las líneas de esas opciones en un `native.ini` viejo se ignoran.
-  - **Menos opciones:**
-    - Se pueden cambiar: pantalla completa, tamaño de ventana, resolución interna, pantalla ancha en combates, idioma,
-      iconos de botones, vibración y botones. EXP y dinero (x1–x5) solo se cambian en el launcher.
-    - Fijo: 60 fps, VSync, vídeos suaves, sigue funcionando sin foco, sub-píxel, profundidad, perspectiva, texturas
-      suaves, color real, sin tramado, sombras suaves, sombras y cielo en combate, zona muerta 10 %, menús en avance
-      rápido, saltar PRESS START y cursor que da la vuelta.
-  - **Launcher rehecho entero, también en lo gráfico:** el cooperativo en la pantalla principal, sin pasar por
-    Ajustes.
-  - **Estilo:** el atardecer de Asuka renovado: la escena a pantalla completa, un menú lateral (Jugar, Ajustes,
-    Partidas, Herramientas, Salir) y la **sala** arriba a la derecha.
-  - **La sala** (red: versión 8):
-    - Tu grupo de juego, de hasta 4 contigo.
-    - **En tu red:** los launchers de la misma red se anuncian por difusión y salen como **disponibles**, sin
-      entrar en tu grupo. Con "Invitar", el otro ve la invitación y la acepta o la rechaza. Así puede haber dos
-      grupos en la misma red si sois más de 4.
-    - **Añadir por IP** (para Tailscale, ZeroTier o Internet): empareja directamente. Quien recibe se añade a tu
-      grupo sin tener que escribir tu IP.
-    - Un grupo lleno (4) no sale como invitable. "Salir de la sala" te deja solo.
-    - El grupo se guarda como `coop_peers`, y el juego, si está abierto, sigue los cambios sin reiniciar.
-  - Descartado para la 1.3: el código de sala (UPnP). Más adelante, quizá, un código de amigo fijo con un servidor
-    pequeño nuestro.
-  - **Una sola descarga:** solo `asuka-link-<versión>.zip` y su `.sha256` (release.ps1 deja de subir el nombre viejo
-    a partir de la 1.3.0).
-  - Al publicarla: decidir qué hacer con las releases y el historial anteriores.
-- **Después:**
-  - raids: "Turno de X", objetos y huir, ajuste de jefes;
-  - avisos de "X ha entrado en…".
+## Hecho (el detalle, en `CHANGELOG-COOP.md`)
+- **v1.1.0:** proyecto independiente (scripts en git); el launcher no descarga programas de fuera y comprueba las
+  actualizaciones; entradas de red validadas; avance rápido apagado en combates en red; quitados "Curar al subir de
+  nivel", "Guardar en cualquier sitio" y los packs extra.
+- **v1.2.x:** el Digilog completo (paneles, fotos de los mapas, objeto que pide cada misión, iconos de teclas), pasos
+  en todas las misiones y en 5 idiomas, misiones de cartas. v1.2.3: un solo zip por release y cooperativo por defecto.
+- **v1.3.0, la versión base** (12-11-2026): opciones dentro del juego (menú de pausa, fila "Opciones"); mods fijos
+  (Digilog, viaje rápido, texto rápido, EXP compartida, entrenamiento sin azar, BladeGarurumon, efectos, sonidos y
+  scripts propios, cooperativo; objetivo en el mapa apagado); menos opciones (EXP y dinero x1–x5 solo en el
+  launcher); launcher rehecho con el atardecer de Asuka y la **sala** (grupo de hasta 4, launchers de tu red como
+  disponibles con "Invitar", "Añadir por IP" para Tailscale, ZeroTier o Internet; el grupo se guarda en `coop_peers`
+  y el juego lo sigue sin reiniciar); una sola descarga, `asuka-link-<versión>.zip` y su `.sha256`. Descartado: el
+  código de sala (UPnP); quizá más adelante un código de amigo con un servidor pequeño.
+- **v1.3.x–v1.6.x:** menú del Guardromon con las ventanas del juego, intercambio y duelos de cartas, viaje rápido
+  seguro, laboratorio con la lista de formas, combates en red iguales en los dos juegos y raids con objetos,
+  "Turno de…", huir y el jefe golpeando a todos (red 9, v1.6.0).
+
+## Siguiente
+- Raids: ajuste del jefe según los jugadores y tiempo límite por turno.
+- Avisos de "X ha entrado en…".
 
 ## Los sistemas del juego
 
