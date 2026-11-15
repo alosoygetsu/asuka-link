@@ -138,15 +138,16 @@ está hecho cuando su condición se cumple. Abajo, los subpasos de cada paso, co
 
 ### 0x05-0x06 La Tarjeta Azul y el tren al sur
 1. Teddy ha visto al Ratón Suerte en la Pradera del Viento. (`F40:11`, 0x229)
-2. Busca la Tarjeta Azul: un Guilmon te manda a su primo. (`F1c:44`, 0x20C)
-3. El primo dice que la tiene otro Guilmon. (`F1c:45`, 0x223)
-4. Un Guilmon Astuto te da una tarjeta… que no funciona en la estación. (`F1c:46`, 0x22C)
-5. En Ciudad Seiryu te cuentan que era una farsa del Guilmon Astuto. (`F1c:47`, 0x22E)
-6. Encuentra al Guilmon Astuto y consigue la Tarjeta Azul verdadera. (`+Tarjeta Azul`, 0x224)
-7. Registra la Tarjeta Azul en la estación. (0x22C)
-8. Gana a Keith en el Puente de Asuka. (`F40:06`, 0x205)
-9. Un terremoto para la góndola en la Grieta Profunda. (`F40:18`, 0x415)
-10. Llega a la Estación Sur. (paso 0x07)
+2. La terminal de la Estación Este pide la Tarjeta Azul (evento 90: la historia pasa a 0x06). (0x22C)
+3. Keith te reta al cruzar el Puente de Asuka. (`F40:06`, 0x202)
+4. Un Guilmon de la Posada de Asuka te manda a su primo. (`F1c:44`, 0x20C)
+5. El primo, en la Posada del Bosque: la tiene otro Guilmon, en Ciudad Seiryu. (`F1c:45`, 0x223)
+6. El Guilmon Astuto, en la Torre Céfiro, te da la Tarjeta 8zul. (`+0x18F`, 0x22F)
+7. No funciona en la terminal de la estación. (`F1c:46`, 0x22C)
+8. Un Guilmon de Ciudad Seiryu: era una farsa del Guilmon Astuto. (`F1c:47`, 0x22E)
+9. El Guilmon Astuto, en la Posada Bosque PS, te da la Tarjeta Azul verdadera. (`+Tarjeta Azul`, 0x224)
+10. Regístrala en la terminal (evento 10, sin marca) y toma la góndola: un terremoto la para. (`F40:18`, 0x22D)
+11. Llega a la Estación Sur. (paso 0x07)
 
 ### 0x07-0x09 Zanbamon y la máscara
 1. Zanbamon te corta el paso en la Tumba de la Selva. (`F40:00`, 0x480)
@@ -161,36 +162,51 @@ está hecho cuando su condición se cumple. Abajo, los subpasos de cada paso, co
 10. Devuélvesela a Sepikmon. (evento 230, paso 0x0A)
 
 ### 0x0A Líder Suzaku
-1. Vence al Líder Suzaku en el Salón Suzaku: Pin Suzaku. Para el Sector Oeste hay que llamar a Submarimon. (`F40:02`, 0x240)
+1. Lisa te habla al llegar a Ciudad Suzaku, frente a la posada (evento 250). (`F40:0a`, 0x23E)
+2. Vence al Líder Suzaku en el Salón Suzaku: Pin Suzaku. Para el Sector Oeste hay que llamar a Submarimon. (`F40:02`, 0x240)
 
 ### 0x0B-0x0D Buscar a Teddy
-1. Kail quiere buscar a Teddy en el Centro Admin. de Asuka. (`F40:04`, Vestíbulo)
-2. El guarda no deja pasar: separaos y pregunta en la ciudad. (paso 0x0C)
-3. Ponte el Traje Agumon: el guarda deja pasar a los Digimon. (`+Traje Agumon`, 0x20B)
-4. Kail, disfrazada, sigue buscando por su cuenta. (`F40:05`, Vestíbulo)
-5. En la Sala Maestra, el Maestro de Juego os pilla: Teddy lo tiene preso el Ratón Suerte, en el Sector Oeste. (`F1c:0e`, 0x305)
+1. Kail te espera en Ciudad Suzaku (evento 270, solo allí: con el viaje rápido, la misión espera a que vuelvas) y
+   te lleva al Salón principal de Asuka (0x204, evento 271). (`F40:04`)
+2. El guarda del Centro Admin. no deja pasar (evento 272; vuelta al Salón, evento 273: historia 0x0C). (0x214)
+3. El Maestro John, en la taberna Chuleta Cordero: solo entran el personal y los Digimon. (`F1a:0c`, 0x20F)
+4. Jake y la abuela Beth, en Ciudad Asuka: Etemon les dio Trajes Agumon. (`F1a:14`, 0x201)
+5. Mat el Travieso, en las Alcantarillas: no sabe de Etemon. (`F1a:15`, 0x21B)
+6. Kail, en el Salón principal: Mat es Etemon, disfrazado. (`F1a:16`, 0x203)
+7. Mat te da el Traje Agumon (evento 290). (`+Traje Agumon`, 0x21B)
+8. Con el traje, en la Ruta Subterránea (evento 300: historia 0x0D). (0x20B)
+9. Kail, disfrazada (evento 310), y el guarda os deja pasar (evento 340). (`F1c:0c`, 0x214)
+10. En la Sala Maestra, el Maestro de Juego os pilla: Teddy lo tiene preso el Ratón Suerte, en el Sector Oeste. (`F1c:0e`, 0x218)
+- `F40:05` no sirve de paso: la ponen los eventos 271 y 310 y la borran el 272 y el 352.
 
 ### 0x0E Jefe Qing Long y el Chip TNT
-1. Te piden una bomba para abrir un muro. (`F1a:2b`)
-2. Baronmon, en las Ruinas Protocolo, haría un Chip TNT con una Bola TNT. (`F1c:4f`, 0x226)
-3. Consigue la Bola TNT. (`+Bola TNT`)
-4. Baronmon te hace el Chip TNT. (`+Chip TNT`, 0x226)
-5. Pon el Chip TNT en el muro del Pantano Bios. (`F40:07`, 0x455)
+1. Nami, en la Bahía Fénix: vio algo detrás del santuario del Pantano Bios. (`F1a:02`, 0x23B)
+2. Detrás del altar del Pantano Bios, el Símbolo de la Sinceridad. (`F1a:2a`, 0x235)
+3. Sepikmon, en la Casa del Chamán: Baronmon hace bombas. (`F1a:2b`, 0x239)
+4. Baronmon, en las Ruinas Protocolo, haría un Chip TNT con una Bola TNT. (`F1c:4f`, 0x226)
+5. Consigue la Bola TNT (Triceramon). (`+Bola TNT`)
+6. Baronmon te hace el Chip TNT. (`+Chip TNT`, 0x226)
+7. Pon el Chip TNT en el muro del Pantano Bios. (`F40:07`, 0x235)
 
 ### 0x0F-0x11 Ciudad Byakko
-1. Vence al Líder Byakko: el Pin Byakko está en una sala. (`F40:1e`, Cúpula Byakko)
-2. Era una trampa: caes al sótano. Busca una salida. (paso 0x10)
-3. Numemon te saca: la gente de Byakko es falsa. (`F40:a2`, Valle de las Balas)
-4. Encuentra a Numemon en la Fábrica Dum Dum. (`F40:3c`)
-5. Vence a HiAndromon: te abre las escaleras secretas y te da el Rifle Oxidado. (`F0a:04`, 0x252)
+1. Un Numemon te avisa en el Desierto del Ruido (evento 380). (`F40:0c`, 0x248)
+2. El Líder Byakko te reta y te manda a por el pin a otra sala. (`F40:1e`, Cúpula Byakko)
+3. En la Sala de Almacén no hay pin: caes al sótano (eventos 412-413: historia 0x10). (0x25F)
+4. Los guardias de la Cueva Subterránea. (`F1a:03`, 0x260)
+5. Numemon te saca (evento 421) y te lleva al Valle Balas (evento 422, `F40:a2`): la gente de Byakko es falsa. (`F40:20`, 0x260)
+6. El verdadero Líder Byakko, en la Sala Delirios de la Torre Delirio (eventos 430-431: historia 0x11). (0x25C)
+7. Encuentra a Numemon en la Fábrica Dum Dum. (`F40:3c`, 0x24D)
+8. Numemon se esconde en cuatro salas con cofre (eventos 450-500); el último hace que HiAndromon te deje pasar. (`F1c:25`)
+9. Vence a HiAndromon: escaleras secretas y Rifle Oxidado (eventos 510-511: historia 0x12). (0x252)
 
 ### 0x12-0x15 Lisa, el Ratón Suerte y el Pase de Personal
 1. Sigue a Lisa por las alcantarillas; el Ratón Suerte es Numemon. (`F40:39`, Alcantarillas)
 2. En su escondite, vence al Atacante de la A.o.A. (`F40:3b`, Sala Secreta)
-3. Sin un Pase de Personal no se entra en Ciudad Asuka. (`F40:3a`)
-4. Datamon abriría los cimientos con un pase. (`F1c:1b`, 0x21C)
-5. Nick busca un pase en el ordenador. (`F40:03`, Sala Secreta)
-6. Usa el Pase de Personal con Datamon. (`F1c:1d`, 0x21C)
+3. Kail: sin un Pase de Personal no se entra en Ciudad Asuka; Lisa te manda a buscar a Nick y Keith (evento 540). (`F40:3a`)
+4. Datamon abriría los cimientos con un pase (opcional, no va en el Digilog). (`F1c:1b`, 0x21C)
+5. Nick y Keith, en el Lago SB Suzaku (evento 550), que te lleva a la Sala Secreta (evento 551: historia 0x15). (`F40:03`, 0x241)
+6. Nick encuentra el pase (evento 552). (`F40:3d`, `+Pase Personal`, 0x256)
+7. Usa el Pase de Personal con Datamon. (`F1c:1d`, 0x21C)
 
 ### 0x16 Maestro de Juego
 1. Ábrete paso entre los soldados del Centro Admin. (combates `F0c:05`-`F0c:18`)
@@ -234,7 +250,7 @@ está hecho cuando su condición se cumple. Abajo, los subpasos de cada paso, co
 1. Llega a la Sala de Control del Satélite Espía. (`F40:74`)
 2. Vence a Lord Megadeath y a Snatchmon. (evento 1070)
 
-Los pasos que no aparecen aquí (0x00-0x03, 0x18-0x19, 0x1D, 0x1F, 0x2B-0x2D) ya se cuentan bien con su frase.
+El 0x1D es el Digihuevo de la Sabiduría, en el Lago UG Zhu Que (evento 760). Los pasos que no aparecen aquí (0x00-0x03, 0x18-0x19, 0x1D, 0x1F, 0x2B-0x2D) ya se cuentan bien con su frase.
 
 ## Los jefes de las misiones del port: sus marcas y sus tramos
 Cada jefe pone una marca al encontrarlo (y empieza el combate) y otra al vencerlo (la de hecha). Casi todos solo están

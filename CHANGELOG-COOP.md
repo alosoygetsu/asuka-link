@@ -13,6 +13,19 @@ Basado en el port v0.18.9. Red: **versión 9**, la misma que la 1.6.0 (se juntan
 - Lo mismo pasaba con el juego, el visor o el editor abiertos desde el launcher: se quedaban con el puerto de la
   sala mientras estaban abiertos, y volver a abrir el launcher daba el aviso. El juego tampoco pasa ya su puerto
   (27500) a lo que abre.
+- **Digilog:**
+  - Llevar en la bolsa el objeto de un paso posterior ya no hace saltar pasos (la Bola TNT, la Tela de Araña o la
+    Bolsa de Carpetas antes de tiempo): un objeto solo cuenta cuando ya está hecho lo anterior.
+  - La Tarjeta Azul, en su orden: la terminal de la estación, Keith en el puente, los Guilmon y el Guilmon Astuto
+    de la Torre Céfiro, que faltaba.
+  - Líder Suzaku: la llegada a Ciudad Suzaku. Buscar a Teddy: cómo conseguir el Traje Agumon (la taberna, Jake y la
+    abuela Beth, Mat el Travieso, Kail), y Kail te espera en Ciudad Suzaku si te vas con el viaje rápido.
+  - Huevo de la Sinceridad: mirar detrás del altar del Pantano Bios. Ciudad Byakko: el Numemon del desierto, los
+    guardias de la cueva, el verdadero Líder Byakko en la Torre Delirio y la persecución por la fábrica.
+  - Pase de Personal: a Nick y Keith se les busca en el Lago SB Suzaku.
+  - Los pasos ya no cuentan lo que te dicen los personajes: dicen con quién hablar y dónde.
+  - Las descripciones del Salón Zhu Que y del Lago UG Zhu Que (el Digihuevo de la Sabiduría) eran de otro paso.
+  - En español, la DDNA de Veemon se llamaba «DADN Veermon» (errata del juego): en el Digilog, «DADN Veemon».
 
 ## v1.6.0
 Basado en el port v0.18.9. Red: **versión 9**: no se junta con la 1.5.1 ni las anteriores (todos tenéis que

@@ -163,7 +163,7 @@
  #define SIDE_QUEST_COUNT (s32)(sizeof SIDE_QUESTS / sizeof SIDE_QUESTS[0])
  #define JOURNAL_MAX (JOURNAL_LAST_STEP + 1 + SIDE_QUEST_COUNT)
  
-@@ -484,39 +551,127 @@
+@@ -484,39 +551,141 @@
      s32 cursor;
      s32 page;
      s32 pageCount;
@@ -288,18 +288,32 @@
 +}
 +
 +/* An entry's title in a window: a story step's, a side quest's item, or its own */
++/* An item's name in the Digilog: the game's, or ours where the game's has a typo (JOURNAL_ITEM_NAMES: the Spanish
++   "DADN Veermon") */
++static void setJournalItemName(TextWindow *window, s32 item) {
++    s32 i;
++
++    for (i = 0; i < (s32)(sizeof JOURNAL_ITEM_NAMES / sizeof JOURNAL_ITEM_NAMES[0]); i++) {
++        if (JOURNAL_ITEM_NAMES[i].item == item) {
++            window->setString(window, native_journal_text(LANGUAGE), JOURNAL_ITEM_NAMES[i].text);
++            return;
++        }
++    }
++    window->setString(window, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_NAMES)), item);
++}
++
 +static void setJournalTitle(TextWindow *window, s32 entry) {
 +    if (entry >= 0) {
 +        window->setString(window, journalTexts(), TEXT_STEP(entry));
 +    } else if (journalOwnTitle(entry) != 0) {
 +        window->setString(window, native_journal_text(LANGUAGE), journalOwnTitle(entry));
 +    } else {
-+        window->setString(window, FILE_CACHE.load(TEXT_FILE(TEXT_ITEM_NAMES)), SIDE_QUESTS[-1 - entry].item);
++        setJournalItemName(window, SIDE_QUESTS[-1 - entry].item);
 +    }
  }
  
  /* The tab's entries */
-@@ -545,7 +700,15 @@
+@@ -545,7 +714,15 @@
  }
  
  /* An entry's field */
@@ -315,7 +329,7 @@
      return entry >= 0 ? STSTATUS_objectiveModeAt(entry) : SIDE_QUESTS[-1 - entry].mode;
  }
  
-@@ -566,30 +729,284 @@
+@@ -566,30 +743,309 @@
      return mode >= 0x200 && mode <= 0x2D6;
  }
  
@@ -360,12 +374,37 @@
 +    return journalCode(step->code);
 +}
 +
++/* Whether a step's code is a flag or a past story step: the steps an item's waits for (journalStepNow) */
++static s32 journalGateCode(s32 code) {
++    return code < 0x7000 || (code & 0xF000) == 0xF000;
++}
++
++/* Whether a step counts towards the one to do: an item already in the bag only once the last flag's step before it
++   holds (a TNT Ball or a Spider Web picked up early doesn't skip the talks before it); an item handed in still
++   counts, as it only held after that step */
++static s32 journalStepCounts(const JournalStep *steps, s32 i) {
++    s32 j;
++
++    if (!journalStepDone(&steps[i])) {
++        return 0;
++    }
++    if ((steps[i].code & 0xF000) != 0x8000) {
++        return 1;
++    }
++    for (j = i - 1; j >= 0; j--) {
++        if (journalGateCode(steps[j].code)) {
++            return journalStepDone(&steps[j]);
++        }
++    }
++    return 1;
++}
++
 +static s32 journalStepNow(const JournalStep *steps, s32 n, s32 unordered) {
 +    s32 now = 0;
 +    s32 i;
 +
 +    for (i = 0; i < n; i++) {
-+        if (journalStepDone(&steps[i])) {
++        if (unordered ? journalStepDone(&steps[i]) : journalStepCounts(steps, i)) {
 +            now = i + 1;
 +        } else if (unordered) {
 +            return i; /* in any order: the first still to do */
@@ -584,7 +623,7 @@
 +    }
 +    if (journalReward(entry) != 0) {
 +        setJournalLabel(windows->rewardLabel, TEXT_REWARD_LABEL(journal->tab));
-+        windows->reward->setString(windows->reward, items, journalReward(entry));
++        setJournalItemName(windows->reward, journalReward(entry));
 +        windows->reward->setPalette(windows->reward, PALETTE_GREEN);
 +    }
 +    if (journalStepShown && journalStepParty) { /* the step's text and the party's total now */
@@ -607,7 +646,7 @@
  static void showJournalPage(Journal *journal, JournalWindows *windows) {
      TextWindow *window;
      s32 i;
-@@ -600,32 +1017,19 @@
+@@ -600,32 +1056,19 @@
          window = windows->entries[i];
          if (n >= journal->count) {
              window->setVisible(window, 0);
@@ -643,7 +682,7 @@
      windows->cursor->setVisible(windows->cursor, journal->count != 0);
  }
  
-@@ -633,66 +1037,190 @@
+@@ -633,66 +1076,190 @@
      s32 i;
  
      if (show) {
@@ -875,7 +914,7 @@
      }
  }
  
-@@ -705,6 +1233,7 @@
+@@ -705,6 +1272,7 @@
      if (PAD_PRESSED(PAD_LEFT) || PAD_PRESSED(PAD_RIGHT)) {
          SOUND.playSound(SOUND_MENU_MOVE);
          journal->tab ^= 1;
@@ -883,7 +922,7 @@
          journal->cursor = 0;
          journal->page = 0;
          fillJournal(journal);
-@@ -723,14 +1252,24 @@
+@@ -723,14 +1291,24 @@
          journal->cursor = journal->cursor < journal->count - 1 ? journal->cursor + 1 : cursor;
      }
      if (cursor == journal->cursor) {
@@ -909,7 +948,7 @@
      showJournalEntry(journal, windows);
      return 1;
  }
-@@ -755,6 +1294,7 @@
+@@ -755,6 +1333,7 @@
          STSTATUS_data.funcs.updateFade(&journal->fades[2]);
          if (STSTATUS_data.funcs.updateFade(&journal->fades[0])) {
              showJournal(journal, windows, 1);
@@ -917,7 +956,7 @@
              journal->substate++;
          }
          break;
-@@ -799,21 +1339,36 @@
+@@ -799,21 +1378,36 @@
          if (FILE_CACHE.isLoading(TEXT_FILE(TEXT_STAGE_NAMES)) || FILE_CACHE.isLoading(TEXT_FILE(TEXT_ITEM_NAMES))) {
              break;
          }
@@ -966,7 +1005,7 @@
          windows->cursor->setVisible(windows->cursor, 0);
          journal->nextState(journal);
          break;
-@@ -833,8 +1388,9 @@
+@@ -833,8 +1427,9 @@
      Journal *journal = createTask(updateJournal, sizeof(Journal), sizeof(JournalWindows));
  
      journal->layer = SCREEN_LAYER;

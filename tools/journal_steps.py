@@ -46,68 +46,90 @@ STORY = [
         (F(0x1C, 0x11), M(0x22B), "Vence a MasterTyranno en el Valle Tyranno.", "Beat MasterTyranno in Tyranno Valley."),
         (F(0x40, 0x12), S(420), "Vence al Líder Seiryu en Ciudad Seiryu.", "Beat Leader Seiryu in Seiryu City."),
     ]),
+    # el paso 0x05 acaba en la terminal de la estación (evento 90 de wstag410); en el 0x06, Keith sale al cruzar el
+    # Puente de Asuka hacia el primer Guilmon. La Tarjeta 8zul (0x18F) la da el Guilmon Astuto de la Torre Céfiro
     ([0x05, 0x06], [
-        (F(0x40, 0x11), S(395), "Teddy ha visto al Ratón Suerte en la Pradera del Viento.", "Teddy saw Lucky Mouse on the Wind Prairie."),
-        (F(0x1C, 0x44), M(0x20C), "Busca la Tarjeta Azul: pregunta a los Guilmon.", "Look for the Blue Card: ask the Guilmon."),
-        (F(0x1C, 0x45), M(0x223), "El primo de Guilmon dice que la tiene otro Guilmon.", "Guilmon's cousin says another Guilmon has it."),
-        (F(0x1C, 0x46), M(0x22C), "La tarjeta del Guilmon Astuto no funciona en la estación.", "Sly Guilmon's card doesn't work at the station."),
-        (F(0x1C, 0x47), M(0x22E), "Era una farsa: busca al Guilmon Astuto.", "It was a fake: find Sly Guilmon."),
-        (ITEM(0x18E), M(0x224), "Consigue la Tarjeta Azul verdadera.", "Get the real Blue Card."),
-        (F(0x40, 0x06), S(205), "Gana a Keith en el Puente de Asuka.", "Beat Keith on Asuka Bridge."),
-        (F(0x40, 0x18), S(415), "Toma la góndola: un terremoto la para en la Grieta Profunda.", "Take the gondola: a quake stops it in the Deeper Crevice."),
+        (F(0x40, 0x11), S(395), "Ve a la Pradera del Viento.", "Go to the Wind Prairie."),
+        (AFTER(0x05), M(0x22C), "Usa la terminal de la Estación Este.", "Use the terminal at East Station."),
+        (F(0x40, 0x06), S(205), "Cruza el Puente de Asuka hacia Ciudad Asuka.", "Cross Asuka Bridge to Asuka City."),
+        (F(0x1C, 0x44), M(0x20C), "Busca al Guilmon de la Posada de Asuka.", "Find the Guilmon at the Asuka Inn."),
+        (F(0x1C, 0x45), M(0x223), "Habla con el Guilmon de la Posada del Bosque.", "Talk to the Guilmon at the Forest Inn."),
+        (ITEM(0x18F), M(0x22F), "Busca al Guilmon Astuto en la Torre Céfiro, Ciudad Seiryu.", "Find Sly Guilmon at Zephyr Tower, Seiryu City."),
+        (F(0x1C, 0x46), M(0x22C), "Usa la tarjeta en la terminal de la Estación Este.", "Use the card at East Station's terminal."),
+        (F(0x1C, 0x47), M(0x22E), "Habla con el Guilmon de Ciudad Seiryu.", "Talk to the Guilmon in Seiryu City."),
+        (ITEM(0x18E), M(0x224), "Encuentra al Guilmon Astuto en la Posada del Bosque PS.", "Find Sly Guilmon at the Forest Inn BF."),
+        (F(0x40, 0x18), M(0x22C), "Registra la tarjeta en la terminal y toma la góndola.", "Register the card at the terminal and take the gondola."),
         (AFTER(0x06), S(440), "Llega a la Estación Sur.", "Reach South Station."),
     ]),
     ([0x07, 0x08, 0x09], [
-        (F(0x40, 0x00), S(480), "Zanbamon te corta el paso en la Tumba de la Selva.", "Zanbamon blocks the way at the Jungle Grave."),
-        (F(0x1C, 0x43), M(0x238), "Gatomon dice que Sepikmon sabrá qué hacer.", "Gatomon says Sepikmon will know what to do."),
-        (F(0x1A, 0x17), S(475), "Sepikmon perdió su máscara: la tenía con Baronmon.", "Sepikmon lost his mask while with Baronmon."),
-        (F(0x1A, 0x18), M(0x226), "Baronmon: Sepikmon anda gastando bromas en Asuka.", "Baronmon: Sepikmon is up to pranks in Asuka."),
-        (F(0x1A, 0x19), M(0x202), "En el Puente de Asuka, un Sepikmon dice que encontró la máscara.",
-         "On Asuka Bridge, a Sepikmon says he found the mask."),
-        (F(0x1A, 0x1A), M(0x201), "Etemon, en Ciudad Asuka: Sepikmon huyó al Lago Divermon.",
-         "Etemon, in Asuka City: Sepikmon ran to Divermon Lake."),
-        (AFTER(0x08), M(0x227), "Busca a Sepikmon en el Lago Divermon: solo está Nick.",
-         "Look for Sepikmon at Divermon Lake: only Nick is there."),
+        (F(0x40, 0x00), S(480), "Ve a la Tumba de la Selva.", "Go to the Jungle Grave."),
+        (F(0x1C, 0x43), M(0x238), "Habla con Gatomon en la Posada del Pantano.", "Talk to Gatomon at the Swamp Inn."),
+        (F(0x1A, 0x17), S(475), "Habla con Sepikmon en la Casa del Chamán.", "Talk to Sepikmon at the Shaman House."),
+        (F(0x1A, 0x18), M(0x226), "Habla con Baronmon en las Ruinas Protocolo.", "Talk to Baronmon at the Protocol Ruins."),
+        (F(0x1A, 0x19), M(0x202), "Busca a Sepikmon en el Puente de Asuka.", "Look for Sepikmon on Asuka Bridge."),
+        (F(0x1A, 0x1A), M(0x201), "Habla con Etemon en Ciudad Asuka.", "Talk to Etemon in Asuka City."),
+        (AFTER(0x08), M(0x227), "Busca a Sepikmon en el Lago Divermon.", "Look for Sepikmon at Divermon Lake."),
         (F(0x1A, 0x1B), M(0x201), "Vuelve a ver a Etemon en Ciudad Asuka.", "See Etemon again in Asuka City."),
         (ITEM(0x015), M(0x21B), "Recupera la Máscara Sepik en las Alcantarillas.", "Get the Sepik Mask back in the Sewers."),
         (AFTER(0x09), S(475), "Devuélvele la máscara a Sepikmon.", "Give the mask back to Sepikmon."),
     ]),
+    # Lisa sale al llegar a Ciudad Suzaku (evento 250 de wstag500)
     ([0x0A], [
+        (F(0x40, 0x0A), M(0x23E), "Ve a Ciudad Suzaku.", "Go to Suzaku City."),
         (F(0x40, 0x02), S(520), "Vence al Líder Suzaku en el Salón Suzaku.", "Beat Leader Suzaku in Suzaku Hall."),
     ]),
+    # Kail te espera en Ciudad Suzaku (evento 270, solo allí: si te vas con el viaje rápido, espera a que vuelvas) y te
+    # lleva al Salón principal (0x204, evento 271). F40:05 no sirve de paso: la ponen, la borran y la vuelven a poner
     ([0x0B, 0x0C, 0x0D], [
-        (F(0x40, 0x04), S(212), "Kail quiere buscar a Teddy en el Centro Admin.", "Kail wants to look for Teddy at the Admin Center."),
-        (AFTER(0x0B), S(285), "El guarda no deja pasar: pregunta por la ciudad.", "The guard won't let you in: ask around town."),
-        (ITEM(0x00F), M(0x20B), "Ponte el Traje Agumon: dejan pasar a los Digimon.", "Wear the Agumon Suit: Digimon may pass."),
-        (F(0x40, 0x05), S(210), "Kail, disfrazada, busca por su cuenta.", "Kail, in disguise, searches on her own."),
-        (F(0x1C, 0x0E), S(305), "En la Sala Maestra os pilla el Maestro de Juego.", "The Game Master catches you in the Master Room."),
+        (F(0x40, 0x04), M(0x23E), "Kail te espera en Ciudad Suzaku.", "Kail is waiting for you in Suzaku City."),
+        (AFTER(0x0B), S(285), "Ve con Kail al Centro Admn. de Asuka.", "Go with Kail to Asuka's Admin Center."),
+        (F(0x1A, 0x0C), M(0x20F), "Pregunta en la taberna Chuleta Cordero de Asuka.", "Ask around at the Lamb Chop tavern in Asuka."),
+        (F(0x1A, 0x14), M(0x201), "Habla con Jake y la abuela Beth en Ciudad Asuka.", "Talk to Jake and Granny Beth in Asuka City."),
+        (F(0x1A, 0x15), M(0x21B), "Habla con Mat el Travieso en las Alcantarillas.", "Talk to Mischievous Mat in the Sewers."),
+        (F(0x1A, 0x16), M(0x203), "Habla con Kail en el Salón principal de Asuka.", "Talk to Kail in Asuka's Main Lobby."),
+        (ITEM(0x00F), M(0x21B), "Vuelve a hablar con Mat el Travieso.", "Talk to Mischievous Mat again."),
+        (AFTER(0x0C), M(0x20B), "Lleva el Traje Agumon a la Ruta Subterránea.", "Take the Agumon Suit to the Underground Path."),
+        (F(0x1C, 0x0C), S(285), "Entra en el Centro Admn. de Asuka.", "Get into Asuka's Admin Center."),
+        (F(0x1C, 0x0E), S(305), "Busca a Teddy en la Sala Maestra.", "Look for Teddy in the Master Room."),
     ]),
+    # detrás del altar del Pantano Bios (F1A:2A), luego Sepikmon
     ([0x0E], [
-        (F(0x1A, 0x02), S(485), "Busca el Símbolo de la Sinceridad: pregunta a Nami en la Bahía Fénix.",
-         "Look for the Symbol of Sincerity: ask Nami at Phoenix Bay."),
-        (F(0x1A, 0x2B), S(475), "Te piden una bomba para abrir un muro.", "You need a bomb to open a wall."),
-        (F(0x1C, 0x4F), M(0x226), "Baronmon haría un Chip TNT con una Bola TNT.", "Baronmon could make a TNT Chip from a TNT Ball."),
+        (F(0x1A, 0x02), S(485), "Habla con Nami en la Bahía Fénix.", "Talk to Nami at Phoenix Bay."),
+        (F(0x1A, 0x2A), M(0x235), "Mira detrás del altar del Pantano Bios.", "Look behind the altar in Bios Swamp."),
+        (F(0x1A, 0x2B), S(475), "Habla con Sepikmon en la Casa del Chamán.", "Talk to Sepikmon at the Shaman House."),
+        (F(0x1C, 0x4F), M(0x226), "Habla con Baronmon en las Ruinas Protocolo.", "Talk to Baronmon at the Protocol Ruins."),
         (ITEM(0x05A), M(0x22B), "Los Triceramon del Valle Tyranno sueltan Bolas TNT.", "Triceramon in Tyranno Valley drop TNT Balls."),
-        (ITEM(0x00E), M(0x226), "Baronmon te hace el Chip TNT.", "Baronmon makes you the TNT Chip."),
+        (ITEM(0x00E), M(0x226), "Lleva la Bola TNT a Baronmon.", "Take the TNT Ball to Baronmon."),
         (F(0x40, 0x07), S(455), "Pon el Chip TNT en el muro del Pantano Bios.", "Set the TNT Chip on the wall in Bios Swamp."),
         # hasta que la historia pase de paso: sin nombrar al Jefe Qing Long, que aún no ha salido
         (AFTER(0x0E), M(0x236), "El muro ha caído: crúzalo y busca el Digihuevo de la Sinceridad.",
          "The wall is down: go through and look for the Digi-Egg of Sincerity."),
     ]),
     ([0x0F, 0x10, 0x11], [
-        (F(0x40, 0x1E), S(675), "Vence al Líder Byakko en la Cúpula Byakko.", "Beat Leader Byakko in Byakko Dome."),
-        (AFTER(0x0F), S(685), "Era una trampa: busca una salida del sótano.", "It was a trap: find a way out of the basement."),
-        (F(0x40, 0xA2), S(575), "Numemon te saca: la gente de Byakko es falsa.", "Numemon gets you out: Byakko's people are fakes."),
+        # Numemon sale en el Desierto del Ruido (evento 380); en la Cueva Subterránea, los guardias (F1A:03) y luego
+        # Numemon (evento 421, F40:20), que te lleva al Valle Balas (evento 422). El verdadero líder, en la Sala
+        # Delirios (eventos 430-431: la historia pasa a 0x11). En la fábrica, Numemon se esconde en cuatro salas
+        # (eventos 470-500): el último (F1C:25) hace que HiAndromon te deje pasar
+        (F(0x40, 0x0C), M(0x248), "Cruza el Desierto del Ruido hacia Ciudad Byakko.", "Cross Noise Desert to Byakko City."),
+        (F(0x40, 0x1E), S(675), "Reta al Líder Byakko en la Cúpula Byakko.", "Challenge Leader Byakko in Byakko Dome."),
+        (AFTER(0x0F), M(0x25F), "Busca el Pin Byakko en la Sala de Almacén.", "Look for the Byakko Badge in the Storage Room."),
+        (F(0x1A, 0x03), M(0x260), "Habla con los guardias de la Cueva Subterránea.", "Talk to the guards in the Underground Cave."),
+        (F(0x40, 0x20), M(0x260), "Habla con Numemon en la Cueva Subterránea.", "Talk to Numemon in the Underground Cave."),
+        (AFTER(0x10), M(0x25C), "Vence al verdadero Líder Byakko: Sala Delirios, Torre Delirio.",
+         "Beat the real Leader Byakko: Mirage Room, Mirage Tower."),
         (F(0x40, 0x3C), S(580), "Encuentra a Numemon en la Fábrica Dum Dum.", "Find Numemon in the Dum Dum Factory."),
-        (F(0x0A, 0x04), M(0x252), "Vence a HiAndromon: abre las escaleras secretas.", "Beat HiAndromon: he opens the secret stairs."),
+        (F(0x1C, 0x25), M(0x24D), "Sigue a Numemon por las salas de la fábrica.", "Follow Numemon through the factory's rooms."),
+        (AFTER(0x11), M(0x252), "Vence a HiAndromon en la Sala de Operaciones.", "Beat HiAndromon in the Operation Room."),
     ]),
+    # Kail y Lisa te mandan a buscar a Nick y Keith (evento 540); están en el Lago SB Suzaku (evento 550, F40:03), que
+    # te lleva a la Sala Secreta (evento 551); allí te dan el pase (evento 552, F40:3D)
     ([0x12, 0x13, 0x14, 0x15], [
         (F(0x40, 0x39), S(615), "Sigue a Lisa por las alcantarillas.", "Follow Lisa through the sewers."),
-        (F(0x40, 0x3B), S(620), "Vence al Atacante en el escondite.", "Beat the Attacker at the hideout."),
-        (F(0x40, 0x3A), S(620), "Sin un Pase de Personal no se entra en Asuka.", "You can't enter Asuka without a Staff Pass."),
-        (F(0x1C, 0x1B), M(0x21C), "Datamon abriría los cimientos con un pase.", "Datamon would open the foundation with a pass."),
-        (F(0x40, 0x03), S(620), "Nick busca un pase en el ordenador.", "Nick looks for a pass on the computer."),
-        (F(0x1C, 0x1D), M(0x21C), "Usa el Pase de Personal con Datamon.", "Use the Staff Pass with Datamon."),
+        (F(0x40, 0x3B), S(620), "Vence al Atacante en la Sala Secreta.", "Beat the Attacker in the Secret Room."),
+        (F(0x40, 0x3A), S(620), "Habla con Kail en la Sala Secreta.", "Talk to Kail in the Secret Room."),
+        (F(0x40, 0x03), M(0x241), "Busca a Nick y a Keith en el Lago SB Suzaku.", "Look for Nick and Keith at Suzaku UG Lake."),
+        (F(0x40, 0x3D), S(625), "Espera en la Sala Secreta a que Nick busque un pase.", "Wait in the Secret Room while Nick finds a pass."),
+        (F(0x1C, 0x1D), M(0x21C), "Usa el Pase de Personal con Datamon, Sala de Control.", "Use the Staff Pass with Datamon, Control Room."),
     ]),
     ([0x16], [
         (F(0x40, 0x4A), S(300), "Lucha contra los soldados del Centro Admin.", "Fight past the soldiers in the Admin Center."),
@@ -169,8 +191,8 @@ QUEST_STEPS = {
     0x005: [
         (F(0x1A, 0x36), M(0x21F), "Habla con Tai Kong Wang en Shell Beach.", "Talk to Tai Kong Wang at Shell Beach."),
         (ITEM(0x192), M(0x211), "Consigue la Bolsa de Carpetas.", "Get the Folder Bag."),
-        (F(0x1A, 0x21), M(0x21F), "Te hará una caña: necesita materiales.", "She'll make a pole: she needs materials."),
-        (F(0x1A, 0x2C), M(0x227), "Ayuda a Divermon en su lago: un Pez Rojo.", "Help Divermon at his lake: a Red Snapper."),
+        (F(0x1A, 0x21), M(0x21F), "Vuelve a hablar con Tai Kong Wang en Shell Beach.", "Talk to Tai Kong Wang at Shell Beach again."),
+        (F(0x1A, 0x2C), M(0x227), "Habla con Divermon en el Lago Divermon.", "Talk to Divermon at Divermon Lake."),
         (ITEM(0x059), S(370), "Los Dokugumon del Bosque Protocolo sueltan Tela de Araña.", "Dokugumon in Protocol Forest drop Spider Web."),
         (ITEM(0x0A7), M(0x201), "Compra una Jabalina de Bambú en Ciudad Asuka.", "Buy a Bamboo Spear in Asuka City."),
         (ITEM(0x005), M(0x21F), "Llévale los tres materiales a Tai Kong Wang.", "Bring the three materials to Tai Kong Wang."),
@@ -194,8 +216,8 @@ QUEST_STEPS = {
         (F(0x1A, 0x3C), M(0x297), "Gana al primer Etemon a las cartas.", "Beat the first Etemon at cards."),
         (F(0x1A, 0x3D), M(0x297), "Gana al segundo Etemon.", "Beat the second Etemon."),
         (F(0x1A, 0x3E), M(0x297), "Gana al tercer Etemon.", "Beat the third Etemon."),
-        (F(0x1C, 0x49), M(0x297), "El último Etemon no juega sin su micrófono.", "The last Etemon won't play without his mic."),
-        (F(0x1C, 0x3F), M(0x2EA), "Un Black King Agumon: lo tiene su líder.", "A Black King Agumon: their leader has it."),
+        (F(0x1C, 0x49), M(0x297), "Habla con el último Etemon.", "Talk to the last Etemon."),
+        (F(0x1C, 0x3F), M(0x2EA), "Habla con un BK Agumon de la Placa de Circuitos.", "Talk to a BK Agumon on the Circuit Board."),
         (F(0x1C, 0x40), M(0x2EA), "Gana al líder de los Black Kings: el micro.", "Beat the Black Kings' leader: the mic."),
         (F(0x1A, 0x3F), M(0x297), "Devuélveselo a Etemon y gánale.", "Give it back to Etemon and beat him."),
         (F(0x1A, 0x40), M(0x297), "Gana a MetalEtemon.", "Beat MetalEtemon."),
@@ -264,10 +286,10 @@ QUEST_STEPS.update({
     ],
     # las Botas Árbol (ya en el Digilog del port; sus pasos)
     0x004: [
-        (F(0x1A, 0x22), M(0x220), "Un chico en la Capa de Conexión quiere su carta de Gabumon.", "A boy at Plug Cape wants his Gabumon card."),
+        (F(0x1A, 0x22), M(0x220), "Habla con el chico que patea un árbol en la Capa de Conexión.", "Talk to the boy kicking a tree at Plug Cape."),
         (F(0x1A, 0x23), S(235), "La carta está en la Posada de Asuka, abajo.", "The card is downstairs in the Asuka Inn."),
-        (F(0x1A, 0x24), M(0x220), "Dásela: te manda a hablar con Veemon.", "Give it to him: he sends you to Veemon."),
-        (F(0x1A, 0x25), S(255), "En la taberna de Asuka vieron a Veemon en la Pradera del Viento.", "At Asuka's tavern they saw Veemon on the Wind Prairie."),
+        (F(0x1A, 0x24), M(0x220), "Dale la carta al chico de la Capa de Conexión.", "Give the card to the boy at Plug Cape."),
+        (F(0x1A, 0x25), S(255), "Pregunta por Veemon en la taberna Chuleta Cordero.", "Ask about Veemon at the Lamb Chop tavern."),
         # al encontrarlo (evento 1304 de wstag400) se borra F1A:26 y se activa F1A:27; de vuelta en la Pradera, el
         # evento 1305 da las botas y activa F1A:28
         (F(0x1A, 0x26), M(0x229), "Veemon quiere jugar en la Pradera del Viento.", "Veemon wants to play on the Wind Prairie."),
@@ -446,6 +468,11 @@ for item, dri, dri_map, talk, ask, mon, mon_map, fight, k, (lo, hi) in DDNA:
          f"Take the DDNA to DRI {dri}: {partner} joins you."),
     ]
 
+# objetos cuyo nombre en el juego tiene una errata: el Digilog (título y recompensa) usa el nuestro
+ITEM_NAMES = [
+    (0x023, "DADN Veemon", "Veemon DDNA"),  # el juego en español: «DADN Veermon»
+]
+
 
 def wrap(s, width=39):
     if "\n" in s:
@@ -474,6 +501,7 @@ def texts():
     out += [(wrap(es), wrap(en)) for _, _, _, es, en, _, _ in TITLED_QUESTS]
     for item in sorted(QUEST_STEPS):
         out += [(wrap(es), wrap(en)) for _, _, es, en in QUEST_STEPS[item]]
+    out += [(es, en) for _, es, en in ITEM_NAMES]
     return out
 
 
@@ -549,6 +577,10 @@ def main(first_text=FIRST_STEP_TEXT):
             rows.append((code, mode_of(where) if where else 0, t))
             t += 1
         quests.append((item, start, len(QUEST_STEPS[item])))
+    names = []
+    for item, _, _ in ITEM_NAMES:
+        names.append((item, t))
+        t += 1
     h = ["/* Generated by tools/journal_steps.py: do not edit. The Digilog's steps, coop/patches ststatus/item_list.c. */",
          "",
          "/* the texts' file, of the game's language (platform/journal_text.c): its words and digits, then the steps' */",
@@ -565,6 +597,7 @@ def main(first_text=FIRST_STEP_TEXT):
          "#define JOURNAL_ALL 0xE000 /* a quest's done: when all its steps hold, in any order */",
          "/* a step's or a quest's code: having the item and partner k (special 0x0B + k), the DDNA handed to its DRI */",
          "#define JOURNAL_PARTNER_DDNA(k, item) (0xD000 | (k) << 9 | (item))",
+         "typedef struct JournalItemName { unsigned short item, text; } JournalItemName; /* an item's name of ours (a typo in the game's) */",
          "",
          "static const JournalStep JOURNAL_STEPS[] = {"]
     h += [f"    {{0x{c:04X}, 0x{m:03X}, {x}}}," for c, m, x in rows]
@@ -574,6 +607,8 @@ def main(first_text=FIRST_STEP_TEXT):
     h += [f"    {{0x{i:03X}, {a}, {n}}}," for i, a, n in quests]
     h += ["};", "static const JournalQuest JOURNAL_NEW_QUESTS[] = {"]
     h += [f"    {{0x{i:03X}, 0x{m:03X}, 0x{d:04X}, {x}, {ti}}}," for i, m, d, x, ti, _ in new]
+    h += ["};", "static const JournalItemName JOURNAL_ITEM_NAMES[] = {"]
+    h += [f"    {{0x{i:03X}, {x}}}," for i, x in names]
     h += ["};", "/* the new side quests as rows of the port's SIDE_QUESTS, item, field, done, last step, item needed */",
           "#define JOURNAL_NEW_SIDE_QUESTS \\"]
     h += [f"    {{ 0x{i:03X}, 0x{m:03X}, 0x{d:04X}, 0, 0x{r:03X} }}, \\" for i, m, d, x, _, r in new]
