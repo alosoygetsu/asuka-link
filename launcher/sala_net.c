@@ -649,6 +649,25 @@ static void load_lists(void)
     }
 }
 
+/* Launchers up to v1.6.0 handed their room socket down to what they started, this one too when it came from their
+   update: that copy, here in this very process, is what keeps the port taken. Socket handles are small multiples of 4;
+   whichever is bound to the room's port and isn't ours goes. True when one went */
+static bool drop_inherited(void)
+{
+    bool dropped = false;
+    for (UINT_PTR h = 4; h < 0x10000; h += 4) {
+        struct sockaddr_in at;
+        int len = sizeof at;
+        if ((SOCKET)h != s_sock && getsockname((SOCKET)h, (struct sockaddr *)&at, &len) == 0 && at.sin_family == AF_INET &&
+            ntohs(at.sin_port) == s_port) {
+            note("closing socket %u, inherited on port %d", (unsigned)h, s_port);
+            closesocket((SOCKET)h);
+            dropped = true;
+        }
+    }
+    return dropped;
+}
+
 void net_init(void)
 {
     WSADATA wsa;
@@ -682,6 +701,10 @@ void net_init(void)
     if (s_sock == INVALID_SOCKET) {
         return;
     }
+    /* not handed down: the game, the tools and the new launcher after an update are started with SDL_CreateProcess,
+       which passes on inheritable handles, and a copy of this socket in one of them kept the port taken after this
+       launcher had gone */
+    SetHandleInformation((HANDLE)s_sock, HANDLE_FLAG_INHERIT, 0);
     BOOL yes = TRUE;
     u_long nonblock = 1;
     setsockopt(s_sock, SOL_SOCKET, SO_BROADCAST, (const char *)&yes, sizeof yes);
@@ -691,7 +714,7 @@ void net_init(void)
     at.sin_addr.s_addr = INADDR_ANY;
     at.sin_port = htons(s_port);
     note("id %08x, port %d, game port %d, %d recent, %d to ask back", s_id, s_port, s_game_port, s_recents, s_rejoins);
-    if (bind(s_sock, (struct sockaddr *)&at, sizeof at) != 0) {
+    if (bind(s_sock, (struct sockaddr *)&at, sizeof at) != 0 && (!drop_inherited() || bind(s_sock, (struct sockaddr *)&at, sizeof at) != 0)) {
         note("port %d taken", s_port);
         closesocket(s_sock); /* another launcher has the port: this one only shows the room it can't join */
         s_sock = INVALID_SOCKET;

@@ -240,6 +240,8 @@ int coop_net_start(void) {
         coop_log("no socket (%d)", WSAGetLastError());
         return 0;
     }
+    /* not handed down to what the game starts (dw2003.exe --postcards): a copy there would keep the port taken */
+    SetHandleInformation((HANDLE)s_sock, HANDLE_FLAG_INHERIT, 0);
     setsockopt(s_sock, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&off, sizeof off);
     memset(&bind_addr, 0, sizeof bind_addr);
     bind_addr.sin6_family = AF_INET6;

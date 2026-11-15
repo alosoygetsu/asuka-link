@@ -4,6 +4,16 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.6.1
+Basado en el port v0.18.9. Red: **versión 9**, la misma que la 1.6.0 (se juntan sin problema).
+- **"Puerto 27499 ocupado" al actualizar:** tras actualizar desde el launcher, el nuevo salía con la sala sin
+  conexión y el aviso de puerto ocupado hasta cerrarlo y abrirlo otra vez. El launcher viejo le pasaba, sin querer,
+  su conexión de la sala al programa que abría. Ya no la pasa, y el nuevo, si se la encuentra, la cierra y entra en
+  la sala: también al actualizar desde la 1.6.0.
+- Lo mismo pasaba con el juego, el visor o el editor abiertos desde el launcher: se quedaban con el puerto de la
+  sala mientras estaban abiertos, y volver a abrir el launcher daba el aviso. El juego tampoco pasa ya su puerto
+  (27500) a lo que abre.
+
 ## v1.6.0
 Basado en el port v0.18.9. Red: **versión 9**: no se junta con la 1.5.1 ni las anteriores (todos tenéis que
 actualizar), porque los combates entre jugadores ahora se calculan de otra forma.
