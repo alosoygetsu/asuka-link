@@ -4,6 +4,14 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.7.1
+Basado en el port v0.18.9. Red: **versión 9**, la misma que la 1.7.0 (se juntan sin problema).
+- **Digilog: las subastas.** Nueva misión «Subastas», en la Torre de Carga de Asuka. En cada capítulo de la historia
+  el Sr. Smith subasta allí una pieza de equipo, 16 en total: de la Barrera Divina, por 800 BIT, a la Armadura
+  Valor, por 32000. La subasta empieza sola si entras en la torre con el dinero. Si pasas o avanza la historia, esa
+  subasta se pierde, y la misión pasa a la siguiente. Cada paso dice el precio y el objeto. La misión queda hecha
+  con la última subasta y sale de la lista cuando ya no quedan.
+
 ## v1.7.0
 Basado en el port v0.18.9. Red: **versión 9**, la misma que la 1.6.x (se juntan sin problema).
 - **La sala, también mientras juegas:** el launcher, minimizado, sigue atendiendo la sala con el juego abierto. Si

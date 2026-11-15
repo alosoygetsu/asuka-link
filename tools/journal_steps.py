@@ -402,7 +402,33 @@ TITLED_QUESTS = [
      "Con el Trofeo Sol, los BK Agumon y Numemon de la Placa dan cartas raras.",
      "Sun Trophy: the Circuit Board's BK Agumon and Numemon give rare cards."),
 ]
-NEW_QUESTS += [(key, where, ALL, es, en) for key, where, _, _, _, es, en in TITLED_QUESTS]
+# las subastas del Sr. Smith en la Torre de Carga (modo 0x210; fieldstg/story.c, FIELDSTG_progressEvents): una por paso
+# de historia, solo en ese paso y si llevas el dinero (MONEY_REQUIRED); pujar da el objeto y pasar no, y las dos ponen
+# F04:0n (field_stage.c, END_CHOICE). En orden: cada paso es esa marca; hecha al resolver la última, y fuera de la
+# lista al pasar el paso 0x27 (QUEST_LAST)
+TITLED_QUESTS += [
+    (0x202, M(0x210), 0, "Subastas", "Auctions",
+     "Cada capítulo hay una subasta en la\nTorre de Carga; si la dejas, se pierde.",
+     "Each chapter, the Cargo Tower holds an\nauction: miss it and it's gone."),
+]
+TITLED_DONE = {0x202: F(0x04, 0x0F)}  # las que no se hacen con todos sus pasos (ALL)
+QUEST_LAST = {0x202: 0x27}  # el último paso de historia en que se puede hacer (SideQuest.last)
+NEW_QUESTS += [(key, where, TITLED_DONE.get(key, ALL), es, en) for key, where, _, _, _, es, en in TITLED_QUESTS]
+# (paso de historia, precio, objeto en español, en inglés): la n-ésima pone F04:0n
+AUCTIONS = [
+    (0x05, 800, "la Barrera Divina", "Divine Barrier"), (0x08, 800, "el Escudo Peligro", "Hazard Shield"),
+    (0x0C, 1600, "el Escudo Tirador", "Sniper Shield"), (0x0E, 1600, "el Escudo Dramon", "Dramon Shield"),
+    (0x10, 2700, "la Vara Yin Yang", "Yin Yang Wand"), (0x16, 2700, "el Colmillo Peligro", "Hazard Fang"),
+    (0x18, 4000, "el Cañón Franco", "Sniper Cannon"), (0x1A, 4000, "el Acero Ronin", "Ronin Blade"),
+    (0x1C, 6000, "las Gafas Tirador", "Sniper Goggle"), (0x1E, 6000, "la Corona Divina", "Divine Crown"),
+    (0x1F, 8700, "el Casco Valor", "Brave Helmet"), (0x22, 8700, "el Casco Ronin", "Ronin Helmet"),
+    (0x24, 11500, "el Traje Yin Yang", "Yin Yang Suit"), (0x25, 17500, "la Armadura Ronin", "Ronin Armor"),
+    (0x26, 24000, "el Traje Salvaje", "Wild Suit"), (0x27, 32000, "la Armadura Valor", "Brave Armor"),
+]
+QUEST_STEPS[0x202] = [
+    (F(0x04, n), M(0x210), f"Torre de Carga: puja {price} BIT por {es}.", f"Cargo Tower: bid {price} BIT for the {en}.")
+    for n, (_, price, es, en) in enumerate(AUCTIONS)
+]
 # cada domador: primero un combate y luego un duelo, que pide carisma (los umbrales 13 y 14 de PARTY_STAT_THRESHOLDS)
 QUEST_STEPS[0x200] = [
     (CARD(1), M(0x25B), "Nakano, Salón Delirios: combate, duelo y la Javalina Sagrada.",
@@ -611,7 +637,7 @@ def main(first_text=FIRST_STEP_TEXT):
     h += [f"    {{0x{i:03X}, {x}}}," for i, x in names]
     h += ["};", "/* the new side quests as rows of the port's SIDE_QUESTS, item, field, done, last step, item needed */",
           "#define JOURNAL_NEW_SIDE_QUESTS \\"]
-    h += [f"    {{ 0x{i:03X}, 0x{m:03X}, 0x{d:04X}, 0, 0x{r:03X} }}, \\" for i, m, d, x, _, r in new]
+    h += [f"    {{ 0x{i:03X}, 0x{m:03X}, 0x{d:04X}, 0x{QUEST_LAST.get(i, 0):02X}, 0x{r:03X} }}, \\" for i, m, d, x, _, r in new]
     h += ["", ""]
     (NATIVE / "include" / "journal_steps.h").write_text("\n".join(h), encoding="utf-8", newline="\n")
     print(f"include/journal_steps.h: {len(rows)} pasos, {len(groups)} pasos de historia con lista, {len(quests)} misiones con pasos")

@@ -367,7 +367,14 @@ Los herreros, por compañero:
   del Duelo (el Trofeo Asuka).
 - **Punto sin retorno:** al entrar en la Sala Maestra de Amaterasu, tras los Oinkmon (historia 0x26-0x27), ya no se
   pueden conseguir los artículos épicos ni las subastas. Un aviso en el Digilog antes de ese paso.
-- **Subastas de El Dorado:** hay una nueva en muchos puntos de la historia (la guía las marca); la última, con la
-  Armadura Valor de Agumon (32000 BIT), justo antes del punto sin retorno.
+- **Subastas** (en el Digilog desde la v1.7.1, misión 0x202): no son de El Dorado (Ponchomon solo da el ID) sino del
+  Sr. Smith en la **Torre de Carga** (modo 0x210, `fieldstg/story.c`, tabla `FIELDSTG_progressEvents`). Al entrar,
+  si `GAME.progress` es justo el de la fila, F04:0n está a 0 y llevas el dinero (`MONEY_REQUIRED`), sale la escena y
+  pregunta «¿Pujar a X BIT?»: sí paga, da el objeto y pone F04:0n; no solo pone F04:0n (`field_stage.c`,
+  `END_CHOICE`). Sin dinero no empieza. Textos: `?SDMG260.BIN`. Pasos de historia, precio y objeto: 0x05 800 Barrera
+  Divina, 0x08 800 Escudo Peligro, 0x0C 1600 Escudo Tirador, 0x0E 1600 Escudo Dramon, 0x10 2700 Vara Yin Yang, 0x16
+  2700 Colmillo Peligro, 0x18 4000 Cañón Franco, 0x1A 4000 Acero Ronin, 0x1C 6000 Gafas Tirador, 0x1E 6000 Corona
+  Divina, 0x1F 8700 Casco Valor, 0x22 8700 Casco Ronin, 0x24 11500 Traje Yin Yang, 0x25 17500 Armadura Ronin, 0x26
+  24000 Traje Salvaje, 0x27 32000 Armadura Valor. Nada de la historia depende de ellas (tampoco Kail ni Teddy).
 - **Para entrar al servidor Amaterasu por otro lado:** con Digmon, desde el Desierto Norte 0 (North Badland W), por la
   Placa de Circuitos.

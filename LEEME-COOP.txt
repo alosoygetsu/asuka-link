@@ -112,6 +112,8 @@ coop = 0 en native.ini apaga el cooperativo.)
    - DIGILOG (en el menú del mapa): cada misión dice en qué paso vas ("Paso 2 de
      5") y qué toca hacer; con □ (Cuadrado) ves todos sus pasos. Las que solo
      se pueden hacer en un tramo de la historia lo avisan.
+     "Subastas": en cada capítulo hay una en la Torre de Carga de Asuka (entra
+     con el dinero que pide su paso); si pasas o sigue la historia, se pierde.
      Los investigadores DRI te piden su DDNA aunque ya tengas a ese compañero:
      así puedes combatir contra su jefe. Su paso dice qué nivel de equipo piden.
    - LABORATORIO DE DIGIMON: en la Tabla de digievolución, □ (Cuadrado) enseña
