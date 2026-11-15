@@ -71,6 +71,13 @@ coop = 0 en native.ini apaga el cooperativo.)
 --------
 1. Formad la sala, dadle a JUGAR todos y cargad vuestra partida. Si alguien
    entra o sale de la sala mientras jugáis, el juego lo sigue solo.
+   - Con el juego abierto, el launcher sigue minimizado atendiendo la sala (no
+     lo cierres si quieres que entre alguien más). Si alguien te invita, el
+     juego lo enseña arriba: MANTÉN SELECT un segundo para aceptar; si no haces
+     nada, la invitación caduca a los 30 segundos. También avisa de quién
+     entra o sale de la sala.
+   - Para que entre alguien a mitad de partida: que te invite o te añada por IP
+     desde su launcher, o pasa al launcher (Alt+Tab) e invítalo tú.
 2. La primera vez, Windows pregunta si dejas a dw3launcher.exe y a dw2003.exe
    usar la red: marca las dos casillas (redes privadas y públicas) y dale a
    "Permitir".

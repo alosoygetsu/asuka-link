@@ -101,6 +101,9 @@ static void check_lang(const Lang *l)
     if (!saves_fits(l, MAIN_W - 16)) {
         fail(l, "saves page", l->s[S_SV_NOCARD]);
     }
+    if (!sala_game_fits(l)) {
+        fail(l, "game notice", l->s[S_SALA_G_INVITE]);
+    }
     if (!home_fits(l)) {
         fail(l, "home screen", l->s[S_READY]);
     }

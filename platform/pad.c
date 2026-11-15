@@ -346,6 +346,12 @@ static void record_replay(uint16_t *held, uint8_t *sticks) {
 }
 
 /* Called every vsync (etc.c) */
+static uint16_t s_held; /* the last vsync's buttons, bit per button (pad_held) */
+
+uint16_t pad_held(void) {
+    return s_held;
+}
+
 void pad_update(void) {
     const bool *keys = SDL_GetKeyboardState(NULL);
     static int frame;
@@ -385,6 +391,7 @@ void pad_update(void) {
             last = held;
         }
     }
+    s_held = held;
     b[0] = 0;    /* answered */
     b[1] = 0x73; /* analog, 3 halfwords */
     b[2] = (uint8_t)~held;

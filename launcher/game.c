@@ -91,10 +91,23 @@ bool game_start(void)
     }
     /* so that a game that finds no data reports it, instead of opening a launcher again */
     SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "DW3_FROM_LAUNCHER", "1", true);
-    const char *args[] = {path, NULL};
-    s_game = process_start(args, SDL_GetBasePath(), false);
+    const char *args[12] = {path, NULL};
+    char extra[256];
+    if (test_window() && SDL_getenv("DW3_GAME_ARGS")) { /* a test's game: on a map (--field 0x230 ...) */
+        char *state = NULL;
+        int n = 1;
+        SDL_strlcpy(extra, SDL_getenv("DW3_GAME_ARGS"), sizeof extra);
+        for (char *a = SDL_strtok_r(extra, " ", &state); a && n < 11; a = SDL_strtok_r(NULL, " ", &state)) {
+            args[n++] = a;
+        }
+        args[n] = NULL;
+    }
+    s_game = process_start(args, SDL_GetBasePath(), test_window()); /* a test copy's game: no console in front */
     return s_game != NULL;
 }
+
+/* DW3_TEST_WINDOW (our tests, as the game's): the window hidden, never raised, the game without a console */
+bool test_window(void) { return SDL_getenv("DW3_TEST_WINDOW") != NULL; }
 
 bool game_running(void) { return s_game != NULL; }
 

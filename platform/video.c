@@ -228,14 +228,18 @@ void present_frame(void) {
 
     int ff = !menu_active() && g_ff_speed > 1, pf = !menu_active() && perf_on();
     int tags = !menu_active() && native_coop_tags_due(); /* co-op: the other players' names */
+    int notice = !menu_active() && native_coop_notice_due(); /* co-op: the room's invitation or news */
 
     gl_sync(0);
-    if (menu_active() || ff || pf || tags) {
+    if (menu_active() || ff || pf || tags || notice) {
         SDL_SetRenderDrawColor(s_menu_renderer, 0, 0, 0, 0);
         SDL_RenderClear(s_menu_renderer);
         menu_draw(s_menu_renderer);
         if (tags) {
             native_coop_draw_tags(s_menu_renderer);
+        }
+        if (notice) {
+            native_coop_draw_notice(s_menu_renderer);
         }
         if (ff) { /* fast forward's speed, in a corner */
             char text[8];
@@ -261,7 +265,7 @@ void present_frame(void) {
         }
         shot = NULL;
     }
-    gl_present(menu_active() || ff || pf || tags ? s_menu : NULL, n ? &shot : NULL);
+    gl_present(menu_active() || ff || pf || tags || notice ? s_menu : NULL, n ? &shot : NULL);
     if (n) {
         dump_vram(n, shot);
     }

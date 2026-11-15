@@ -34,7 +34,7 @@ mapas (`WSTAGnnn.PRO`) en 0x800A5DE0, encima de FIELDSTG.
 
 - `native/platform/` el PC: `main.c` arranque y opciones fijas, `video.c`/`gpu*.c`/`gl.c` gráficos, `snd.c`/`spu.c`
   sonido, `pad.c`/`controls.c` mandos, `menu.c` las opciones del juego, `memcard.c`, `mods.c`/`stagemods.c` mods,
-  `team.c` el equipo libre, `journal_text.c` textos del Digilog, `state.c` teclas de depuración.
+  `team.c` el equipo libre, `coop_notice.c` el aviso de la sala dentro del juego, `journal_text.c` textos del Digilog, `state.c` teclas de depuración.
 - Cooperativo: `platform/coop.c` los otros jugadores en el campo, `coop_net.c` la red (UDP 27500, `COOP_VERSION`),
   `coop_battle.c` combates en paralelo (PvP, raids, duelos de cartas), `coop_look.c` su aspecto, `coop_tags.c` los
   nombres, `coop_test.c` ayudas de nuestras pruebas, `coop_text.h` textos propios (`tools/coop_text.py`).

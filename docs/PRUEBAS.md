@@ -73,7 +73,12 @@ cualquier proceso (la consola es de conhost).
 
 ## Launcher
 - `dw3launcher.exe --shot f.png` abre la sala (escribe `sala.log`) y sale; con `DW3_LOBBY_PORT=275xx` no toca el 27499
-  del usuario. Un programa de 50 líneas con la misma SDL3 (en el scratchpad) sirvió de "launcher viejo" para probar
+  del usuario.
+- Un launcher de prueba que juega: `DW3_TEST_WINDOW=1` lo deja oculto (no se minimiza ni se levanta) y lanza el juego
+  sin consola; `--keys enter` le da a Jugar y `DW3_GAME_ARGS="--field 0x230 --progress 10"` pasa argumentos al juego
+  (solo con `DW3_TEST_WINDOW`). Los avisos de la sala en el juego (`sala_aviso.txt` / `sala_respuesta.txt` junto al
+  exe) salen en el log como `room notice:`. Para hacer de otro jugador basta un script de Python que hable el
+  `Packet` de `sala_net.c` (HELLO, INVITE, ROOM, LEAVE); SELECT mantenido: `DW3_PRESS` con `N:select` cada 6 vsyncs. Un programa de 50 líneas con la misma SDL3 (en el scratchpad) sirvió de "launcher viejo" para probar
   la actualización sin descargar nada.
 
 ## Tests unitarios

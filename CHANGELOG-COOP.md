@@ -4,6 +4,18 @@ Desde la **v1.0.0**, el cooperativo tiene sus propias versiones: sube **1.1, 1.2
 1.1.2…** con arreglos. Está basado en la v0.18.9 del port nativo de Feerdus (sus cambios, en
 [CHANGELOG.md](CHANGELOG.md)), y desde la v1.0.0 se mantiene aquí por su cuenta.
 
+## v1.7.0
+Basado en el port v0.18.9. Red: **versión 9**, la misma que la 1.6.x (se juntan sin problema).
+- **La sala, también mientras juegas:** el launcher, minimizado, sigue atendiendo la sala con el juego abierto. Si
+  alguien te invita, el juego lo enseña arriba: «X te invita a su sala». **Mantén SELECT** un segundo para aceptar
+  (se llena una barra); si no, la invitación caduca a los 30 segundos. Al aceptar, el juego se une a la nueva sala
+  solo, sin reiniciarlo.
+- El juego también avisa cuando alguien entra en la sala o sale de ella («X se une a la sala»).
+- Para añadir a alguien a mitad de partida: él te invita o te añade por IP desde su launcher; o tú pasas al launcher
+  (Alt+Tab) e invitas desde allí. Si cierras el launcher, la partida sigue, pero la sala ya no cambia hasta que lo
+  vuelvas a abrir.
+- Los avisos dentro del juego salen sin tildes (la letra de esos avisos no las tiene).
+
 ## v1.6.1
 Basado en el port v0.18.9. Red: **versión 9**, la misma que la 1.6.0 (se juntan sin problema).
 - **"Puerto 27499 ocupado" al actualizar:** tras actualizar desde el launcher, el nuevo salía con la sala sin

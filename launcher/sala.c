@@ -149,10 +149,181 @@ void sala_activate(int id)
     }
 }
 
+/* ---- the game's notice: while the game runs, the room speaks to it through two files next to it. sala_aviso.txt
+   ("I|N id seq", then two lines in ASCII, the overlay's font): I an invitation, accepted in the game holding SELECT,
+   N someone who joined or left; sala_respuesta.txt: the invitation's id, the game's yes (platform/coop_notice.c) ---- */
+
+#define NOTICE_LINE 38 /* the overlay's width, 320 / 8, less the plate's margins */
+
+/* UTF-8 to the debug font's ASCII: accented Latin letters to their plain one, the rest out */
+static void ascii(char *out, int size, const char *in)
+{
+    static const char LATIN[] = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty";
+    int n = 0;
+    for (const Uint8 *c = (const Uint8 *)in; *c && n < size - 1; c++) {
+        if (*c < 0x80) {
+            out[n++] = (char)*c;
+        } else if (*c == 0xC3 && c[1] >= 0x80 && c[1] <= 0xBF) {
+            out[n++] = LATIN[*++c - 0x80];
+        } else {
+            while ((c[1] & 0xC0) == 0x80) { /* the sign's other bytes */
+                c++;
+            }
+        }
+    }
+    out[n] = 0;
+}
+
+static char s_notice[200];
+static bool s_notice_dirty;
+
+static void notice_set(char kind, Uint32 id, const char *a, const char *b)
+{
+    static Uint32 seq;
+    char la[64], lb[64];
+    ascii(la, sizeof la, a);
+    ascii(lb, sizeof lb, b ? b : "");
+    SDL_snprintf(s_notice, sizeof s_notice, "%c %08x %u\n%s\n%s\n", kind, id, ++seq, la, lb);
+    s_notice_dirty = true;
+}
+
+static void notice_clear(void)
+{
+    s_notice[0] = 0;
+    s_notice_dirty = true;
+}
+
+/* written whole (a temporary, renamed): the game never reads half; retried while the game holds the file open */
+static void notice_flush(void)
+{
+    char path[1200], tmp[1300];
+    if (!s_notice_dirty) {
+        return;
+    }
+    path_in_root(path, sizeof path, "sala_aviso.txt");
+    if (!s_notice[0]) {
+        SDL_RemovePath(path);
+        s_notice_dirty = SDL_GetPathInfo(path, NULL);
+        return;
+    }
+    SDL_snprintf(tmp, sizeof tmp, "%s.tmp", path);
+    s_notice_dirty = !(SDL_SaveFile(tmp, s_notice, SDL_strlen(s_notice)) && SDL_RenamePath(tmp, path));
+}
+
+static void answer_drop(void)
+{
+    char path[1200];
+    path_in_root(path, sizeof path, "sala_respuesta.txt");
+    SDL_RemovePath(path);
+}
+
+/* the game's yes to the invitation it was shown: taken if it's still the one */
+static void answer_read(void)
+{
+    char path[1200];
+    path_in_root(path, sizeof path, "sala_respuesta.txt");
+    char *text = SDL_LoadFile(path, NULL);
+    if (!text) {
+        return;
+    }
+    const Uint32 id = (Uint32)SDL_strtoul(text, NULL, 16);
+    SDL_free(text);
+    SDL_RemovePath(path);
+    const NetPlayer *inv = net_invitation();
+    if (inv && inv->id == id) {
+        native_log("room: the invitation accepted in the game");
+        net_answer(true);
+    }
+}
+
+static void game_notice(void)
+{
+    static bool running;
+    static Uint32 shown_invite, ids[ROOM_MAX];
+    static char names[ROOM_MAX][16];
+    static int count;
+    NetPlayer mem[ROOM_MAX];
+    const int n = net_members(mem, ROOM_MAX);
+    char lines[2][64] = {"", ""};
+    int said = 0;
+    if (game_running() != running) {
+        running = game_running();
+        notice_clear();
+        answer_drop();
+        shown_invite = 0;
+        count = 0; /* the room as it is now: no notice for it */
+        for (int i = 1; i < n; i++) {
+            ids[count] = mem[i].id;
+            SDL_strlcpy(names[count++], mem[i].name, sizeof names[0]);
+        }
+    }
+    if (!running) {
+        notice_flush();
+        return;
+    }
+    answer_read();
+    const NetPlayer *inv = net_invitation();
+    const Uint32 invite = inv ? inv->id : 0;
+    /* who joined, who left: the others, by id */
+    for (int i = 1; i < n && said < 2; i++) {
+        bool was = false;
+        for (int k = 0; k < count; k++) {
+            was |= ids[k] == mem[i].id;
+        }
+        if (!was) {
+            SDL_snprintf(lines[said++], sizeof lines[0], L->s[S_SALA_G_JOINED], mem[i].name[0] ? mem[i].name : "?");
+        }
+    }
+    for (int k = 0; k < count && said < 2; k++) {
+        bool is = false;
+        for (int i = 1; i < n; i++) {
+            is |= ids[k] == mem[i].id;
+        }
+        if (!is) {
+            SDL_snprintf(lines[said++], sizeof lines[0], L->s[S_SALA_G_LEFT], names[k][0] ? names[k] : "?");
+        }
+    }
+    count = 0;
+    for (int i = 1; i < n; i++) {
+        ids[count] = mem[i].id;
+        SDL_strlcpy(names[count++], mem[i].name, sizeof names[0]);
+    }
+    if (invite != shown_invite) {
+        shown_invite = invite;
+        if (invite) {
+            char line[64];
+            SDL_snprintf(line, sizeof line, L->s[S_SALA_G_INVITE], inv->name);
+            notice_set('I', invite, line, L->s[S_SALA_G_HOLD]);
+        } else if (!said) {
+            notice_clear(); /* answered or gone */
+        }
+    }
+    if (said && !shown_invite) {
+        notice_set('N', 0, lines[0], said > 1 ? lines[1] : NULL);
+    }
+    notice_flush();
+}
+
+/* the notice's lines fit the overlay with the longest name (15) */
+bool sala_game_fits(const Lang *l)
+{
+    const int FORMATS[] = {S_SALA_G_INVITE, S_SALA_G_JOINED, S_SALA_G_LEFT};
+    char line[96], a[96];
+    ascii(a, sizeof a, l->s[S_SALA_G_HOLD]);
+    bool ok = SDL_strlen(a) <= NOTICE_LINE;
+    for (int i = 0; i < 3; i++) {
+        SDL_snprintf(line, sizeof line, l->s[FORMATS[i]], "MMMMMMMMMMMMMMM");
+        ascii(a, sizeof a, line);
+        ok &= SDL_strlen(a) <= NOTICE_LINE;
+    }
+    return ok;
+}
+
 void sala_tick(void)
 {
     static int pairing;
     net_poll();
+    game_notice();
     s_refreshed = 0; /* what came may change the lists */
     if (net_all_ready() && !s_all_ready_said) {
         s_all_ready_said = true;

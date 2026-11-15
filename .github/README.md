@@ -38,6 +38,10 @@ Todo se hace en la **sala**, arriba a la derecha de la pantalla principal del la
 Luego, **Jugar**, y entrad en el mismo mapa: a los 1-2 segundos os veréis, cada uno con su personaje y su nombre
 encima. El juego sigue los cambios de la sala sin reiniciarlo.
 
+**A mitad de partida:** el launcher sigue atendiendo la sala, minimizado. Si alguien te invita, el juego lo enseña
+arriba y aceptas **manteniendo SELECT**; también avisa de quién entra en la sala o sale de ella. Para invitar tú,
+pasa al launcher con Alt+Tab.
+
 Si algo no va, junto a `dw2003.exe` hay un `coop.log` (el juego) y un `sala.log` (la sala) que dicen quién está
 conectado, el ping y los errores habituales. La guía completa está en `LEEME-COOP.txt`, dentro del zip.
 

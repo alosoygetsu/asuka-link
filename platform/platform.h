@@ -244,6 +244,11 @@ void pad_bind_reset(void);              /* the defaults */
 int pad_bind_ini(const char *key, const char *value); /* 1: a binding, read */
 int pad_bind_line(int i, char *key, char *value, size_t size); /* line 0-31 for native.ini; 1: not the default */
 struct SDL_Gamepad *pad_gamepad(void);  /* the one open, or NULL */
+uint16_t pad_held(void);                /* the buttons held at the last vsync, bit 0 select .. 15 square */
+/* coop_notice.c: the room's notice from the launcher, over the frame */
+int native_coop_notice_due(void);       /* 1 while there's one to show (and SELECT is watched) */
+struct SDL_Renderer;
+void native_coop_draw_notice(struct SDL_Renderer *r);
 
 /* The options menu's Controls page and button icons (controls.c) */
 enum { ICONS_AUTO, ICONS_PS1, ICONS_PS3, ICONS_PS4, ICONS_PS5, ICONS_XBOX360, ICONS_XBOXONE, ICONS_XBOXSERIES, ICONS_SWITCH, ICONS_KEYBOARD, ICONS_COUNT };

@@ -245,7 +245,7 @@ int main(int argc, char **argv)
     SDL_Window *window;
     SDL_Renderer *r;
     if (!SDL_CreateWindowAndRenderer("Asuka Link - Digimon World 2003", w ? w : SCREEN_W * k, h ? h : SCREEN_H * k,
-                                     SDL_WINDOW_RESIZABLE | (shot ? SDL_WINDOW_HIDDEN : 0), &window, &r)) {
+                                     SDL_WINDOW_RESIZABLE | (shot || test_window() ? SDL_WINDOW_HIDDEN : 0), &window, &r)) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Digimon World 2003", SDL_GetError(), NULL);
         return 1;
     }
@@ -287,7 +287,9 @@ int main(int argc, char **argv)
         busy = screens_tick();
         if (game_running() != was_running) {
             was_running = game_running();
-            if (was_running) {
+            if (test_window()) {
+                /* a test copy's launcher stays hidden: never in front of the player */
+            } else if (was_running) {
                 SDL_MinimizeWindow(window);
             } else {
                 SDL_RestoreWindow(window);
