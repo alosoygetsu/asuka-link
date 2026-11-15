@@ -1101,7 +1101,7 @@ def model_lines(fighter):
     face = len(m["face"]) if fighter else 0
     return [f"  modelo: {mfile} parte {mpart}: {model_text(m)}{f', cara {face} partes' if face else ''}; {height}"
             f"distancia {info['distance']}, {info['cams']} cámaras",
-            f"  movimientos ({len(m['durations'])}, en fotogramas): {motions_text(m)}",
+            f"  movimientos ({len(m['durations'])}, en fotogramas; ↻ se repite): {motions_text(m)}",
             f"  guiones de efectos ({len(ef)}, parte {epart}): {ranges(ef) or '-'}"]
 
 
@@ -1115,8 +1115,11 @@ def model_data(ref, motions_ref, fighter=None):
     except (struct.error, IndexError, ValueError, KeyError):
         return None
     durations = {k + 1: sum(max(s[1], 0) for s in steps) for k, steps in enumerate(m["motions"]) if steps}
+    # su último paso (count 0) es una marca: frame -32768, se repite desde el fotograma endFrame; -1, acaba
+    loops = {k + 1: steps[-1][3] for k, steps in enumerate(m["motions"])
+             if steps and steps[-1][1] == 0 and steps[-1][2] == -32768}
     return dict(bones=len(m["parents"]), meshes=sum(1 for x in m["meshes"] if x["p"]),
-                polys=sum(len(x["p"]) for x in m["meshes"]), vram=m["vram"][:2], durations=durations,
+                polys=sum(len(x["p"]) for x in m["meshes"]), vram=m["vram"][:2], durations=durations, loops=loops,
                 parents=m["parents"], per_mesh=[len(x["p"]) for x in m["meshes"]], steps=m["motions"],
                 face=modelos.face(fighter) if fighter else [])
 
@@ -1127,7 +1130,7 @@ def model_text(m):
 
 
 def motions_text(m, limit=24):
-    items = [f"{k}:{d}" for k, d in m["durations"].items()]
+    items = [f"{k}:{d}{'↻' if k in m['loops'] else ''}" for k, d in m["durations"].items()]
     return " ".join(items[:limit]) + (f" … (+{len(items) - limit})" if len(items) > limit else "")
 
 
@@ -1165,7 +1168,8 @@ def cmd_modelo(args):
               f"{ref & 0xFFFF}; {model_text(m)}" + (f", cara {len(m['face'])} partes" if m["face"] else ""))
         print("  huesos (k←padre, polígonos): " + " ".join(f"{k + 1}←{p}:{n}" for k, (p, n) in
                                                            enumerate(zip(m["parents"], m["per_mesh"]))))
-        lines = [f"    {k}: {d} fotogramas en {len(m['steps'][k - 1])} pasos" for k, d in m["durations"].items()]
+        lines = [f"    {k}: {d} fotogramas en {len(m['steps'][k - 1])} pasos"
+                 + (f", bucle desde el fotograma {m['loops'][k]}" if k in m["loops"] else "") for k, d in m["durations"].items()]
         print(f"  movimientos ({len(lines)}):")
         for l in capped(lines):
             print(l)
