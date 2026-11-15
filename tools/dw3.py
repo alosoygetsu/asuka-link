@@ -643,50 +643,82 @@ def story_choices():
     return rows
 
 
+ITEM_RE = re.compile(r"\bITEM\(\s*(0x[0-9A-Fa-f]+|\d+)\s*,\s*(0x[0-9A-Fa-f]+|\d+)\s*\)(\s*,\s*(0x[0-9A-Fa-f]+|\d+))?")
+
+
+@functools.lru_cache(None)
+def code_sites():
+    """cada FLAG(g, n) e ITEM(tipo, n) del código (sin journal_steps.h), en una pasada: [dict(code, val, file, line,
+    ctx, kind, text)]; code: la marca (g << 8 | n) o el objeto (0x8000 | n, sin su tipo, como ITEM() de
+    journal_steps); val: el número que la acompaña o None; kind: set (activa), clear (borra), test o use"""
+    out = []
+    for f in source_files(with_patched=False):
+        if f.name == "journal_steps.h":
+            continue
+        t = read(f)
+        if "FLAG" not in t and "F(" not in t and "ITEM(" not in t:
+            continue
+        for n, l in enumerate(t.split("\n"), 1):
+            hits = []
+            for m in FLAG_RE.finditer(l):
+                if m.group(1) == "F" and f.suffix != ".py":
+                    continue
+                hits.append((int(m.group(2), 0) << 8 | int(m.group(3), 0), m.group(5)))
+            if "ITEM(" in l and not l.lstrip().startswith("#define"):
+                hits += [(0x8000 | int(m.group(2), 0), m.group(4)) for m in ITEM_RE.finditer(l)]
+            if not hits:
+                continue
+            ctx = enclosing_function(f, n) or ""
+            for code, val in hits:
+                if "applyAction" in l or ctx.endswith("Actions"):
+                    kind = "clear" if val == "0" else "set"
+                elif "checkCondition" in l or ctx.endswith("Conditions") or re.search(r"\b(if|while)\b|==|!=", l):
+                    kind = "test"
+                else:
+                    kind = "use"
+                out.append(dict(code=code, val=int(val, 0) if val else None, file=f, line=n, ctx=ctx, kind=kind,
+                                text=l.strip()))
+    return out
+
+
+def site_say(s):
+    """lo que dice la charla de un sitio (actorNTalkM...), en español, o ''"""
+    am = re.match(r"actor(\d+)Talk(\d+)(Conditions|Actions)", s["ctx"])
+    return talk_text(s["file"].stem, int(am.group(1)), int(am.group(2))) if am else ""
+
+
 def cmd_marca(args):
     """marca F40:05: dónde se activa, se borra y se comprueba una marca (código, conversaciones, guiones, Digilog)"""
     if not args:
         sys.exit("uso: dw3.py marca F40:05   (o 0x4005, 40:05)")
     code = parse_flag(args[0])
-    raw = re.compile(r"\b0x0*%X\b" % code, re.I)
     sets, tests, other, notes = [], [], [], []
-    files = [p for p in source_files(with_patched=False) if p.name != "journal_steps.h"]
-    for f in files:
-        t = read(f)
-        if "FLAG" not in t and "F(" not in t and not raw.search(t):
+    found = set()
+    for s in code_sites():
+        if s["code"] != code:
             continue
-        ls = t.split("\n")
-        for n, l in enumerate(ls, 1):
-            val = None
-            found = False
-            for m in FLAG_RE.finditer(l):
-                if m.group(1) == "F" and f.suffix != ".py":
-                    continue
-                if (int(m.group(2), 0) << 8 | int(m.group(3), 0)) == code:
-                    found, val = True, m.group(5)
-                    break
-            if (not found and raw.search(l) and (l.lstrip().startswith(("/*", "*", "//")) or "flag" in l.lower())
+        found.add((s["file"], s["line"]))
+        where, ctx = rel(s["file"], s["line"]), s["ctx"]
+        say = site_say(s)
+        say = f" «{say}»" if say else ""
+        v = f"={s['val']}" if s["val"] is not None else ""
+        if s["kind"] in ("set", "clear"):
+            sets.append(f"{'activa' if s['kind'] == 'set' else 'borra '}{v} {where} {ctx}{say}")
+        elif s["kind"] == "test":
+            tests.append(f"comprueba{v} {where} {ctx}{say}")
+        else:
+            other.append(f"usa{v} {where} {ctx}  {s['text'][:70]}")
+    # el número suelto, en los comentarios ("sets flag 0x4005"); en el código suele ser otra cosa (un opcode de guion
+    # como 0x601)
+    raw = re.compile(r"\b0x0*%X\b" % code, re.I)
+    for f in source_files(with_patched=False):
+        t = read(f)
+        if f.name == "journal_steps.h" or not raw.search(t):
+            continue
+        for n, l in enumerate(t.split("\n"), 1):
+            if ((f, n) not in found and raw.search(l) and (l.lstrip().startswith(("/*", "*", "//")) or "flag" in l.lower())
                     and not re.match(r"\s*/\* 0x[0-9A-Fa-f]+ \*/", l)):  # no los offsets de las structs
-                # el número suelto, en los comentarios ("sets flag 0x4005"); en el código suele ser otra cosa (un
-                # opcode de guion como 0x601)
                 notes.append(f"{rel(f, n)}  {l.strip(' /*').strip()[:90]}")
-                continue
-            if not found:
-                continue
-            where = rel(f, n)
-            ctx = enclosing_function(f, n) or ""
-            am = re.match(r"actor(\d+)Talk(\d+)(Conditions|Actions)", ctx)
-            say = ""
-            if am:
-                say = talk_text(f.stem, int(am.group(1)), int(am.group(2)))
-                say = f" «{say}»" if say else ""
-            v = f"={int(val, 0)}" if val else ""
-            if "applyAction" in l or (ctx.endswith("Actions")):
-                sets.append(f"{'activa' if val != '0' else 'borra '}{v} {where} {ctx}{say}")
-            elif "checkCondition" in l or ctx.endswith("Conditions") or re.search(r"\b(if|while)\b|==|!=", l):
-                tests.append(f"comprueba{v} {where} {ctx}{say}")
-            else:
-                other.append(f"usa{v} {where} {ctx}  {l.strip()[:70]}")
     # las marcas que van en tablas como números (los eventos de la historia, las respuestas de las preguntas)
     for r in story_choices():
         if r["flag"] == code:
@@ -1554,23 +1586,32 @@ def script_cmd(name, usage):
     return f
 
 
+def journal_code(c):
+    """una condición del Digilog (journal_steps.py) en palabras cortas: F1A:22, objeto 0x5, tras paso 0x8..."""
+    import journal_steps as j
+    if c == j.ALL:
+        return "TODOS"
+    if c >= 0xF000:
+        return f"tras paso {c & 0xFFF:#x}"
+    if c >= 0xD000:
+        return f"objeto {c & 0x1FF:#x} y compañero {c >> 9 & 7}"
+    if 0x9200 <= c < 0x9400:
+        return f"carta {c & 0x1FF:#x}"
+    if 0x8000 <= c < 0x9000:
+        return f"objeto {c & 0x1FF:#x}"
+    if 0x7200 <= c < 0x7400:
+        import quest_talks as q
+        return q.party_stat(c & 0x1FF, 1)
+    if 0x7000 <= c < 0x7200:
+        import quest_talks as q
+        return q.special(c & 0x1FF, 1)
+    return flag_text(c)
+
+
 def cmd_digilog(args):
     """digilog [paso_hex | objeto_hex]: los pasos del Digilog (journal_steps.py) de un paso de historia o misión"""
     import journal_steps as j
-
-    def code(c):
-        if c == j.ALL:
-            return "TODOS"
-        if c >= 0xF000:
-            return f"tras paso {c & 0xFFF:#x}"
-        if 0x9200 <= c < 0x9400:
-            return f"carta {c & 0x1FF:#x}"
-        if 0x8000 <= c < 0x9000:
-            return f"objeto {c & 0x1FF:#x}"
-        if 0x7200 <= c < 0x7400:
-            import quest_talks as q
-            return q.party_stat(c & 0x1FF, 1)
-        return flag_text(c)
+    code = journal_code
 
     def where(w):
         return "" if not w else (f"modo {w[1]:#x}" if w[0] == "m" else f"wstag{w[1]}")

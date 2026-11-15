@@ -49,23 +49,28 @@ def find(event, only=None):
                     int(m.group(3), 0) if m.group(3) else None, script.group(1) if script else "")
     return None
 
-for arg in sys.argv[1:]:
-    only, _, ev = arg.rpartition(":")  # "wstag480:171", o solo el número
-    ev = int(ev)
-    r = find(ev, only or None)
-    if not r:
-        print(f"evento {ev}: no encontrado")
-        continue
-    stage, base, n, script = r
-    texts = [int(x, 0) for x in re.findall(r"0x200,\s*\w+,\s*(0x[0-9A-Fa-f]+|\d+),", script)]
-    print(f"== evento {ev} ({stage}): {len(texts)} frases")
-    if base is None or n is None:
-        continue
-    table = archive_entry((FILES / ("%04d.bin" % (base + SPANISH))).read_bytes(), n)
-    if not table:
-        continue
-    for t in (texts if len(texts) <= 5 else texts[:3] + texts[-2:]):  # las primeras y las últimas
-        try:
-            print("   ", q.dec(q.entry(table, t, 400), True)[:150])
-        except Exception:
-            pass
+def main():
+    for arg in sys.argv[1:]:
+        only, _, ev = arg.rpartition(":")  # "wstag480:171", o solo el número
+        ev = int(ev)
+        r = find(ev, only or None)
+        if not r:
+            print(f"evento {ev}: no encontrado")
+            continue
+        stage, base, n, script = r
+        texts = [int(x, 0) for x in re.findall(r"0x200,\s*\w+,\s*(0x[0-9A-Fa-f]+|\d+),", script)]
+        print(f"== evento {ev} ({stage}): {len(texts)} frases")
+        if base is None or n is None:
+            continue
+        table = archive_entry((FILES / ("%04d.bin" % (base + SPANISH))).read_bytes(), n)
+        if not table:
+            continue
+        for t in (texts if len(texts) <= 5 else texts[:3] + texts[-2:]):  # las primeras y las últimas
+            try:
+                print("   ", q.dec(q.entry(table, t, 400), True)[:150])
+            except Exception:
+                pass
+
+
+if __name__ == "__main__":
+    main()
