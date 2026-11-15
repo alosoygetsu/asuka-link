@@ -62,5 +62,6 @@ mapas (`WSTAGnnn.PRO`) en 0x800A5DE0, encima de FIELDSTG.
 | La sala o el launcher | `launcher/sala*.c`, `home.c`; textos en `launcher/lang_*.c` (comprobar con `--check`) |
 | Mods de mapas o de Digimon | `platform/stagemods.c`, `digimon_mods.c` |
 | Ver los sprites de campo y sus animaciones | `python native/tools/sprites.py [--gif] [--only VMON]` → abrir `native/build/sprites/index.html` (local, ignorado por git: las imágenes son del juego). Formato en el docstring de `tools/sprites.py` |
+| Ver los modelos 3D de combate y sus movimientos | `python native/tools/modelos.py [--only AGUM] [--check]` → abrir `native/build/modelos/index.html` (local, ignorado por git; three.js de jsdelivr, hace falta internet): compañeros, formas, enemigos y modelos de efectos, con sus movimientos como los reproduce el juego. Formato en el docstring |
 | Repasar las misiones del Digilog | `python native/tools/misiones.py [--partida [game_N.bin]]` → abrir `native/build/misiones/index.html` (local, ignorado por git): cada paso en los 5 idiomas, su condición y mapa, las charlas y eventos que lo ponen o lo borran (con el sprite si se generó `build/sprites`), lo que dan, enlaces entre misiones, avisos y, con un volcado de GAME, lo hecho |
 | Estudiar una misión | `dw3.py marca`, `texto`, `charlas`, `pasos`, `eventos`, `dialogo`; `docs/MISIONES.md` |

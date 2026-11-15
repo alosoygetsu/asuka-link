@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelos de combate</title>
+<!-- Copied next to list.js and m/ by tools/modelos.py; it shows what that export read from the game.
+     The motions replay FIGHTSTG_setMotion / FIGHTSTG_stepMotion / FIGHTSTG_poseBone (dw3_decomp src/fightstg/fightstg.c). -->
+<style>
+:root { --bg: #16181d; --panel: #1f2229; --line: #2e323c; --text: #d8dbe2; --dim: #8a90a0; --acc: #f0a640; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+#side { width: 280px; min-width: 200px; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+#search { margin: 10px; padding: 7px 9px; background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: 6px; }
+#groups { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 10px 6px; }
+#groups button.sel { border-color: var(--acc); color: var(--acc); }
+#count { margin: 0 10px 6px; color: var(--dim); font-size: 12px; }
+#list { overflow-y: auto; flex: 1; }
+.item { padding: 6px 10px; cursor: pointer; border-bottom: 1px solid var(--line); }
+.item:hover { background: var(--panel); }
+.item.sel { background: #2b2f3a; border-left: 3px solid var(--acc); padding-left: 7px; }
+.item small { display: block; color: var(--dim); font-family: ui-monospace, monospace; font-size: 11px; }
+.head { padding: 8px 10px 4px; color: var(--acc); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+#main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#top { padding: 10px 14px 4px; }
+h1 { font-size: 18px; margin: 0 0 2px; }
+#meta { color: var(--dim); font-size: 12px; font-family: ui-monospace, monospace; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 6px 0; }
+.bar label { color: var(--dim); font-size: 13px; display: flex; gap: 5px; align-items: center; }
+select, button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; font: inherit; }
+button { cursor: pointer; }
+button:hover { border-color: var(--acc); }
+#motions { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; max-height: 92px; overflow-y: auto; }
+#motions button { min-width: 36px; padding: 3px 6px; font-size: 12px; }
+#motions button.sel { border-color: var(--acc); color: var(--acc); }
+#view { flex: 1; position: relative; min-height: 0; }
+#view canvas { display: block; width: 100%; height: 100%; }
+#status { position: absolute; left: 10px; bottom: 8px; color: var(--dim); font: 12px ui-monospace, monospace; pointer-events: none; white-space: pre; }
+#msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--dim); pointer-events: none; text-align: center; padding: 20px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="side">
+  <input id="search" placeholder="Buscar: nombre, archivo, nº…" autofocus>
+  <div id="groups"></div>
+  <div id="count"></div>
+  <div id="list"></div>
+</div>
+<div id="main">
+  <div id="top">
+    <h1 id="title">—</h1>
+    <div id="meta"></div>
+    <div id="motions"></div>
+    <div class="bar">
+      <button id="play">⏸ Pausa</button>
+      <button id="step">Fotograma ▶</button>
+      <button id="restart">⟲ Desde el principio</button>
+      <label>Velocidad <input id="speed" type="range" min="0" max="8" step="1" value="4"> <span id="speedTxt">×1</span></label>
+      <label><input id="loop" type="checkbox" checked> Repetir</label>
+      <label><input id="tex" type="checkbox" checked> Texturas</label>
+      <label><input id="light" type="checkbox" checked> Luz</label>
+      <label><input id="cull" type="checkbox" checked> Ocultar caras traseras</label>
+      <label><input id="wire" type="checkbox"> Alambre</label>
+      <label><input id="grid" type="checkbox" checked> Suelo</label>
+      <label><input id="faceAnim" type="checkbox" checked> Cara</label>
+      <label>Fondo <select id="bg"><option value="#2a2d36">oscuro</option><option value="#4a6d8c">cielo</option><option value="#c8c8c8">claro</option><option value="#00ff00">verde</option></select></label>
+    </div>
+  </div>
+  <div id="view"><div id="msg">Cargando three.js…</div><div id="status"></div></div>
+</div>
+<script src="list.js"></script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const $ = (id) => document.getElementById(id);
+const MODELS = window.MODELS || [];
+const msg = (t) => { $("msg").textContent = t; $("msg").style.display = t ? "flex" : "none"; };
+if (!MODELS.length) msg("Falta list.js: genera la carpeta con python tools/modelos.py");
+else msg("");
+
+// ---------------------------------------------------------------- scene
+const view = $("view");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+view.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color($("bg").value);
+const camera = new THREE.PerspectiveCamera(40, 1, 1, 200000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+scene.add(new THREE.AmbientLight(0xffffff, 1.4));
+const sun = new THREE.DirectionalLight(0xffffff, 1.8);
+sun.position.set(0.5, 1, 1);
+scene.add(sun);
+const grid = new THREE.GridHelper(4000, 20, 0x666c7a, 0x3a3e48);
+scene.add(grid);
+// PSX space: x right, y down, z away from the camera; turned 180 degrees about x it is three's (y up, z to us)
+const world = new THREE.Group();
+world.rotation.x = Math.PI;
+scene.add(world);
+
+function resize() {
+  const r = view.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / Math.max(1, r.height);
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(view);
+
+// ---------------------------------------------------------------- list
+const GROUPS = ["Todos", "Compañeros", "Formas", "Enemigos", "Efectos"];
+let group = "Todos", current = null;
+function renderGroups() {
+  $("groups").innerHTML = "";
+  for (const g of GROUPS) {
+    const b = document.createElement("button");
+    b.textContent = g;
+    b.className = g === group ? "sel" : "";
+    b.onclick = () => { group = g; renderGroups(); renderList(); };
+    $("groups").append(b);
+  }
+}
+function renderList() {
+  const q = $("search").value.trim().toLowerCase();
+  const list = $("list");
+  list.innerHTML = "";
+  let n = 0, last = null;
+  for (const m of MODELS) {
+    if (group !== "Todos" && m.group !== group) continue;
+    const hay = `${m.name} ${m.file} ${m.key} ${m.fighter ?? ""}`.toLowerCase();
+    if (q && !hay.includes(q)) continue;
+    if (m.group !== last) {
+      const h = document.createElement("div");
+      h.className = "head";
+      h.textContent = m.group;
+      list.append(h);
+      last = m.group;
+    }
+    const d = document.createElement("div");
+    d.className = "item" + (current && current.key === m.key ? " sel" : "");
+    d.innerHTML = `<b></b><small></small>`;
+    d.querySelector("b").textContent = m.name;
+    d.querySelector("small").textContent = `${m.file}${m.fighter != null ? " · luchador " + m.fighter : ""} · ${m.motions} mov.`;
+    d.onclick = () => load(m.key);
+    list.append(d);
+    n++;
+  }
+  $("count").textContent = `${n} de ${MODELS.length} modelos`;
+}
+$("search").oninput = renderList;
+renderGroups();
+renderList();
+
+// ---------------------------------------------------------------- loading (a script per model: works from file://)
+let pending = null;
+window.modelLoaded = (m) => { if (pending) { pending(m); pending = null; } };
+function load(key) {
+  const entry = MODELS.find((m) => m.key === key);
+  if (!entry) return;
+  msg("Cargando…");
+  const s = document.createElement("script");
+  s.src = `m/${key}.js`;
+  pending = (m) => { s.remove(); build(m, entry); msg(""); };
+  s.onerror = () => { msg(`No se pudo leer m/${key}.js`); s.remove(); };
+  document.head.append(s);
+  try { localStorage.setItem("modelos.last", key); } catch (e) {}
+  history.replaceState(null, "", "#" + key);
+}
+
+// ---------------------------------------------------------------- textures: the model's VRAM read as the PSX does
+let vram = null, vramW = 0, vramH = 0, mats = [];
+function decodeVram(b64) {
+  const bin = atob(b64), a = new Uint16Array(bin.length >> 1);
+  for (let i = 0; i < a.length; i++) a[i] = bin.charCodeAt(2 * i) | bin.charCodeAt(2 * i + 1) << 8;
+  return a;
+}
+const px = (x, y) => (x >= 0 && y >= 0 && x < vramW && y < vramH ? vram[y * vramW + x] : 0);
+function paintMaterial(m) {
+  const [pageX, depth, clutX, clutY] = m.def;
+  const img = m.ctx.createImageData(256, 256), d = img.data;
+  for (let v = 0; v < 256; v++) {
+    for (let u = 0; u < 256; u++) {
+      let c;
+      if (depth === 0) c = px(clutX + ((px(pageX + (u >> 2), v) >> ((u & 3) * 4)) & 15), clutY);
+      else if (depth === 1) c = px(clutX + ((px(pageX + (u >> 1), v) >> ((u & 1) * 8)) & 255), clutY);
+      else c = px(pageX + u, v);
+      const o = (v * 256 + u) * 4;
+      d[o] = (c & 31) << 3; d[o + 1] = (c >> 5 & 31) << 3; d[o + 2] = (c >> 10 & 31) << 3;
+      d[o + 3] = c === 0 ? 0 : (c & 0x8000 ? 254 : 255); // 0: transparent texel; the top bit: semi-transparent
+    }
+  }
+  m.ctx.putImageData(img, 0, 0);
+  m.tex.needsUpdate = true;
+}
+function material(def) {
+  const key = def.join(",");
+  let m = mats.find((x) => x.key === key);
+  if (!m) {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 256;
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.magFilter = tex.minFilter = THREE.NearestFilter;
+    tex.flipY = false;
+    tex.generateMipmaps = false;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    m = { key, def, ctx: canvas.getContext("2d", { willReadFrequently: true }), tex };
+    paintMaterial(m);
+    mats.push(m);
+  }
+  return m;
+}
+
+// ---------------------------------------------------------------- geometry
+let model = null; // the loaded model and its state, as FIGHTSTG's Model
+const shaded = []; // [three material, lit, textured]
+function makeMaterial(lit, texDef, abr) {
+  const opts = { side: THREE.FrontSide, vertexColors: true };
+  if (texDef) { opts.map = material(texDef).tex; opts.alphaTest = 0.5; }
+  if (abr) {
+    opts.transparent = true;
+    opts.depthWrite = false;
+    if (abr === 1) opts.opacity = 0.5;
+    else if (abr === 2 || abr === 4) opts.blending = THREE.AdditiveBlending;
+    else if (abr === 3) opts.blending = THREE.SubtractiveBlending;
+  }
+  const mat = lit ? new THREE.MeshLambertMaterial(opts) : new THREE.MeshBasicMaterial(opts);
+  // PSX colours: 128 is 1.0
+  mat.color.setScalar(lit ? 1 : 255 / 128);
+  shaded.push([mat, lit, !!texDef]);
+  return mat;
+}
+function buildMesh(mesh) {
+  const groups = new Map(); // "lit|mat|abr" -> arrays
+  for (const p of mesh.p) {
+    const flags = p[0], mi = p[1], colour = p[2];
+    const quad = flags & 1, textured = flags & 2, lit = flags & 4, gouraud = flags & 8, abr = flags >> 4;
+    const n = quad ? 4 : 3;
+    const idx = p.slice(3, 3 + n);
+    let o = 3 + n;
+    const nrm = lit ? p.slice(o, o + n) : null;
+    if (lit) o += n;
+    const uv = textured ? p.slice(o, o + 2 * n) : null;
+    const def = textured && mi >= 0 ? mesh.mats[mi] : null;
+    const key = `${lit ? 1 : 0}|${def ? def.slice(0, 4).join(",") : "-"}|${abr}`;
+    if (!groups.has(key)) groups.set(key, { lit, def, abr, pos: [], nor: [], uv: [], col: [] });
+    const g = groups.get(key);
+    // the PSX draws what is clockwise on screen; three keeps what is counter-clockwise: reversed
+    const tris = quad ? [[0, 2, 1], [1, 2, 3]] : [[0, 2, 1]];
+    const r = (colour >> 16 & 255) / 255, gr = (colour >> 8 & 255) / 255, b = (colour & 255) / 255;
+    for (const t of tris) {
+      for (const k of t) {
+        const vi = idx[k] * 3;
+        g.pos.push(mesh.v[vi], mesh.v[vi + 1], mesh.v[vi + 2]);
+        const ni = nrm ? (gouraud ? nrm[k] : nrm[0]) * 3 : -1;
+        if (ni >= 0) g.nor.push(mesh.n[ni] / 4096, mesh.n[ni + 1] / 4096, mesh.n[ni + 2] / 4096);
+        else g.nor.push(0, 0, 1);
+        if (uv) g.uv.push(((uv[2 * k] + def[4]) & 255) / 256 + 1 / 512, ((uv[2 * k + 1] + def[5]) & 255) / 256 + 1 / 512);
+        else g.uv.push(0, 0);
+        if (lit) g.col.push(1, 1, 1);
+        else if (textured) g.col.push(0.5, 0.5, 0.5); // unlit textured: the texture as it is
+        else g.col.push(r, gr, b);
+      }
+    }
+  }
+  const out = new THREE.Group();
+  for (const g of groups.values()) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(g.pos, 3));
+    geo.setAttribute("normal", new THREE.Float32BufferAttribute(g.nor, 3));
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute(g.uv, 2));
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(g.col, 3));
+    const m = new THREE.Mesh(geo, makeMaterial(g.lit, g.def, g.abr));
+    out.add(m);
+  }
+  return out;
+}
+
+function disposeModel() {
+  if (!model) return;
+  for (const b of model.groups) world.remove(b);
+  model.groups.forEach((g) => g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }));
+  shaded.forEach(([m]) => m.dispose());
+  shaded.length = 0;
+  mats.forEach((m) => m.tex.dispose());
+  mats = [];
+  model = null;
+}
+
+function build(data, entry) {
+  disposeModel();
+  current = entry;
+  renderList();
+  [vramW, vramH] = data.vram;
+  vram = decodeVram(data.vram[2]);
+  const n = data.parents.length + 1;
+  const bones = [];
+  for (let i = 0; i < n; i++) {
+    bones.push({ parent: i ? data.parents[i - 1] : 0, keys: i ? data.keys[i - 1] : null,
+      pos: [0, 0, 0], rot: [0, 0, 0], scale: [4096, 4096, 4096], prevPos: [0, 0, 0], prevRot: [0, 0, 0], prevScale: [4096, 4096, 4096],
+      world: new THREE.Matrix4(), visible: true });
+  }
+  const groups = [];
+  for (let i = 1; i < n; i++) {
+    const g = buildMesh(data.meshes[i - 1]);
+    g.matrixAutoUpdate = false;
+    world.add(g);
+    groups.push(g);
+  }
+  const motions = data.motions;
+  model = { data, bones, groups, motions, motion: 0, keyframes: [], blendTargets: [], blendSources: [], keyframe: 1,
+    keyframeCount: 0, motionDone: 0, toIdle: 0, idleMotion: 0, blendTarget: 0, frame: 0, blend: 0, blending: 0,
+    idleFrames: [motions[0] && motions[0][0] ? motions[0][0][2] : 0, motions[1] && motions[1][0] ? motions[1][0][2] : 0],
+    face: data.face.map((r) => ({ rect: r, used: r[2] !== 0, frame: 0 })), blinkTimer: 0, time: 0, ticks: 0 };
+  $("title").textContent = data.name;
+  const polys = data.meshes.reduce((s, m) => s + m.p.length, 0);
+  $("meta").textContent = `${data.file} · ${entry.group}${entry.fighter != null ? " · luchador " + entry.fighter : ""} · ${n} huesos · ${polys} polígonos · VRAM ${vramW}×${vramH}` +
+    (data.face.length ? ` · cara: ${data.face.filter((r) => r[2]).length} partes` : "");
+  renderMotions();
+  setMotion(1, true);
+  poseBones();
+  updateMatrices();
+  frameCamera();
+  applyOptions();
+}
+
+// ---------------------------------------------------------------- motions (FIGHTSTG_setMotion, _stepMotion)
+function setMotion(motion, restart) {
+  const M = model;
+  if (!restart && M.motion === motion) return;
+  M.motion = motion; M.keyframe = 1; M.motionDone = 0; M.toIdle = 0;
+  M.keyframes = []; M.blendTargets = []; M.blendSources = [];
+  const steps = M.motions[motion - 1] || [];
+  for (let s = 0; s < steps.length; s++) {
+    const [index, n, frame, endFrame] = steps[s];
+    if (n === 0) {
+      M.keyframes.push(frame & 0xFFFF); M.blendTargets.push(endFrame); M.blendSources.push(0);
+      break;
+    }
+    if (endFrame === 0) {
+      let to = steps[s + 1] ? steps[s + 1][2] : 0;
+      if (to === -1) { to = M.idleFrames[M.idleMotion]; M.toIdle = 1; }
+      const from = index !== 0 ? steps[s - 1][3] : 0xFFFF;
+      for (let i = 0; i < n; i++) {
+        M.blendSources.push(from); M.blendTargets.push(to);
+        M.keyframes.push(((((i + 1) << 12) / (n + 1)) | 0) | 0x8000);
+      }
+    } else {
+      for (let i = 0; i < n; i++) { M.keyframes.push(frame + i); M.blendTargets.push(0); M.blendSources.push(0); }
+    }
+  }
+  M.keyframeCount = M.keyframes.length;
+  if (motion === 1) M.idleMotion = 0;
+  if (motion === 2) M.idleMotion = 1;
+  M.ticks = 0;
+  renderMotionsSel();
+}
+function stepMotion(frames) {
+  const M = model;
+  if (!M.keyframeCount) return;
+  if (!M.motionDone) {
+    let k = M.keyframe;
+    if (M.keyframes[k] & 0x8000) {
+      if (M.blendTarget !== M.blendTargets[k]) {
+        M.blendTarget = M.blendTargets[k];
+        if (M.blendSources[k] !== 0xFFFF) for (let i = 1; i < M.bones.length; i++) poseBone(M.bones[i], M.blendSources[k]);
+        for (const b of M.bones) { b.prevPos = b.pos.slice(); b.prevRot = b.rot.slice(); b.prevScale = b.scale.slice(); }
+      }
+      M.frame = M.blendTargets[k];
+      M.blend = M.keyframes[k] & 0x7FFF;
+      M.blending = 1;
+    } else {
+      M.blendTarget = 0; M.frame = M.keyframes[k]; M.blending = 0;
+    }
+    M.keyframe = Math.min(M.keyframe + frames, M.keyframeCount - 1);
+    k = M.keyframe;
+    if (M.keyframes[k] === 0x8000) M.keyframe = M.blendTargets[k];
+    else if (M.keyframes[k] === 0xFFFF) M.motionDone = 1;
+    M.ticks += frames;
+  } else {
+    M.blendTarget = 0; M.blending = 0;
+    if ($("loop").checked) setMotion(M.motion, true);
+    else if (M.toIdle) setMotion(M.idleMotion + 1, false);
+  }
+}
+
+// ---------------------------------------------------------------- posing (FIGHTSTG_poseBone, _blendBone)
+const OUTS = ["pos", "rot", "scale"], PREVS = ["prevPos", "prevRot", "prevScale"];
+function poseBone(bone, frame) {
+  for (let c = 0; c < 3; c++) {
+    const k = bone.keys[c], out = bone[OUTS[c]];
+    let j = 0;
+    while (k[j * 4 + 3] < frame) j++;
+    if (k[j * 4 + 3] === frame || j === 0) { out[0] = k[j * 4]; out[1] = k[j * 4 + 1]; out[2] = k[j * 4 + 2]; continue; }
+    const p = (j - 1) * 4, q = j * 4;
+    const t = (((frame - k[p + 3]) << 12) / (k[q + 3] - k[p + 3])) | 0;
+    for (let a = 0; a < 3; a++) out[a] = k[p + a] + ((((k[q + a] - k[p + a]) * t) >> 12));
+  }
+}
+function blendBone(bone, frame, blend) {
+  for (let c = 0; c < 3; c++) {
+    const k = bone.keys[c], out = bone[OUTS[c]], prev = bone[PREVS[c]];
+    let j = 0;
+    while (k[j * 4 + 3] < frame) j++;
+    const cur = [k[j * 4], k[j * 4 + 1], k[j * 4 + 2]];
+    if (c === 2 && (prev.includes(0) || cur.includes(0))) { out[0] = cur[0]; out[1] = cur[1]; out[2] = cur[2]; return; }
+    for (let a = 0; a < 3; a++) out[a] = prev[a] + (((cur[a] - prev[a]) * blend) >> 12);
+  }
+}
+function poseBones() {
+  const M = model;
+  for (let i = 1; i < M.bones.length; i++) {
+    if (M.blending) blendBone(M.bones[i], M.frame, M.blend);
+    else poseBone(M.bones[i], M.frame);
+  }
+}
+const TAU = Math.PI * 2 / 4096;
+const mLocal = new THREE.Matrix4(), mx = new THREE.Matrix4(), my = new THREE.Matrix4(), mz = new THREE.Matrix4();
+function updateMatrices() {
+  const M = model;
+  M.bones[0].world.identity();
+  for (let i = 1; i < M.bones.length; i++) {
+    const b = M.bones[i];
+    const s = b.scale;
+    b.visible = !(((s[0] | s[1] | s[2])) <= 48);
+    if (b.visible) {
+      // Rz * Ry * Rx * Scale, then the position (RotMatrixZYX, ScaleMatrix); world = parent's * local
+      mz.makeRotationZ(b.rot[2] * TAU); my.makeRotationY(b.rot[1] * TAU); mx.makeRotationX(b.rot[0] * TAU);
+      mLocal.copy(mz).multiply(my).multiply(mx).scale(new THREE.Vector3(s[0] / 4096, s[1] / 4096, s[2] / 4096));
+      mLocal.setPosition(b.pos[0], b.pos[1], b.pos[2]);
+      b.world.multiplyMatrices(M.bones[b.parent].world, mLocal);
+    }
+    const g = M.groups[i - 1];
+    g.visible = b.visible;
+    g.matrix.copy(b.world);
+    g.matrixWorldNeedsUpdate = true;
+  }
+}
+
+// ---------------------------------------------------------------- face (FIGHTSTG_updateFace): VRAM copies
+function eyesFrame() {
+  const m = model.motion;
+  return m >= 4 && m <= 11 ? 2 : m === 2 ? 1 : 0;
+}
+function updateFace(frames) {
+  const M = model;
+  if (!M.face.length || !$("faceAnim").checked) return;
+  let eyes = eyesFrame();
+  if (eyes === 0) {
+    switch (M.blinkTimer >> 1) {
+      case 0: M.blinkTimer = (Math.random() * 128 | 0) + 60; eyes = 0; break;
+      case 1: case 2: case 5: case 6: eyes = 1; break;
+      case 3: case 4: eyes = 2; break;
+      default: eyes = 0;
+    }
+    M.blinkTimer = Math.max(0, M.blinkTimer - frames);
+  } else M.blinkTimer = 0;
+  M.time += frames;
+  const cycle = (M.time % 18 / 6) | 0;
+  let dirty = false;
+  M.face.forEach((p, i) => {
+    const f = i < 2 ? eyes : cycle;
+    if (!p.used || p.frame === f) return;
+    p.frame = f;
+    const [x, y, w, h] = p.rect, sx = p.rect[4 + f * 2], sy = p.rect[5 + f * 2];
+    const tmp = [];
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) tmp.push(px(sx + c, sy + r));
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+      if (x + c < vramW && y + r < vramH) vram[(y + r) * vramW + x + c] = tmp[r * w + c];
+    }
+    dirty = true;
+  });
+  if (dirty) mats.forEach(paintMaterial);
+}
+
+// ---------------------------------------------------------------- camera and options
+function frameCamera() {
+  world.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  for (const g of model.groups) if (g.visible) box.expandByObject(g);
+  if (box.isEmpty()) box.setFromCenterAndSize(new THREE.Vector3(), new THREE.Vector3(1000, 1000, 1000));
+  const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()).length();
+  controls.target.copy(c);
+  camera.position.set(c.x + size * 0.9, c.y + size * 0.35, c.z + size * 1.5);
+  camera.near = size / 100; camera.far = size * 100;
+  camera.updateProjectionMatrix();
+  grid.position.y = box.min.y;
+  grid.scale.setScalar(Math.max(0.2, size / 3000));
+}
+function applyOptions() {
+  for (const [m, lit, textured] of shaded) {
+    m.wireframe = $("wire").checked;
+    m.side = $("cull").checked ? THREE.FrontSide : THREE.DoubleSide;
+    if (textured) {
+      const want = $("tex").checked ? m.userData.map || m.map : null;
+      if (m.map) m.userData.map = m.map;
+      m.map = want;
+    }
+    m.needsUpdate = true;
+  }
+  const lightOn = $("light").checked;
+  sun.visible = lightOn;
+  scene.children.filter((o) => o.isAmbientLight).forEach((a) => (a.intensity = lightOn ? 1.4 : 3.2));
+  grid.visible = $("grid").checked;
+  scene.background = new THREE.Color($("bg").value);
+}
+for (const id of ["wire", "cull", "tex", "light", "grid", "bg"]) $(id).onchange = applyOptions;
+
+function renderMotions() {
+  const box = $("motions");
+  box.innerHTML = "";
+  model.motions.forEach((steps, i) => {
+    if (!steps.length) return;
+    const b = document.createElement("button");
+    b.textContent = i + 1;
+    const frames = steps.reduce((s, x) => s + Math.max(0, x[1]), 0);
+    b.title = `Movimiento ${i + 1}: ${frames} fotogramas` + (i < 2 ? " (reposo)" : "") + (i >= 3 && i <= 10 ? " (ojos cerrados)" : "");
+    b.onclick = () => { setMotion(i + 1, true); };
+    box.append(b);
+  });
+}
+function renderMotionsSel() {
+  const btns = $("motions").querySelectorAll("button");
+  btns.forEach((b) => b.classList.toggle("sel", +b.textContent === model.motion));
+}
+
+let playing = true;
+const SPEEDS = [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "⏸ Pausa" : "▶ Reproducir"; };
+$("step").onclick = () => { if (model) { playing = false; $("play").textContent = "▶ Reproducir"; tick(1); } };
+$("restart").onclick = () => { if (model) setMotion(model.motion, true); };
+$("speed").oninput = () => { $("speedTxt").textContent = "×" + SPEEDS[$("speed").value]; };
+
+function tick(frames) {
+  for (let i = 0; i < frames; i++) stepMotion(1);
+  poseBones();
+  updateMatrices();
+  updateFace(frames);
+}
+
+let acc = 0, lastT = performance.now();
+function loop(t) {
+  const dt = Math.min(0.1, (t - lastT) / 1000);
+  lastT = t;
+  if (model && playing) {
+    acc += dt * 60 * SPEEDS[$("speed").value];
+    const n = Math.floor(acc);
+    if (n > 0) { acc -= n; tick(n); }
+  }
+  if (model) {
+    $("status").textContent = `movimiento ${model.motion} · paso ${model.keyframe}/${model.keyframeCount - 1} · fotograma ${model.frame}` +
+      (model.blending ? ` (mezcla ${(model.blend / 40.96).toFixed(0)}%)` : "") + (model.motionDone ? " · acabado" : "");
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+resize();
+requestAnimationFrame(loop);
+
+let first = location.hash.slice(1);
+try { first = first || localStorage.getItem("modelos.last"); } catch (e) {}
+if (MODELS.length) load(MODELS.some((m) => m.key === first) ? first : MODELS[0].key);
+</script>
+</body>
+</html>
