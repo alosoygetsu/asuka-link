@@ -1093,14 +1093,82 @@ def model_lines(fighter):
         _, epart, effects = archive_part(info["effects"])
     except (ValueError, struct.error, IndexError, FileNotFoundError):
         return [f"  modelo {info['model']:#x}, movimientos {info['motions']:#x}, efectos {info['effects']:#x}"]
-    mv, ef = used_slots(motions), used_slots(effects)
-    whole = game_file(info["model"] >> 16)
-    parts = struct.unpack_from("<I", whole, 0)[0] // 4
+    ef = used_slots(effects)
     height = f"altura {info['height']}, " if info["height"] else ""
-    return [f"  modelo: {mfile} ({parts} partes, {len(whole) // 1024} KB), el modelo en la parte {mpart}; {height}"
+    m = model_data(info["model"], info["motions"], fighter)
+    if not m:
+        return [f"  modelo: {mfile} parte {mpart}, movimientos parte {apart} (modelos.py no lo lee)"]
+    face = len(m["face"]) if fighter else 0
+    return [f"  modelo: {mfile} parte {mpart}: {model_text(m)}{f', cara {face} partes' if face else ''}; {height}"
             f"distancia {info['distance']}, {info['cams']} cámaras",
-            f"  movimientos ({len(mv)}, parte {apart}): {ranges(mv)}; guiones de efectos ({len(ef)}, parte {epart}): "
-            f"{ranges(ef) or '-'}"]
+            f"  movimientos ({len(m['durations'])}, en fotogramas): {motions_text(m)}",
+            f"  guiones de efectos ({len(ef)}, parte {epart}): {ranges(ef) or '-'}"]
+
+
+@functools.lru_cache(None)
+def model_data(ref, motions_ref, fighter=None):
+    """lo que cuenta dw3.py de un modelo de combate, del lector de tools/modelos.py: huesos, mallas, polígonos, texturas,
+    y por movimiento (desde 1) su duración: la suma de los fotogramas de sus pasos (FIGHTSTG_stepMotion)"""
+    import modelos
+    try:
+        m = modelos.model(ref, motions_ref, lambda s: None)
+    except (struct.error, IndexError, ValueError, KeyError):
+        return None
+    durations = {k + 1: sum(max(s[1], 0) for s in steps) for k, steps in enumerate(m["motions"]) if steps}
+    return dict(bones=len(m["parents"]), meshes=sum(1 for x in m["meshes"] if x["p"]),
+                polys=sum(len(x["p"]) for x in m["meshes"]), vram=m["vram"][:2], durations=durations,
+                parents=m["parents"], per_mesh=[len(x["p"]) for x in m["meshes"]], steps=m["motions"],
+                face=modelos.face(fighter) if fighter else [])
+
+
+def model_text(m):
+    return (f"{m['bones']} huesos, {m['polys']} polígonos en {m['meshes']} mallas, texturas "
+            f"{m['vram'][0]}×{m['vram'][1]}")
+
+
+def motions_text(m, limit=24):
+    items = [f"{k}:{d}" for k, d in m["durations"].items()]
+    return " ".join(items[:limit]) + (f" … (+{len(items) - limit})" if len(items) > limit else "")
+
+
+def cmd_modelo(args):
+    """modelo [luchador | NOMBRE | efecto N]: un modelo de combate (tools/modelos.py): huesos con su padre, polígonos
+    por malla, cada movimiento con sus pasos y su duración (sin nada, los 248 luchadores y los 129 de efecto)"""
+    import modelos
+    cat, _ = modelos.catalogue()  # (key, name, group, model ref, motions ref, fighter)
+    if not args:
+        groups = {}
+        for key, name, group, *_ in cat:
+            groups.setdefault(group, []).append(f"{key[1:]} {name}")
+        for g, items in groups.items():
+            print(f"{g} ({len(items)}): " + ", ".join(items[:MAX * 2 if MAX else None]) +
+                  (" …" if MAX and len(items) > MAX * 2 else ""))
+        return
+    if args[0] == "efecto" and len(args) > 1:
+        found = [c for c in cat if c[0] == f"e{int(args[1], 0)}"]
+    else:
+        q = " ".join(args)
+        if re.fullmatch(r"0x[0-9a-fA-F]+|\d+", q):
+            found = [c for c in cat if c[0] == f"f{int(q, 0)}"]
+        else:
+            qc = q.casefold()
+            found = ([c for c in cat if c[1].casefold() == qc] or [c for c in cat if qc in c[1].casefold()])
+    if not found:
+        sys.exit("ningún modelo así (dw3.py modelo los lista)")
+    for key, name, group, ref, mref, fighter in found[:3]:
+        m = model_data(ref, mref, fighter)
+        if not m:
+            print(f"{key} {name}: modelos.py no lo lee")
+            continue
+        fname = file_names()[ref >> 16] if (ref >> 16) < len(file_names()) else hex(ref >> 16)
+        print(f"{name} ({group}, {'luchador ' + str(fighter) if fighter else 'efecto ' + key[1:]}): {fname} parte "
+              f"{ref & 0xFFFF}; {model_text(m)}" + (f", cara {len(m['face'])} partes" if m["face"] else ""))
+        print("  huesos (k←padre, polígonos): " + " ".join(f"{k + 1}←{p}:{n}" for k, (p, n) in
+                                                           enumerate(zip(m["parents"], m["per_mesh"]))))
+        lines = [f"    {k}: {d} fotogramas en {len(m['steps'][k - 1])} pasos" for k, d in m["durations"].items()]
+        print(f"  movimientos ({len(lines)}):")
+        for l in capped(lines):
+            print(l)
 
 
 def enemy_name(fighter, lang="S"):
@@ -1659,6 +1727,7 @@ COMMANDS = {
     "salidas": cmd_salidas,
     "enemigos": cmd_enemigos,
     "personaje": cmd_personaje,
+    "modelo": cmd_modelo,
     "estado": cmd_estado,
     "pasos": script_cmd("story_steps", "pasos [paso_hex ...]: conversaciones que hacen algo en cada paso de historia (story_steps.py)"),
     "eventos": cmd_eventos,
