@@ -1232,14 +1232,46 @@ FIELD_PARTNERS = 3  # FIELD_CHARACTER_PARTNERS (field_map.h): los personajes 3-1
 
 @functools.lru_cache(None)
 def character_sprites():
-    """[(archivo, fotogramas)] por personaje (Actor.key1) de FIELDSTG_fileEntries, del FIELDSTG.PRO europeo: cada valor,
-    archivo << 16 | número de fotogramas"""
+    """[(archivo, entrada de su tabla de sets)] por personaje (Actor.key1) de FIELDSTG_fileEntries, del FIELDSTG.PRO
+    europeo: cada valor, archivo << 16 | entrada (tools/sprites.py explica el formato)"""
     syms = {s[1]: s for s in symbols_of(CFG / "symbols_fieldstg.txt")}
     a, size = syms["FIELDSTG_fileEntries"][0], syms["FIELDSTG_fileEntries"][2]
     ovl = game_file("FIELDSTG.PRO")
     vals = struct.unpack_from(f"<{size // 4}i", ovl, a - 0x80082CB0)
     names = file_names()
     return [((names[v >> 16] if 0 < v >> 16 < len(names) else "") if v else "", v & 0xFFFF if v else 0) for v in vals]
+
+
+@functools.lru_cache(None)
+def character_raw():
+    syms = {s[1]: s for s in symbols_of(CFG / "symbols_fieldstg.txt")}
+    a, size = syms["FIELDSTG_fileEntries"][0], syms["FIELDSTG_fileEntries"][2]
+    return struct.unpack_from(f"<{size // 4}i", game_file("FIELDSTG.PRO"), a - 0x80082CB0)
+
+
+@functools.lru_cache(None)
+def sprite_info(n):
+    """(imágenes, [(set, nombre)]) del sprite del personaje n: las imágenes (TIM) distintas que usan sus sets, y sus
+    sets (tools/sprites.py: SpriteFile, SET_NAMES); None si no tiene o no se lee"""
+    import sprites
+    v = character_raw()[n] if n < len(character_raw()) else 0
+    if not v:
+        return None
+    try:
+        f = sprites.SpriteFile(v >> 16, v & 0xFFFF)
+        sets = f.sets()
+        tims = {fr[1] for _, dirs in sets for e in dirs if e for fr in f.frames(e)[0]}
+    except (struct.error, IndexError, ValueError):
+        return None
+    return len(tims), [(s, sprites.SET_NAMES.get(s, "pose de evento" if s >= 0x40 else "")) for s, _ in sets]
+
+
+def sprite_text(n):
+    info = sprite_info(n)
+    if not info:
+        return ""
+    images, sets = info
+    return f"{images} imágenes, {len(sets)} animaciones"
 
 
 @functools.lru_cache(None)
@@ -1284,11 +1316,11 @@ def character_name(n, top=3):
 
 def cmd_personaje(args):
     """personaje [N | P###XXXX | nombre]: el sprite de un personaje del campo (el N de charlas y de probar.ps1
-    talk:N), sus fotogramas, su nombre y en qué mapas sale (sin nada, la lista)"""
+    talk:N), sus imágenes y animaciones, su nombre y en qué mapas sale (sin nada, la lista)"""
     sprites = character_sprites()
     uses = character_uses()
     if not args:
-        lines = [f"{n} {f} {fr} fotogramas  {character_name(n)}" for n, (f, fr) in enumerate(sprites) if f]
+        lines = [f"{n} {f} {sprite_text(n)}  {character_name(n)}" for n, (f, _) in enumerate(sprites) if f]
         print(f"{len(lines)} personajes con sprite (de {len(sprites)}):")
         for l in capped(lines, MAX * 5 if MAX else 0):
             print("  " + l)
@@ -1306,8 +1338,14 @@ def cmd_personaje(args):
         sys.exit("ningún personaje con ese número, sprite o nombre")
     for n in sorted(found)[:MAX or None]:
         f, fr = sprites[n] if n < len(sprites) else ("", 0)
-        print(f"personaje {n} ({n:#x}): {f or 'sin sprite'}" + (f", {fr} fotogramas" if f else "") +
+        print(f"personaje {n} ({n:#x}): {f or 'sin sprite'}" + (f", {sprite_text(n)}" if f else "") +
               (f"  {character_name(n)}" if character_name(n) else ""))
+        info = sprite_info(n)
+        if info:
+            print("  animaciones (set): " + ", ".join(f"{s:#x}" + (f" {nm}" if nm else "") for s, nm in info[1]))
+        if n == 2:
+            print("  el jugador: sus sets salen de 5 archivos según el set (SET_FILE_* de actor_control.c; "
+                  "tools/sprites.py los dibuja todos)")
         shared = [m for m, (g, _) in enumerate(sprites) if g == f and m != n] if f else []
         if shared:
             print(f"  el mismo sprite: personajes {', '.join(map(str, shared[:12]))}" + (" …" if len(shared) > 12 else ""))
